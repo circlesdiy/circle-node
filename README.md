@@ -1,4 +1,4 @@
-# circles.diy
+![cover image](static/img/circles-og-image.jpeg)
 
 A social platform for communities, creators and collaborators.
 
@@ -32,8 +32,8 @@ Read the manifesto: https://circles.diy/
 
 3. **Clone and deploy:**
    ```bash
-   git clone <your-repo>
-   cd circles.diy
+   git clone git@github.com:circlesdiy/circle-node.git
+   cd circles-node
    ./init-letsencrypt.sh yourdomain.com your@email.com
    ```
 
@@ -45,7 +45,7 @@ The `init-letsencrypt.sh` script:
 - ✅ Requests Let's Encrypt SSL certificate
 - ✅ Switches to HTTPS configuration
 - ✅ Tests the final deployment
-- ✅ Sets up automatic certificate renewal
+- ✅ Sets up automatic certificate renewal with certbot
 
 ### Troubleshooting
 
@@ -104,10 +104,9 @@ docker compose up -d
 ### Monitoring
 - **View logs:** `docker compose logs -f`
 - **Check certificates:** `docker compose exec nginx nginx -t`
-- **Feedback storage:** `./data/feedback.txt`
 
 ### Local Development
 ```bash
-PORT=6969 go run main.go
-# Access at http://localhost:6969
+go run main.go
+# Access at http://localhost:8080
 ```
