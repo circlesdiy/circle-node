@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"circles.diy/internal/auth"
 	"circles.diy/internal/config"
 	"circles.diy/internal/storage"
 	"go.uber.org/zap"
@@ -16,11 +18,15 @@ import (
 
 // App represents the application with all its dependencies
 type App struct {
-	Config   *config.Config
-	Logger   *zap.Logger
-	Postgres *storage.Postgres
-	Redis    *storage.Redis
-	Server   *http.Server
+	Config      *config.Config
+	Logger      *zap.Logger
+	Postgres    *storage.Postgres
+	Redis       *storage.Redis
+	Server      *http.Server
+
+	// Authentication components
+	AuthService *auth.Service
+	AuthHandler *auth.Handler
 }
 
 // New creates a new application instance with all dependencies
@@ -64,11 +70,26 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
+	// Initialize authentication system
+	logger.Info("initializing authentication system...")
+	authRepo := auth.NewRepository(postgres.Pool)
+	authConfig := auth.DefaultWebAuthnConfig()
+
+	// Create slog logger for auth system (conversion from zap)
+	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	authService := auth.NewService(authRepo, authConfig, slogLogger)
+	authHandler := auth.NewHandler(authService, slogLogger)
+
 	app := &App{
-		Config:   cfg,
-		Logger:   logger,
-		Postgres: postgres,
-		Redis:    redis,
+		Config:      cfg,
+		Logger:      logger,
+		Postgres:    postgres,
+		Redis:       redis,
+		AuthService: authService,
+		AuthHandler: authHandler,
 	}
 
 	return app, nil

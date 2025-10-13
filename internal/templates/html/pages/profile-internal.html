@@ -1,0 +1,249 @@
+{{define "profile-internal"}}
+{{template "base" .}}
+{{end}}
+
+{{define "main"}}
+<div class="profile-dashboard">
+    <div class="profile-banner-edit">
+        <img src="{{.Profile.Banner}}" alt="Profile banner" />
+        <button class="edit-banner-btn" title="Change banner"  >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z"></path></svg>
+        </button>
+    </div>
+    
+    <div class="profile-layout">
+        <aside class="profile-controls-sidebar">
+            <div class="sidebar-section">
+                <h3>Profile Controls</h3>
+                <div class="profile-controls-list">
+                    <button class="control-item active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
+                        Edit Profile
+                    </button>
+                    <button class="control-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"></path></svg>
+                        Media Library
+                    </button>
+                    <button class="control-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,112a28,28,0,0,0-8,54.83V184a8,8,0,0,0,16,0V166.83A28,28,0,0,0,128,112Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,128,152Zm80-72H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"></path></svg>
+                        Privacy Settings
+                    </button>
+                    <button class="control-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"></path></svg>
+                        Help & Support
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Extensions</h3>
+                <div class="extensions-list">
+                    {{range .Extensions}}
+                    <div class="extension-item {{if .Enabled}}enabled{{end}}">
+                        <div class="extension-info">
+                            <strong class="extension-name">{{.Name}}</strong>
+                            <span class="extension-desc">{{.Description}}</span>
+                        </div>
+                        <button class="extension-toggle {{if .Enabled}}active{{end}}" 
+                                 
+                                
+                                >
+                            {{if .Enabled}}ON{{else}}OFF{{end}}
+                        </button>
+                    </div>
+                    {{end}}
+                </div>
+                <button class="sidebar-action-btn"  >Browse Extensions</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Analytics</h3>
+                <div class="analytics-stats">
+                    <div class="analytics-item">
+                        <span class="analytics-label">Profile Views</span>
+                        <span class="analytics-value">{{.Analytics.ProfileViews}} 
+                            <span class="analytics-change {{if ge .Analytics.ProfileViewsChange 0}}up{{else}}down{{end}}">
+                                {{if ge .Analytics.ProfileViewsChange 0}}+{{end}}{{.Analytics.ProfileViewsChange}}%
+                            </span>
+                        </span>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Post Engagement</span>
+                        <span class="analytics-value">{{.Analytics.PostEngagement}}% 
+                            <span class="analytics-change {{if ge .Analytics.PostEngagementChange 0}}up{{else}}down{{end}}">
+                                {{if ge .Analytics.PostEngagementChange 0}}+{{end}}{{.Analytics.PostEngagementChange}}%
+                            </span>
+                        </span>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">New Connections</span>
+                        <span class="analytics-value">{{.Analytics.NewConnections}} 
+                            <span class="analytics-change {{if ge .Analytics.NewConnectionsChange 0}}up{{else}}down{{end}}">
+                                {{if ge .Analytics.NewConnectionsChange 0}}+{{end}}{{.Analytics.NewConnectionsChange}}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <button class="sidebar-action-btn"  >View Full Analytics</button>
+            </div>
+        </aside>
+
+        <div class="profile-main" id="profile-main">
+            <div class="profile-header-edit">
+                <div class="profile-avatar-edit">
+                    <img src="{{.Profile.Avatar}}" alt="{{.Profile.Handle}}" />
+                    <button class="edit-avatar-btn" title="Change profile picture"  >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z"></path></svg>
+                    </button>
+                </div>
+                <div class="profile-info-edit">
+                    <h1 class="profile-name-edit">
+                        {{.Profile.Name}}
+                        <button class="edit-inline-btn" title="Edit name"  >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z"></path></svg>
+                        </button>
+                    </h1>
+                    <p class="profile-handle-edit">
+                        {{.Profile.Handle}}
+                        <button class="edit-inline-btn" title="Edit handle"  >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z"></path></svg>
+                        </button>
+                    </p>
+                    <div class="profile-bio-edit">
+                        <p>{{.Profile.Bio}}</p>
+                        <button class="edit-bio-btn"  >Edit Bio</button>
+                    </div>
+                </div>
+                <div class="profile-actions-edit">
+                    <a href="/profile/{{.Profile.Handle}}" class="profile-preview-btn">Preview Profile</a>
+                    <button class="profile-share-btn"  >Share Profile</button>
+                </div>
+            </div>
+
+            <div class="profile-stats-edit">
+                <div class="stat-item">
+                    <span class="stat-number">{{.Profile.Stats.Posts}}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{.Profile.Stats.Connections}}</span>
+                    <span class="stat-label">Connections</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{.Profile.Stats.Circles}}</span>
+                    <span class="stat-label">Circles</span>
+                </div>
+            </div>
+
+            <div class="profile-content-edit">
+                <div class="content-nav">
+                    <button class="content-nav-item active"  >My Posts</button>
+                    <button class="content-nav-item"  >
+                        Drafts 
+                        {{if gt .DraftCount 0}}<span class="draft-count">{{.DraftCount}}</span>{{end}}
+                    </button>
+                    <button class="content-nav-item"  >Workshop</button>
+                    <button class="content-nav-item"  >Gallery</button>
+                </div>
+
+                <div class="new-post-section">
+                    <button class="new-post-btn"  >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                        Create New Post
+                    </button>
+                </div>
+
+                <div class="posts-grid" id="posts-container">
+                    {{range .Drafts}}
+                    <article class="post-item-edit draft">
+                        <div class="post-draft-label">Draft</div>
+                        <div class="post-content">
+                            {{if .Gallery}}
+                            <div class="post-gallery">
+                                <div class="gallery-main">
+                                    <img src="{{(index .Gallery 0).URL}}" alt="{{(index .Gallery 0).Alt}}" />
+                                </div>
+                                {{if gt (len .Gallery) 1}}
+                                <div class="gallery-thumbnails">
+                                    {{range slice .Gallery 1 4}}
+                                    <img src="{{.URL}}" alt="{{.Alt}}" />
+                                    {{end}}
+                                    {{if gt (len .Gallery) 4}}
+                                    <div class="gallery-more">+{{sub (len .Gallery) 4}}</div>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
+                            {{if .Image}}
+                            <div class="post-image">
+                                <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" />
+                            </div>
+                            {{end}}
+                            {{if .Video}}
+                            <div class="post-video">
+                                <video controls>
+                                    <source src="{{.Video.URL}}" type="video/mp4">
+                                    {{.Video.Alt}}
+                                </video>
+                            </div>
+                            {{end}}
+                            <p>{{.Content}}</p>
+                        </div>
+                        <div class="post-draft-actions">
+                            <button class="draft-publish-btn"   >Publish</button>
+                            <button class="draft-continue-btn"  >Continue Editing</button>
+                        </div>
+                    </article>
+                    {{end}}
+
+                    {{range .Posts}}
+                    <div class="post-item-edit-wrapper">
+                        <div class="post-edit-controls">
+                            <button class="post-edit-btn" title="Edit post"  >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.69,147.31,64l24-24L216,84.69Z"></path></svg>
+                            </button>
+                            <button class="post-delete-btn" title="Delete post"    >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
+                            </button>
+                        </div>
+                        {{template "post" .}}
+                        <div class="post-stats">
+                            <span class="post-stat">{{.Stats.Replies}} replies</span>
+                            <span class="post-stat">{{.Stats.Shares}} shares</span>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal container -->
+<div id="modal" ></div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Content navigation handling
+    const contentNavItems = document.querySelectorAll('.content-nav-item');
+    contentNavItems.forEach(item => {
+        item.addEventListener('click', () => {
+            contentNavItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+    
+    // Profile controls navigation
+    const controlItems = document.querySelectorAll('.control-item');
+    controlItems.forEach(item => {
+        item.addEventListener('click', () => {
+            controlItems.forEach(control => control.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+});
+</script>
+{{end}}

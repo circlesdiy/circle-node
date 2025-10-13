@@ -1,0 +1,83 @@
+{{define "circle-card"}}
+<div class="circle-card" data-active="{{.Active}}" data-role="{{.UserRole}}"  >
+    <div class="circle-card-header">
+        <div class="circle-card-thumbnail-wrapper">
+            <img src="{{.Thumbnail}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
+            <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
+                {{if .Active}}{{.OnlineCount}} online{{end}}
+            </div>
+        </div>
+        <div class="circle-role-badge role-{{.UserRole}}">
+            {{if eq .UserRole "owner"}}Owner{{else if eq .UserRole "admin"}}Admin{{else}}Member{{end}}
+        </div>
+    </div>
+    
+    <div class="circle-card-banner">
+        {{if .Banner}}
+        <img src="{{.Banner}}" alt="{{.Name}} banner" class="circle-banner" />
+        {{else}}
+        <div class="circle-banner-placeholder"></div>
+        {{end}}
+    </div>
+    
+    <div class="circle-card-content">
+        <div class="circle-header">
+            <h3 class="circle-name">{{.Name}}</h3>
+            <div class="circle-meta">
+                <span class="join-date">Joined {{.JoinedDate}}</span>
+                {{if .LastActivity}}
+                <span class="last-activity">Last active {{.LastActivity}}</span>
+                {{end}}
+            </div>
+        </div>
+        
+        <p class="circle-description">{{.Description}}</p>
+        
+        <div class="circle-stats">
+            <div class="stat">
+                <span class="stat-value">{{.MemberCount}}</span>
+                <span class="stat-label">members</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="circle-card-actions">
+        <button class="circle-action-btn primary"   >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                <path d="m221.66,133.66-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path>
+            </svg>
+            Enter Circle
+        </button>
+        <div class="circle-action-menu">
+            <button class="circle-action-btn secondary" aria-label="More actions" title="More actions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                    <circle cx="128" cy="64" r="16"></circle>
+                    <circle cx="128" cy="128" r="16"></circle>
+                    <circle cx="128" cy="192" r="16"></circle>
+                </svg>
+            </button>
+            <div class="action-dropdown" hidden>
+                <button class="dropdown-action"  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Z"></path>
+                    </svg>
+                    Circle Settings
+                </button>
+                <button class="dropdown-action"  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06Z"></path>
+                    </svg>
+                    Notifications
+                </button>
+                <hr class="dropdown-separator">
+                <button class="dropdown-action danger"    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M112,216a8,8,0,0,1-8,8H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h56a8,8,0,0,1,0,16H48V208h56A8,8,0,0,1,112,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L188.69,112H104a8,8,0,0,0,0,16h84.69l-18.35,18.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,221.66,122.34Z"></path>
+                    </svg>
+                    Leave Circle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,143 @@
+{{define "marketplace-item-card"}}
+<article class="marketplace-card">
+    <div class="marketplace-card-image">
+        {{if .Image}}
+        <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" loading="lazy">
+        {{else}}
+        <div class="marketplace-card-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="2rem" height="2rem" fill="currentColor" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216v92.69L196,132l-19.89,19.89L129,104a16,16,0,0,0-22.62,0L40,170.34V56ZM216,200H76.31L128,148.28l46.34,46.35a16,16,0,0,0,22.63,0L217.66,174a8,8,0,0,0,0-11.31L216,161.31V200ZM168,100a12,12,0,1,1,12,12A12,12,0,0,1,168,100Z"></path></svg>
+        </div>
+        {{end}}
+        
+        <div class="marketplace-card-badges">
+            {{if eq .PriceType "trade"}}
+            <span class="marketplace-badge trade">Trade</span>
+            {{else if eq .PriceType "free"}}
+            <span class="marketplace-badge free">Free</span>
+            {{else if eq .PriceType "negotiable"}}
+            <span class="marketplace-badge negotiable">Negotiable</span>
+            {{end}}
+            
+            {{if .IsFeatured}}
+            <span class="marketplace-badge featured">Featured</span>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="marketplace-card-content"  >
+        <div class="marketplace-card-header">
+            <h3 class="marketplace-card-title">{{.Title}}</h3>
+            <span class="marketplace-card-price">{{.Price}}</span>
+        </div>
+
+        <p class="marketplace-card-description">{{.Description}}</p>
+
+        <div class="marketplace-card-meta">
+            <div class="marketplace-card-seller">
+                <img src="{{.Seller.Avatar}}" alt="{{.Seller.Handle}}" class="seller-avatar">
+                <div class="seller-info">
+                    <span class="seller-name">{{.Seller.Handle}}</span>
+                    {{if .Circle}}
+                    <span class="seller-circle">in {{.Circle}}</span>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="marketplace-card-details">
+                <div class="marketplace-location">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="0.875rem" height="0.875rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88,88,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88,88,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"></path></svg>
+                    <span>{{.Location}}</span>
+                </div>
+                
+                <div class="marketplace-card-stats">
+                    <span class="marketplace-condition">{{.Condition}}</span>
+                    <span class="marketplace-time">{{.TimeAgo}}</span>
+                </div>
+            </div>
+        </div>
+
+        {{if .Tags}}
+        <div class="marketplace-card-tags">
+            {{range .Tags}}
+            <span class="marketplace-tag">#{{.}}</span>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+
+    <div class="marketplace-card-actions">
+        <button class="marketplace-action-btn primary"  >
+            View Details
+        </button>
+        <button class="marketplace-action-btn secondary"  >
+            Message
+        </button>
+        <button class="marketplace-action-btn tertiary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" fill="currentColor" viewBox="0 0 256 256"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z"></path></svg>
+        </button>
+    </div>
+</article>
+{{end}}
+
+{{define "marketplace-featured-card"}}
+<article class="marketplace-featured-card">
+    <div class="featured-card-image">
+        {{if .Image}}
+        <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" loading="lazy">
+        {{end}}
+        
+        <div class="featured-card-overlay">
+            <div class="featured-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" fill="currentColor" viewBox="0 0 256 256"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,23.64-55.07a16.36,16.36,0,0,1,28.6,0L165.94,81.23l59,4.76A16.46,16.46,0,0,1,234.29,114.85Z"></path></svg>
+                Featured
+            </div>
+        </div>
+    </div>
+
+    <div class="featured-card-content"  >
+        <div class="featured-card-header">
+            <div class="featured-seller">
+                <img src="{{.Seller.Avatar}}" alt="{{.Seller.Handle}}" class="featured-seller-avatar">
+                <div class="featured-seller-info">
+                    <span class="featured-seller-name">{{.Seller.Handle}}</span>
+                    {{if .Circle}}
+                    <span class="featured-seller-circle">{{.Circle}}</span>
+                    {{end}}
+                </div>
+            </div>
+            <span class="featured-price">{{.Price}}</span>
+        </div>
+
+        <h3 class="featured-card-title">{{.Title}}</h3>
+        <p class="featured-card-description">{{.Description}}</p>
+
+        <div class="featured-card-meta">
+            <div class="featured-location">
+                <svg xmlns="http://www.w3.org/2000/svg" width="0.875rem" height="0.875rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88,88,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88,88,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"></path></svg>
+                {{.Location}}
+            </div>
+            <div class="featured-stats">
+                <span class="featured-condition">{{.Condition}}</span>
+                <span class="featured-time">{{.TimeAgo}}</span>
+            </div>
+        </div>
+        
+        {{if .Tags}}
+        <div class="featured-card-tags">
+            {{range .Tags}}
+            <span class="featured-tag">#{{.}}</span>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+
+    <div class="featured-card-actions">
+        <button class="featured-action-btn primary"  >
+            View Details
+        </button>
+        <button class="featured-action-btn secondary"  >
+            Contact Seller
+        </button>
+    </div>
+</article>
+{{end}}

@@ -1,0 +1,133 @@
+{{define "reply-tree"}}
+<article class="reply" role="article">
+    <header class="reply-header">
+        <div class="reply-user">
+            <div class="user-avatar user-avatar-small">
+                <img src="{{.User.Avatar}}" alt="{{.User.Handle}}" loading="lazy" />
+            </div>
+            <a class="user-handle-link" href="/profile/{{.User.Handle}}" aria-label="View {{.User.Handle}}'s profile">
+                <strong>{{.User.Handle}}</strong>
+            </a>
+            <time class="reply-time" datetime="{{.Timestamp}}">{{.TimeAgo}}</time>
+        </div>
+    </header>
+    <div class="reply-content">
+        <p>{{.Content}}</p>
+    </div>
+    
+    {{if .Replies}}
+    <div class="nested-replies" role="group" aria-label="Nested replies">
+        {{range .Replies}}
+            {{template "reply-tree" .}}
+        {{end}}
+    </div>
+    {{end}}
+</article>
+{{end}}
+
+{{define "post"}}
+<article class="post">
+    <div class="post-header">
+        <div class="post-user">
+            <div class="user-avatar">
+                <img src="{{.User.Avatar}}" alt="{{.User.Handle}}" />
+            </div>
+            <a class="user-handle-link" href="/profile/{{.User.Handle}}"><strong>{{.User.Handle}}</strong></a>
+            <span class="post-time">{{.TimeAgo}}</span>
+        </div>
+        {{if .Circle}}
+        <div class="post-circle">in {{.Circle}}</div>
+        {{end}}
+    </div>
+    
+    <div class="post-content">
+        {{if .Image}}
+        <div class="post-image">
+            <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" />
+        </div>
+        {{end}}
+        
+        {{if .Video}}
+        <div class="post-video">
+            <video controls>
+                <source src="{{.Video.URL}}" />
+            </video>
+        </div>
+        {{end}}
+        
+        {{if .Gallery}}
+        <div class="post-gallery">
+            <div class="gallery-main">
+                <img src="{{(index .Gallery 0).URL}}" alt="{{(index .Gallery 0).Alt}}" />
+            </div>
+            {{if gt (len .Gallery) 1}}
+            <div class="gallery-thumbnails">
+                {{range $index, $item := .Gallery}}
+                {{if and (gt $index 0) (lt $index 4)}}
+                <img src="{{.URL}}" alt="{{.Alt}}" />
+                {{end}}
+                {{end}}
+                {{if gt (len .Gallery) 4}}
+                <div class="gallery-more">+{{sub (len .Gallery) 4}}</div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+        
+        <p>{{.Content}}</p>
+    </div>
+    
+    <div class="post-actions">
+        <div class="replies-btn">
+            {{if gt (len .Replies) 0}}
+                <button class="replies-toggle" onclick="toggleReplies(this)" data-reply-count="{{len .Replies}}">
+                    <span class="replies-count">Show replies</span>
+                </button>
+            {{ end }}
+        </div>
+        <div class="actions-container">
+            <button class="post-action">Reply</button>
+            <button class="post-action">Share</button>
+            {{if .CanBuy}}
+            <button class="post-action">Buy Now</button>
+            {{else if eq .Circle "The Crop Circle"}}
+            <button class="post-action">RSVP</button>
+            {{else if eq .Circle "DIY Electronics"}}
+            <button class="post-action">Join Workshop</button>
+            {{end}}
+            <button class="post-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,96a32,32,0,1,0,32,32A32,32,0,0,0,128,96Zm0,48a16,16,0,1,1,16-16A16,16,0,0,1,128,144Zm0-64A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32Zm0,144a32,32,0,1,0,32,32A32,32,0,0,0,128,176Zm0,48a16,16,0,1,1,16-16A16,16,0,0,1,128,224Z"></path></svg>
+            </button>
+        </div>
+    </div>
+    
+    {{if .Replies}}
+    <section class="post-replies" style="display: none;" aria-label="Replies">
+        <div class="replies-list">
+            {{range .Replies}}
+                {{template "reply-tree" .}}
+            {{end}}
+        </div>
+    </section>
+    {{end}}
+
+<script>
+function toggleReplies(button) {
+    // Navigate from button -> .replies-btn -> .post-actions -> .post-replies -> .replies-list
+    const postActions = button.closest('.post-actions');
+    const postReplies = postActions.nextElementSibling;
+    const repliesCount = button.querySelector('.replies-count');
+    const replyCount = button.getAttribute('data-reply-count');
+    
+    if (postReplies.style.display === 'none') {
+        postReplies.style.display = 'block';
+        repliesCount.textContent = 'Hide replies';
+    } else {
+        postReplies.style.display = 'none';
+        repliesCount.textContent = `Show replies`;
+    }
+}
+</script>
+</article>
+{{end}}

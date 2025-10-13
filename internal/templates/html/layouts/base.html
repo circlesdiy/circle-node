@@ -1,0 +1,434 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Favicon: auto-selects by media query -->
+    <link rel="icon" href="/static/img/favicon-light.svg" type="svg+xml" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/static/img/favicon-dark.svg" type="svg+xml" media="(prefers-color-scheme: light)">
+
+    <!-- PNG fallback for browsers that don’t love SVG favicons -->
+    <link rel="icon" href="/static/img/favicon-light.png" sizes="any">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://circles.diy/">
+    <meta property="og:title" content="circles.diy - The Community Platform for Creatives">
+    <meta property="og:description"
+        content="A social platform for communities, creators and collaborators. Built on principles of community stewardship, not capital extraction.">
+    <meta property="og:site_name" content="circles.diy">
+    <meta property="og:image" content="https://circles.diy/static/img/circles-og-image.jpeg">
+
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="https://circles.diy/">
+    <meta property="twitter:title" content="circles.diy - The Community Platform for Creatives">
+    <meta property="twitter:description"
+        content="A social platform for communities, creators and collaborators. Built on principles of community stewardship, not capital extraction.">
+    <meta property="twitter:image" content="https://circles.diy/static/img/circles-og-image.jpeg">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="circles.diy">
+    <link rel="apple-touch-icon" href="/static/img/icon-192.png">
+
+    <title>{{.Title}} - circles.diy</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {{block "head" .}}{{end}}
+</head>
+<body>
+    <div class="page-container">
+        {{template "header" .}}
+        
+        <main>
+            {{block "main" .}}{{end}}
+        </main>
+    </div>
+
+    <script src="/static/js/htmx.min.js"></script>
+    <script>
+// Theme Manager Implementation - Global for all pages
+class ThemeManager {
+    constructor() {
+        this.themeButton = document.querySelector('.theme-menu');
+        this.dropdown = document.querySelector('.theme-dropdown');
+        this.radiusOptions = document.querySelectorAll('.radius-option');
+        this.themeOptions = document.querySelectorAll('.theme-option');
+        this.root = document.documentElement;
+        
+        if (this.themeButton && this.dropdown) {
+            this.init();
+        }
+    }
+    
+    init() {
+        this.loadPreferences();
+        
+        this.themeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+        
+        this.radiusOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const radius = option.dataset.radius;
+                this.setRadius(radius);
+            });
+        });
+        
+        this.themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const theme = option.dataset.theme;
+                this.setTheme(theme);
+            });
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.theme-menu-container')) {
+                this.closeDropdown();
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !this.dropdown.hidden) {
+                this.closeDropdown();
+                this.themeButton.focus();
+            }
+        });
+    }
+    
+    toggleDropdown() {
+        if (this.dropdown.hidden) {
+            this.openDropdown();
+        } else {
+            this.closeDropdown();
+        }
+    }
+    
+    openDropdown() {
+        this.dropdown.hidden = false;
+        this.themeButton.setAttribute('aria-expanded', 'true');
+    }
+    
+    closeDropdown() {
+        this.dropdown.hidden = true;
+        this.themeButton.setAttribute('aria-expanded', 'false');
+    }
+    
+    setRadius(radius) {
+        this.root.style.setProperty('--container-radius', radius + 'px');
+        
+        this.radiusOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.radius === radius);
+        });
+        
+        localStorage.setItem('theme-radius', radius);
+        
+        // Save to server
+        fetch('/api/theme/radius', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ radius: parseInt(radius) })
+        });
+    }
+    
+    setTheme(theme) {
+        document.body.classList.remove('theme-light', 'theme-dark', 'theme-system');
+        document.body.classList.add(`theme-${theme}`);
+        
+        if (theme === 'light') {
+            this.applyLightTheme();
+        } else if (theme === 'dark') {
+            this.applyDarkTheme();
+        } else {
+            this.applySystemTheme();
+        }
+        
+        this.themeOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.theme === theme);
+        });
+        
+        localStorage.setItem('theme-mode', theme);
+        
+        // Save to server
+        fetch('/api/theme/mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: theme })
+        });
+    }
+    
+    applyLightTheme() {
+        this.root.style.setProperty('--bg-primary', '#ffffff');
+        this.root.style.setProperty('--bg-secondary', '#f5f5f5');
+        this.root.style.setProperty('--bg-tertiary', '#f9f9f9');
+        this.root.style.setProperty('--text-primary', '#000000');
+        this.root.style.setProperty('--text-secondary', '#666666');
+        this.root.style.setProperty('--text-tertiary', '#999999');
+        this.root.style.setProperty('--border-primary', '#000000');
+        this.root.style.setProperty('--border-secondary', '#cccccc');
+        this.root.style.setProperty('--border-light', '#eeeeee');
+        this.root.style.setProperty('--accent-primary', '#000000');
+        this.root.style.setProperty('--accent-secondary', '#ffffff');
+        this.root.style.setProperty('--hover-bg', '#f5f5f5');
+        this.root.style.setProperty('--active-bg', '#000000');
+        this.root.style.setProperty('--active-text', '#ffffff');
+        this.root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.1)');
+    }
+    
+    applyDarkTheme() {
+        this.root.style.setProperty('--bg-primary', '#000000');
+        this.root.style.setProperty('--bg-secondary', '#0a0a0a');
+        this.root.style.setProperty('--bg-tertiary', '#111111');
+        this.root.style.setProperty('--text-primary', '#ffffff');
+        this.root.style.setProperty('--text-secondary', '#a3a3a3');
+        this.root.style.setProperty('--text-tertiary', '#666666');
+        this.root.style.setProperty('--border-primary', '#ffffff');
+        this.root.style.setProperty('--border-secondary', '#333333');
+        this.root.style.setProperty('--border-light', '#222222');
+        this.root.style.setProperty('--accent-primary', '#ffffff');
+        this.root.style.setProperty('--accent-secondary', '#000000');
+        this.root.style.setProperty('--hover-bg', '#1a1a1a');
+        this.root.style.setProperty('--active-bg', '#ffffff');
+        this.root.style.setProperty('--active-text', '#000000');
+        this.root.style.setProperty('--shadow-color', 'rgba(255, 255, 255, 0.1)');
+    }
+    
+    applySystemTheme() {
+        const properties = [
+            '--bg-primary', '--bg-secondary', '--bg-tertiary',
+            '--text-primary', '--text-secondary', '--text-tertiary',
+            '--border-primary', '--border-secondary', '--border-light',
+            '--accent-primary', '--accent-secondary',
+            '--hover-bg', '--active-bg', '--active-text', '--shadow-color'
+        ];
+        
+        properties.forEach(prop => {
+            this.root.style.removeProperty(prop);
+        });
+    }
+    
+    loadPreferences() {
+        const savedRadius = localStorage.getItem('theme-radius') || '{{.Theme.Radius}}';
+        this.setRadius(savedRadius);
+        
+        const savedTheme = localStorage.getItem('theme-mode') || '{{.Theme.Mode}}';
+        this.setTheme(savedTheme);
+    }
+}
+
+/**
+ * Header Scroll Controller - Lightweight scroll-based hide/reveal behavior
+ * Professional implementation with RAF throttling and accessibility support
+ */
+class HeaderScrollController {
+    constructor() {
+        this.header = document.querySelector('.main-header');
+        this.lastScrollY = document.body.scrollTop || document.documentElement.scrollTop;
+        this.scrollThreshold = 200; // Hide threshold (px)
+        this.revealThreshold = 20;  // Reveal threshold (px)
+        this.isHidden = false;
+        this.rafId = null;
+        this.isScrolling = false;
+        
+        // Respect reduced motion preference
+        this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;    
+        if (this.header && !this.prefersReducedMotion) {
+            this.init();
+        }
+    }
+    
+    /**
+     * Initialize scroll controller with event listeners
+     */
+    init() {
+        document.body.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
+        window.addEventListener('resize', this.handleResize.bind(this), { passive: true });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', this.cleanup.bind(this));
+    }
+    
+    /**
+     * Handle scroll events with RAF throttling
+     */
+    handleScroll() {        
+        if (this.rafId) return;
+        
+        this.rafId = requestAnimationFrame(() => {
+            this.updateHeaderState();
+            this.rafId = null;
+        });
+    }
+    
+    /**
+     * Update header visibility based on scroll direction and position
+     */
+    updateHeaderState() {
+        const currentScrollY = document.body.scrollTop || document.documentElement.scrollTop;
+        const scrollDiff = currentScrollY - this.lastScrollY;
+
+        // Hide header: scrolling down past threshold
+        if (scrollDiff > 0 && currentScrollY > this.scrollThreshold && !this.isHidden) {
+            this.hideHeader();
+        }
+        // Reveal header: any upward scroll movement past reveal threshold
+        else if (scrollDiff < 0 && Math.abs(scrollDiff) > this.revealThreshold && this.isHidden) {
+            this.showHeader();
+        }
+        // Always show header at top of page
+        else if (currentScrollY <= this.scrollThreshold && this.isHidden) {
+            this.showHeader();
+        }
+        
+        this.lastScrollY = currentScrollY;
+    }
+    
+    /**
+     * Hide header with smooth animation
+     */
+    hideHeader() {
+        if (this.isHidden) return;
+        
+        this.header.classList.add('header-scroll-hidden');
+        this.isHidden = true;
+    }
+    
+    /**
+     * Show header with smooth animation  
+     */
+    showHeader() {
+        if (!this.isHidden) return;
+        
+        this.header.classList.remove('header-scroll-hidden');
+        this.isHidden = false;
+    }
+    
+    /**
+     * Handle resize events (debounced)
+     */
+    handleResize() {
+        // Reset scroll position tracking on resize
+        this.lastScrollY = window.pageYOffset;
+    }
+    
+    /**
+     * Cleanup resources and event listeners
+     */
+    cleanup() {
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+        }
+        document.body.removeEventListener('scroll', this.handleScroll);
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('beforeunload', this.cleanup);
+    }
+}
+
+// Initialize controllers when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new ThemeManager();
+    const scrollController = new HeaderScrollController();
+    
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
+});
+    </script>
+    {{block "scripts" .}}{{end}}
+</body>
+</html>
+{{end}}
+
+{{define "header"}}
+<header class="main-header">
+    <div class="header-content">
+        <div class="brand">
+            {{template "circles-icon" .}}
+
+            <h1>circles.diy</h1>
+        </div>
+        
+        {{template "nav" .}}
+        
+        <div class="header-actions">
+            <div class="search-container">
+                <input type="search" placeholder="Search your circles..." class="global-search" aria-label="Global search">
+            </div>
+            
+            {{template "theme-menu" .}}
+            
+            <button class="user-menu" aria-label="User menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
+            </button>
+        </div>
+    </div>
+</header>
+{{end}}
+
+{{define "nav"}}
+<nav class="main-nav">
+    <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
+    <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
+    <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
+    <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>
+    <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a>
+</nav>
+{{end}}
+
+{{define "theme-menu"}}
+<div class="theme-menu-container">
+    <button class="theme-menu" aria-label="Theme settings" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" viewBox="0 0 256 256"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89Zm13,93.71A15.89,15.89,0,0,1,198.21,160H152a32,32,0,0,0-32,32,16,16,0,0,1-21.31,15.07C62.49,194.3,40,164,40,128a88,88,0,0,1,87.09-88h.9a88.35,88.35,0,0,1,88,87.25A88.86,88.86,0,0,1,213.81,147.6ZM140,76a12,12,0,1,1-12-12A12,12,0,0,1,140,76ZM96,100A12,12,0,1,1,84,88,12,12,0,0,1,96,100Zm0,56a12,12,0,1,1-12-12A12,12,0,0,1,96,156Zm88-56a12,12,0,1,1-12-12A12,12,0,0,1,184,100Z"></path></svg>
+    </button>
+    <div class="theme-dropdown" hidden>
+        <div class="theme-section">
+            <h4>Border Radius</h4>
+            <div class="radius-options">
+                <button class="radius-option" data-radius="0" title="Sharp corners">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><rect x="40" y="40" width="176" height="176" rx="0" stroke="currentColor" stroke-width="16" fill="none"></rect></svg>
+                </button>
+                <button class="radius-option" data-radius="6" title="Slightly rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><rect x="40" y="40" width="176" height="176" rx="16" stroke="currentColor" stroke-width="16" fill="none"></rect></svg>
+                </button>
+                <button class="radius-option" data-radius="12" title="Moderately rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><rect x="40" y="40" width="176" height="176" rx="48" stroke="currentColor" stroke-width="16" fill="none"></rect></svg>
+                </button>
+                <button class="radius-option" data-radius="32" title="Fully rounded">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><circle cx="128" cy="128" r="88" stroke="currentColor" stroke-width="16" fill="none"></circle></svg>
+                </button>
+            </div>
+        </div>
+        <div class="theme-section">
+            <h4>Color Theme</h4>
+            <div class="theme-options">
+                <button class="theme-option" data-theme="light" title="Light theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><circle cx="128" cy="128" r="60" fill="currentColor"></circle><path d="m128,36a8,8,0,0,1-8-8V8a8,8,0,0,1,16,0V28A8,8,0,0,1,128,36Z"></path><path d="m62.1,62.1a8,8,0,0,1-11.31,0L39.48,50.79a8,8,0,0,1,11.32-11.31L62.1,50.79A8,8,0,0,1,62.1,62.1Z"></path><path d="M36,128a8,8,0,0,1-8-8H8a8,8,0,0,1,0-16H28A8,8,0,0,1,36,128Z"></path><path d="m62.1,193.9a8,8,0,0,1-11.31,11.31L39.48,193.9a8,8,0,0,1,11.32-11.31l11.31,11.31A8,8,0,0,1,62.1,193.9Z"></path><path d="m128,220a8,8,0,0,1,8,8v20a8,8,0,0,1-16,0V228A8,8,0,0,1,128,220Z"></path><path d="m193.9,193.9a8,8,0,0,1,11.31-11.31l11.31,11.31a8,8,0,0,1-11.32,11.31L193.9,193.9A8,8,0,0,1,193.9,193.9Z"></path><path d="M220,128a8,8,0,0,1,8,8h20a8,8,0,0,1,0,16H228A8,8,0,0,1,220,128Z"></path><path d="m193.9,62.1a8,8,0,0,1,11.31-11.31l11.31,11.31a8,8,0,0,1-11.32,11.31L193.9,62.1A8,8,0,0,1,193.9,62.1Z"></path></svg>
+                    Light
+                </button>
+                <button class="theme-option" data-theme="dark" title="Dark theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M233.54,142.23a8,8,0,0,0-8-2A88,88,0,0,1,103.1,31.4,8,8,0,0,0,102,24a104,104,0,1,0,120,120A8,8,0,0,0,233.54,142.23Z"></path></svg>
+                    Dark
+                </button>
+                <button class="theme-option" data-theme="system" title="System theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><rect x="32" y="48" width="192" height="160" rx="16" fill="none" stroke="currentColor" stroke-width="16"></rect><line x1="160" y1="224" x2="96" y2="224" stroke="currentColor" stroke-width="16"></line><line x1="128" y1="192" x2="128" y2="224" stroke="currentColor" stroke-width="16"></line></svg>
+                    System
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

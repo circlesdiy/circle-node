@@ -1,0 +1,150 @@
+{{define "marketplace"}}
+{{template "base" .}}
+{{end}}
+
+{{define "main"}}
+<div class="marketplace">
+    <header class="marketplace-header">
+        <div class="marketplace-title-section">
+            <h1>Circle Marketplace</h1>
+            <p class="marketplace-subtitle">Discover items for sale and trade within your circles</p>
+        </div>
+        
+        <div class="marketplace-actions">
+            <button class="btn-secondary"  >
+                My Listings
+            </button>
+            <button class="btn-primary"  >
+                <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                List Item
+            </button>
+        </div>
+    </header>
+
+    <div class="marketplace-search">
+        <div class="search-container">
+            <input type="text" class="marketplace-search-input" placeholder="Search items, keywords, or descriptions..." autocomplete="off">
+            <button class="marketplace-filter-btn" type="button" onclick="toggleFilters()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" viewBox="0 0 256 256"><path d="M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="marketplace-filters" id="marketplace-filters">
+        <div class="filter-bar">
+            <div class="filter-group">
+                <select class="filter-select" name="category"   >
+                    <option value="">All Categories</option>
+                    {{range .Categories}}
+                    <option value="{{.ID}}">{{.Icon}} {{.Name}} ({{.Count}})</option>
+                    {{end}}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <select class="filter-select" name="price_type"   >
+                    <option value="">All Types</option>
+                    <option value="sale">For Sale</option>
+                    <option value="trade">For Trade</option>
+                    <option value="free">Free</option>
+                    <option value="negotiable">Negotiable</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <select class="filter-select" name="location"   >
+                    <option value="">All Locations</option>
+                    {{range .PopularLocations}}
+                    <option value="{{.Name}}">{{.Name}} ({{.Count}})</option>
+                    {{end}}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <select class="filter-select" name="condition"   >
+                    <option value="">All Conditions</option>
+                    <option value="new">New</option>
+                    <option value="like-new">Like New</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="poor">For Parts</option>
+                </select>
+            </div>
+
+            <button class="filter-clear-btn"  >
+                Clear Filters
+            </button>
+        </div>
+
+        <div class="marketplace-stats">
+            <span class="results-count">{{.TotalItems}} items found</span>
+            <div class="sort-options">
+                <span>Sort by:</span>
+                <select class="sort-select"   >
+                    <option value="distance">Distance (nearest)</option>
+                    <option value="time">Time (newest)</option>
+                    <option value="price-low">Price (low to high)</option>
+                    <option value="price-high">Price (high to low)</option>
+                    <option value="popular">Most viewed</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {{if .FeaturedItems}}
+    <section class="marketplace-featured">
+        <h2>Featured Items</h2>
+        <div class="featured-grid">
+            {{range .FeaturedItems}}
+            {{template "marketplace-featured-card" .}}
+            {{end}}
+        </div>
+    </section>
+    {{end}}
+
+    <section class="marketplace-items">
+        <div class="marketplace-grid" id="marketplace-grid">
+            {{range .Items}}
+            {{template "marketplace-item-card" .}}
+            {{end}}
+        </div>
+
+        {{if .HasMore}}
+        <div class="marketplace-load-more">
+            <button class="load-more-btn">
+                Load More Items
+            </button>
+        </div>
+        {{end}}
+    </section>
+</div>
+
+<div id="modal" ></div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'marketplace-grid') {
+        console.log('Marketplace grid updated');
+    }
+});
+
+document.body.addEventListener('htmx:responseError', function(evt) {
+    console.error('HTMX Error:', evt.detail.xhr.responseText);
+});
+
+function toggleFilters() {
+    const filters = document.getElementById('marketplace-filters');
+    const btn = document.querySelector('.marketplace-filter-btn');
+    
+    if (filters.classList.contains('filters-visible')) {
+        filters.classList.remove('filters-visible');
+        btn.classList.remove('active');
+    } else {
+        filters.classList.add('filters-visible');
+        btn.classList.add('active');
+    }
+}
+</script>
+{{end}}

@@ -48,6 +48,8 @@ func main() {
 		mux,
 		middleware.SecurityMiddleware,
 		middleware.RateLimitMiddleware,
+		middleware.HTMXMiddleware,
+		middleware.SessionValidationMiddleware(application.AuthService),
 	)
 
 	// Setup HTTP server
@@ -67,23 +69,37 @@ func main() {
 func setupRoutes(app *app.App) *http.ServeMux {
 	mux := http.NewServeMux()
 
+	// Register authentication routes
+	app.AuthHandler.RegisterRoutes(mux)
+
 	// Manifesto & user research routes
 	mux.HandleFunc("/", handlers.HomeHandler)
 	mux.HandleFunc("/feedback", handlers.FeedbackHandler)
 
-	// App routes
-	mux.HandleFunc("/dashboard", handlers.DashboardHandler)
-	mux.HandleFunc("/dashboard/", handlers.DashboardHandler)
-	mux.HandleFunc("/profile", handlers.ProfileHandler)
-	mux.HandleFunc("/profile/", handlers.ProfileHandler)
-	mux.HandleFunc("/circles", handlers.CirclesHandler)
-	mux.HandleFunc("/circles/", handlers.CirclesHandler)
-	mux.HandleFunc("/chat", handlers.ChatHandler)
-	mux.HandleFunc("/chat/", handlers.ChatHandler)
-	mux.HandleFunc("/gather", handlers.GatherHandler)
-	mux.HandleFunc("/gather/", handlers.GatherHandler)
-	mux.HandleFunc("/marketplace", handlers.MarketplaceHandler)
-	mux.HandleFunc("/marketplace/", handlers.MarketplaceHandler)
+	// App routes (protected - require authentication)
+	protectedHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.DashboardHandler))
+	mux.Handle("/dashboard", protectedHandler)
+	mux.Handle("/dashboard/", protectedHandler)
+
+	protectedProfileHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.ProfileHandler))
+	mux.Handle("/profile", protectedProfileHandler)
+	mux.Handle("/profile/", protectedProfileHandler)
+
+	protectedCirclesHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.CirclesHandler))
+	mux.Handle("/circles", protectedCirclesHandler)
+	mux.Handle("/circles/", protectedCirclesHandler)
+
+	protectedChatHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.ChatHandler))
+	mux.Handle("/chat", protectedChatHandler)
+	mux.Handle("/chat/", protectedChatHandler)
+
+	protectedGatherHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.GatherHandler))
+	mux.Handle("/gather", protectedGatherHandler)
+	mux.Handle("/gather/", protectedGatherHandler)
+
+	protectedMarketplaceHandler := middleware.RequireAuthMiddleware(http.HandlerFunc(handlers.MarketplaceHandler))
+	mux.Handle("/marketplace", protectedMarketplaceHandler)
+	mux.Handle("/marketplace/", protectedMarketplaceHandler)
 
 	// Static asset routes
 	mux.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {
@@ -122,6 +138,13 @@ func logRoutes(logger *zap.Logger) {
 	logger.Info("routes configured",
 		zap.Strings("routes", []string{
 			"/ - Manifesto landing page",
+			"/auth/register/begin - Begin WebAuthn registration",
+			"/auth/register/finish - Complete WebAuthn registration",
+			"/auth/login/begin - Begin WebAuthn authentication",
+			"/auth/login/finish - Complete WebAuthn authentication",
+			"/auth/logout - Logout current user",
+			"/auth/session - Get current session info",
+			"/auth/devices - Get user's registered devices",
 			"/dashboard - Dashboard with templates + HTMX",
 			"/profile - Profile page with templates + HTMX",
 			"/circles - Circles page with templates + HTMX",

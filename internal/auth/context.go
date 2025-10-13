@@ -1,0 +1,47 @@
+package auth
+
+import "context"
+
+type contextKey string
+
+const (
+	userContextKey    contextKey = "user"
+	sessionContextKey contextKey = "session"
+)
+
+// WithUser adds a user to the request context
+func WithUser(ctx context.Context, user *User) context.Context {
+	return context.WithValue(ctx, userContextKey, user)
+}
+
+// GetUser retrieves the user from the request context
+func GetUser(ctx context.Context) *User {
+	if user, ok := ctx.Value(userContextKey).(*User); ok {
+		return user
+	}
+	return nil
+}
+
+// WithSession adds a session to the request context
+func WithSession(ctx context.Context, session *Session) context.Context {
+	return context.WithValue(ctx, sessionContextKey, session)
+}
+
+// GetSession retrieves the session from the request context
+func GetSession(ctx context.Context) *Session {
+	if session, ok := ctx.Value(sessionContextKey).(*Session); ok {
+		return session
+	}
+	return nil
+}
+
+// IsAuthenticated checks if the current request is authenticated
+func IsAuthenticated(ctx context.Context) bool {
+	return GetUser(ctx) != nil && GetSession(ctx) != nil
+}
+
+// HasAuthLevel checks if the current session has the required auth level
+func HasAuthLevel(ctx context.Context, requiredLevel int) bool {
+	session := GetSession(ctx)
+	return session != nil && session.AuthLevel >= requiredLevel
+}
