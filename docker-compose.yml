@@ -7,15 +7,30 @@ services:
       - "8080"
     environment:
       - PORT=8080
+      - ENVIRONMENT=production
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=circles
+      - DB_PASSWORD=${CIRCLES_DB_PASSWORD:-circles_secure_password}
+      - DB_DATABASE=circles_diy
+      - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CSRF_SECRET=${CSRF_SECRET:-change-this-in-production}
+      - WEBAUTHN_RP_ID=${DOMAIN:-localhost}
+      - WEBAUTHN_RP_ORIGIN=https://${DOMAIN:-localhost}
     volumes:
       - ./data:/app/data
       - ./static:/app/static:rw
       - ./templates:/app/templates:ro
     restart: unless-stopped
+    depends_on:
+      - db
+      - redis
     tmpfs:
       - /tmp:nosuid,size=100m
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -23,35 +38,37 @@ services:
     networks:
       - app-network
 
-  docmost:
-    image: docmost/docmost:latest
-    depends_on:
-      - db
-      - redis
-    environment:
-      APP_URL: "https://docs.${DOCMOST_DOMAIN:-yourdomain.com}"
-      APP_SECRET: "${DOCMOST_APP_SECRET}"
-      DATABASE_URL: "postgresql://docmost:${DOCMOST_DB_PASSWORD}@db:5432/docmost?schema=public"
-      REDIS_URL: "redis://redis:6379"
-    expose:
-      - "3000"
-    restart: unless-stopped
-    volumes:
-      - docmost_data:/app/data/storage
-    networks:
-      - app-network
+  # docmost:
+  #   image: docmost/docmost:latest
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   environment:
+  #     APP_URL: "https://docs.${DOCMOST_DOMAIN:-yourdomain.com}"
+  #     APP_SECRET: "${DOCMOST_APP_SECRET}"
+  #     DATABASE_URL: "postgresql://docmost:${DOCMOST_DB_PASSWORD}@db:5432/docmost?schema=public"
+  #     REDIS_URL: "redis://redis:6379"
+  #   expose:
+  #     - "3000"
+  #   restart: unless-stopped
+  #   volumes:
+  #     - docmost_data:/app/data/storage
+  #   networks:
+  #     - app-network
 
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: docmost
-      POSTGRES_USER: docmost
-      POSTGRES_PASSWORD: "${DOCMOST_DB_PASSWORD}"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - app-network
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7.2-alpine
@@ -67,7 +84,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Use nginx-local.conf for local development, nginx.conf for production
+      - ./nginx/nginx-local.conf:/etc/nginx/nginx.conf:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     restart: unless-stopped
@@ -76,7 +94,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3

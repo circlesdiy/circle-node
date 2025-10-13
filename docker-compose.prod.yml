@@ -1,0 +1,25 @@
+# Production overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  circles-diy:
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=warn
+      - LOG_FORMAT=json
+    # Remove development volume mounts in production
+    volumes:
+      - ./data:/app/data
+
+  nginx:
+    volumes:
+      # Use production nginx.conf with SSL
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    environment:
+      - DOMAIN=${DOMAIN}
+
+  db:
+    # Don't expose database port in production
+    ports: []

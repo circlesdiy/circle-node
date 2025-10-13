@@ -1,39 +1,70 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"time"
+	"os"
 
-	"circles.diy/internal/config"
+	"circles.diy/internal/app"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/middleware"
 	"circles.diy/internal/templates"
 	"circles.diy/internal/utils"
+	"go.uber.org/zap"
 )
 
 func main() {
-	// Load configuration
-	cfg := config.NewConfig()
+	ctx := context.Background()
 
-	log.Println("Building CSS...")
-	// Start CSS file watcher in development mode
-	if cfg.IsDev {
-		log.Println("Starting CSS file watcher...")
+	// Initialize application
+	application, err := app.New(ctx)
+	if err != nil {
+		log.Fatalf("Failed to initialize application: %v", err)
+	}
+
+	// Build CSS
+	if application.Config.IsDevelopment() && application.Config.Static.HotReload {
+		application.Logger.Info("starting CSS file watcher...")
 		go utils.WatchCSSFiles()
 	} else {
+		application.Logger.Info("building CSS...")
 		if err := utils.BuildCSS(); err != nil {
-			log.Fatalf("Failed to build CSS: %v", err)
+			application.Logger.Fatal("failed to build CSS", zap.Error(err))
 		}
 	}
 
 	// Initialize templates
-	log.Println("Initializing templates...")
+	application.Logger.Info("initializing templates...")
 	if err := templates.InitTemplates(); err != nil {
-		log.Fatalf("Failed to initialize templates: %v", err)
+		application.Logger.Fatal("failed to initialize templates", zap.Error(err))
 	}
 
 	// Setup routes
+	mux := setupRoutes(application)
+
+	// Apply middleware chain
+	handler := middleware.Chain(
+		mux,
+		middleware.SecurityMiddleware,
+		middleware.RateLimitMiddleware,
+	)
+
+	// Setup HTTP server
+	application.SetupHTTPServer(handler)
+
+	// Log available routes
+	logRoutes(application.Logger)
+
+	// Run application (blocks until shutdown signal)
+	if err := application.Run(); err != nil {
+		application.Logger.Fatal("application error", zap.Error(err))
+		os.Exit(1)
+	}
+}
+
+// setupRoutes configures all HTTP routes
+func setupRoutes(app *app.App) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Manifesto & user research routes
@@ -62,7 +93,7 @@ func main() {
 		handlers.ServeStaticFile(w, r, "static/js/htmx.min.js", "application/javascript; charset=utf-8")
 	})
 	mux.HandleFunc("/static/img/", handlers.ServeStaticImage)
-	
+
 	// PWA routes
 	mux.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ServeStaticFile(w, r, "static/manifest.json", "application/manifest+json")
@@ -71,26 +102,33 @@ func main() {
 		handlers.ServeStaticFile(w, r, "static/js/sw.js", "application/javascript; charset=utf-8")
 	})
 
-	// Apply middleware chain
-	handler := middleware.Chain(mux, middleware.SecurityMiddleware, middleware.RateLimitMiddleware)
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if err := app.HealthCheck(r.Context()); err != nil {
+			app.Logger.Error("health check failed", zap.Error(err))
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("unhealthy"))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("healthy"))
+	})
 
-	// Configure server
-	server := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
+	return mux
+}
 
-	// Start server
-	log.Printf("Server starting on port %s", cfg.Port)
-	log.Printf("Routes available:")
-	log.Printf("  / - Manifesto landing page (index.html)")
-	log.Printf("  /dashboard - Dashboard with templates + HTMX")
-	log.Printf("  /profile - Profile page with templates + HTMX")
-	log.Printf("  /circles - Circles page with templates + HTMX")
-	log.Printf("  /chat - Chat page with templates + HTMX")
-	log.Printf("  /gather - Events page with templates + HTMX")
-	log.Fatal(server.ListenAndServe())
+// logRoutes logs all available routes
+func logRoutes(logger *zap.Logger) {
+	logger.Info("routes configured",
+		zap.Strings("routes", []string{
+			"/ - Manifesto landing page",
+			"/dashboard - Dashboard with templates + HTMX",
+			"/profile - Profile page with templates + HTMX",
+			"/circles - Circles page with templates + HTMX",
+			"/chat - Chat page with templates + HTMX",
+			"/gather - Events page with templates + HTMX",
+			"/marketplace - Marketplace page with templates + HTMX",
+			"/health - Health check endpoint",
+		}),
+	)
 }

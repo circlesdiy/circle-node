@@ -106,7 +106,81 @@ docker compose up -d
 - **Check certificates:** `docker compose exec nginx nginx -t`
 
 ### Local Development
+
+#### Option 1: Direct Go (No Database)
 ```bash
+# Run with mock data (no database required)
 go run main.go
 # Access at http://localhost:8080
 ```
+
+#### Option 2: Full Stack with Docker
+```bash
+# Start all services (PostgreSQL + Redis + App + Nginx)
+make docker-up
+
+# Access the app
+open http://localhost              # Main app
+open http://docs.localhost         # Documentation (Docmost)
+
+# View logs
+make docker-logs
+
+# Stop services
+make docker-down
+```
+
+#### Option 3: Database Only (Hybrid)
+```bash
+# Start just database and Redis
+docker-compose up -d db redis
+
+# Run app locally
+go run main.go
+# Access at http://localhost:8080
+```
+
+### Available Make Commands
+
+```bash
+make build        # Build the application binary
+make run          # Build and run
+make dev          # Development mode with auto-reload
+make test         # Run tests
+make clean        # Clean build artifacts
+make docker-up    # Start all Docker services
+make docker-down  # Stop all Docker services
+make docker-logs  # View logs
+make deps         # Install dependencies
+make fmt          # Format code
+```
+
+### Configuration
+
+The app uses YAML configuration with environment variable overrides:
+
+```bash
+# Copy example config
+cp config.example.yaml config.yaml
+
+# Or use environment variables
+export DB_HOST=localhost
+export DB_PORT=5432
+export REDIS_HOST=localhost
+export LOG_LEVEL=debug
+
+# Run
+go run main.go
+```
+
+See [config.example.yaml](config.example.yaml) for all available options.
+
+### Nginx Configuration
+
+Three nginx configurations are available:
+
+- **`nginx/nginx-local.conf`** - Local development (HTTP, no SSL)
+- **`nginx/nginx.conf`** - Production (HTTPS with Let's Encrypt)
+- **`nginx/nginx-init.conf`** - Initial setup for SSL certificate
+
+See [nginx/README.md](nginx/README.md) for detailed nginx documentation.
