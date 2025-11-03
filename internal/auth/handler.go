@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	httphelpers "circles.diy/internal/http"
+	"circles.diy/internal/templates"
 	"github.com/fxamacker/webauthn"
 )
 
@@ -25,6 +26,10 @@ func NewHandler(service *Service, logger *slog.Logger) *Handler {
 
 // RegisterRoutes registers all authentication routes with the mux
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	// Auth page views (GET)
+	mux.HandleFunc("GET /auth/login", h.handleLoginPage)
+	mux.HandleFunc("GET /auth/register", h.handleRegisterPage)
+
 	// WebAuthn registration routes
 	mux.HandleFunc("POST /auth/register/begin", h.handleRegistrationBegin)
 	mux.HandleFunc("POST /auth/register/finish", h.handleRegistrationFinish)
@@ -39,6 +44,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 	// Device management
 	mux.HandleFunc("GET /auth/devices", h.handleGetDevices)
+
+	// Validation endpoints
+	mux.HandleFunc("POST /auth/check-username", h.handleCheckUsername)
+	mux.HandleFunc("POST /auth/check-email", h.handleCheckEmail)
 }
 
 // Registration handlers
@@ -358,4 +367,117 @@ func (h *Handler) RequireAuthLevel(level int) func(http.HandlerFunc) http.Handle
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// Page handlers
+
+// handleLoginPage renders the login page
+func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
+	// If user is already logged in, redirect to dashboard
+	if user := GetUser(r.Context()); user != nil {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Title": "Sign In",
+	}
+
+	// Check for error or success messages in query params
+	if errorMsg := r.URL.Query().Get("error"); errorMsg != "" {
+		data["Error"] = errorMsg
+	}
+	if successMsg := r.URL.Query().Get("success"); successMsg != "" {
+		data["Success"] = successMsg
+	}
+
+	err := templates.GetTemplates().AuthLogin.ExecuteTemplate(w, "auth-login", data)
+	if err != nil {
+		h.logger.Error("Failed to render login page", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// handleRegisterPage renders the registration page
+func (h *Handler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
+	// If user is already logged in, redirect to dashboard
+	if user := GetUser(r.Context()); user != nil {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Title": "Create Account",
+	}
+
+	// Check for error messages in query params
+	if errorMsg := r.URL.Query().Get("error"); errorMsg != "" {
+		data["Error"] = errorMsg
+	}
+
+	err := templates.GetTemplates().AuthRegister.ExecuteTemplate(w, "auth-register", data)
+	if err != nil {
+		h.logger.Error("Failed to render register page", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// Validation handlers
+
+// handleCheckUsername checks if a username is available
+func (h *Handler) handleCheckUsername(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Username string `json:"username"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httphelpers.JSONError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.Username == "" {
+		httphelpers.JSONError(w, http.StatusBadRequest, "Username is required")
+		return
+	}
+
+	// Check if username exists
+	exists, err := h.service.repo.UsernameExists(r.Context(), req.Username)
+	if err != nil {
+		h.logger.Error("Failed to check username", "error", err)
+		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check username")
+		return
+	}
+
+	httphelpers.JSONResponse(w, http.StatusOK, map[string]interface{}{
+		"available": !exists,
+	})
+}
+
+// handleCheckEmail checks if an email is available
+func (h *Handler) handleCheckEmail(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httphelpers.JSONError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.Email == "" {
+		httphelpers.JSONError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	// Check if email exists
+	exists, err := h.service.repo.EmailExists(r.Context(), req.Email)
+	if err != nil {
+		h.logger.Error("Failed to check email", "error", err)
+		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check email")
+		return
+	}
+
+	httphelpers.JSONResponse(w, http.StatusOK, map[string]interface{}{
+		"available": !exists,
+	})
 }

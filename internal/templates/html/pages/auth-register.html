@@ -1,0 +1,181 @@
+{{define "auth-register"}}
+{{template "base" .}}
+{{end}}
+
+{{define "main"}}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Join circles.diy</h1>
+            <p>Create your account and start building community</p>
+        </div>
+
+        {{if .Error}}
+        <div class="auth-alert auth-alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z"></path>
+            </svg>
+            <span>{{.Error}}</span>
+        </div>
+        {{end}}
+
+        <!-- Registration Progress Indicator -->
+        <div class="auth-progress" id="registration-progress">
+            <div class="auth-progress-step active" data-step="1">
+                <span class="auth-progress-number">1</span>
+                <span class="auth-progress-label">Account Details</span>
+            </div>
+            <div class="auth-progress-connector"></div>
+            <div class="auth-progress-step" data-step="2">
+                <span class="auth-progress-number">2</span>
+                <span class="auth-progress-label">Create Passkey</span>
+            </div>
+            <div class="auth-progress-connector"></div>
+            <div class="auth-progress-step" data-step="3">
+                <span class="auth-progress-number">3</span>
+                <span class="auth-progress-label">Complete</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Account Details -->
+        <div id="registration-step-1" class="auth-section">
+            <form id="registration-details-form" class="auth-form">
+                <div class="form-group">
+                    <label for="reg-username" class="form-label">
+                        Username
+                        <span class="form-label-required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="reg-username"
+                        name="username"
+                        class="form-input"
+                        placeholder="Choose a unique username"
+                        autocomplete="username"
+                        pattern="[a-zA-Z0-9_-]{3,30}"
+                        required
+                        autofocus
+                    >
+                    <span class="form-help">3-30 characters, letters, numbers, underscores, hyphens</span>
+                    <span class="form-error" id="username-error" hidden></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-email" class="form-label">
+                        Email Address
+                        <span class="form-label-required">*</span>
+                    </label>
+                    <input
+                        type="email"
+                        id="reg-email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                    <span class="form-help">We'll send you a verification link</span>
+                    <span class="form-error" id="email-error" hidden></span>
+                </div>
+
+                <div class="form-group form-group-checkbox">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="terms-accept" name="terms" required>
+                        <span class="form-checkbox-label">
+                            I agree to the <a href="/terms" target="_blank" class="auth-link">Terms of Service</a>
+                            and <a href="/privacy" target="_blank" class="auth-link">Privacy Policy</a>
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    Continue
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 2: WebAuthn Registration -->
+        <div id="registration-step-2" class="auth-section" hidden>
+            <div class="auth-passkey-info">
+                <div class="auth-passkey-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M216,64H176V56a48,48,0,0,0-48-48,48.05,48.05,0,0,0-48,48,8,8,0,0,0,16,0,32,32,0,0,1,64,0v8H40A16,16,0,0,0,24,80V208a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm0,144H40V80H216V208Zm-88-60a12,12,0,1,1,12,12A12,12,0,0,1,128,148Z"></path>
+                    </svg>
+                </div>
+                <h3>Create Your Passkey</h3>
+                <p>Passkeys are a secure, passwordless way to sign in. Your device will prompt you to verify using your fingerprint, face, or device PIN.</p>
+
+                <ul class="auth-passkey-benefits">
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+                        </svg>
+                        No passwords to remember
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+                        </svg>
+                        Protected from phishing
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+                        </svg>
+                        Works across your devices
+                    </li>
+                </ul>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-full" id="create-passkey-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M216,64H176V56a48,48,0,0,0-48-48,48.05,48.05,0,0,0-48,48,8,8,0,0,0,16,0,32,32,0,0,1,64,0v8H40A16,16,0,0,0,24,80V208a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm0,144H40V80H216V208Zm-88-60a12,12,0,1,1,12,12A12,12,0,0,1,128,148Z"></path>
+                </svg>
+                Create Passkey
+            </button>
+
+            <div class="auth-status" id="passkey-status" hidden>
+                <div class="auth-spinner"></div>
+                <span>Creating your passkey...</span>
+            </div>
+
+            <button type="button" class="btn btn-text btn-full" id="registration-back">
+                Go Back
+            </button>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="registration-step-3" class="auth-section" hidden>
+            <div class="auth-success">
+                <div class="auth-success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+                    </svg>
+                </div>
+                <h3>Welcome to circles.diy!</h3>
+                <p>Your account has been created successfully.</p>
+                <a href="/dashboard" class="btn btn-primary btn-full">
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="/auth/login" class="auth-link">Sign in</a></p>
+        </div>
+    </div>
+
+    <div class="auth-help">
+        <a href="/help/registration" class="auth-help-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path>
+            </svg>
+            Need help with registration?
+        </a>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/auth-register.js"></script>
+{{end}}

@@ -519,6 +519,26 @@ func (r *Repository) UseRecoveryMethod(ctx context.Context, methodID string) err
 	return err
 }
 
+// Validation methods
+
+// UsernameExists checks if a username is already taken
+func (r *Repository) UsernameExists(ctx context.Context, username string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`
+
+	var exists bool
+	err := r.db.QueryRow(ctx, query, username).Scan(&exists)
+	return exists, err
+}
+
+// EmailExists checks if an email is already registered
+func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`
+
+	var exists bool
+	err := r.db.QueryRow(ctx, query, email).Scan(&exists)
+	return exists, err
+}
+
 // Cleanup methods for expired records
 
 // CleanupExpiredChallenges removes expired authentication challenges

@@ -6,6 +6,11 @@ import (
 )
 
 type Templates struct {
+	// Auth pages
+	AuthLogin    *template.Template
+	AuthRegister *template.Template
+
+	// App pages
 	Dashboard       *template.Template
 	ProfilePublic   *template.Template
 	ProfileInternal *template.Template
@@ -22,7 +27,18 @@ func InitTemplates() error {
 
 	var err error
 
-	// Parse all templates using embedded file system
+	// Parse auth templates
+	templates.AuthLogin, err = parseTemplateFromEmbedded("auth-login", "html/pages/auth-login.html")
+	if err != nil {
+		return err
+	}
+
+	templates.AuthRegister, err = parseTemplateFromEmbedded("auth-register", "html/pages/auth-register.html")
+	if err != nil {
+		return err
+	}
+
+	// Parse all app templates using embedded file system
 	templates.Dashboard, err = parseTemplateFromEmbedded("dashboard", "html/pages/dashboard.html")
 	if err != nil {
 		return err

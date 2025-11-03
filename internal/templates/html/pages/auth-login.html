@@ -1,0 +1,117 @@
+{{define "auth-login"}}
+{{template "base" .}}
+{{end}}
+
+{{define "main"}}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Welcome Back</h1>
+            <p>Sign in to your circles.diy account</p>
+        </div>
+
+        {{if .Error}}
+        <div class="auth-alert auth-alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z"></path>
+            </svg>
+            <span>{{.Error}}</span>
+        </div>
+        {{end}}
+
+        {{if .Success}}
+        <div class="auth-alert auth-alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"></path>
+            </svg>
+            <span>{{.Success}}</span>
+        </div>
+        {{end}}
+
+        <!-- WebAuthn Login -->
+        <div id="webauthn-login" class="auth-section">
+            <form id="webauthn-login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username or Email</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-input"
+                        placeholder="Enter your username or email"
+                        autocomplete="username"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M216,64H176V56a48,48,0,0,0-48-48,48.05,48.05,0,0,0-48,48,8,8,0,0,0,16,0,32,32,0,0,1,64,0v8H40A16,16,0,0,0,24,80V208a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm0,144H40V80H216V208Zm-88-60a12,12,0,1,1,12,12A12,12,0,0,1,128,148Z"></path>
+                    </svg>
+                    Sign In with Passkey
+                </button>
+
+                <div class="auth-status" id="webauthn-status" hidden>
+                    <div class="auth-spinner"></div>
+                    <span>Authenticating...</span>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-divider">
+            <span>or</span>
+        </div>
+
+        <!-- Email Magic Link (Fallback) -->
+        <div class="auth-section">
+            <button type="button" class="btn btn-secondary btn-full" id="email-login-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.19V181.81Z"></path>
+                </svg>
+                Sign In with Email Link
+            </button>
+
+            <form id="email-login-form" class="auth-form" hidden>
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    Send Magic Link
+                </button>
+
+                <button type="button" class="btn btn-text btn-full" id="email-login-cancel">
+                    Cancel
+                </button>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="/auth/register" class="auth-link">Create one</a></p>
+        </div>
+    </div>
+
+    <div class="auth-help">
+        <a href="/help/auth" class="auth-help-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path>
+            </svg>
+            Need help signing in?
+        </a>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/auth-login.js"></script>
+{{end}}
