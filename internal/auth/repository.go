@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"circles.diy/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,7 +25,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 // User operations
 
 // CreateUser creates a new user in the database
-func (r *Repository) CreateUser(ctx context.Context, user *User) error {
+func (r *Repository) CreateUser(ctx context.Context, user *domain.User) error {
 	query := `
 		INSERT INTO users (id, username, email, account_status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)`
@@ -37,12 +38,12 @@ func (r *Repository) CreateUser(ctx context.Context, user *User) error {
 }
 
 // GetUserByID retrieves a user by their ID
-func (r *Repository) GetUserByID(ctx context.Context, id string) (*User, error) {
+func (r *Repository) GetUserByID(ctx context.Context, id string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
 		FROM users WHERE id = $1 AND deleted_at IS NULL`
 
-	var user User
+	var user domain.User
 	var deletedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
@@ -64,12 +65,12 @@ func (r *Repository) GetUserByID(ctx context.Context, id string) (*User, error) 
 }
 
 // GetUserByUsername retrieves a user by their username
-func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
 		FROM users WHERE username = $1 AND deleted_at IS NULL`
 
-	var user User
+	var user domain.User
 	var deletedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, username).Scan(
@@ -91,12 +92,12 @@ func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*U
 }
 
 // GetUserByEmail retrieves a user by their email
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
 		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
 		FROM users WHERE email = $1 AND deleted_at IS NULL`
 
-	var user User
+	var user domain.User
 	var deletedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, email).Scan(

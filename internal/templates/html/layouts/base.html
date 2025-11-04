@@ -224,6 +224,58 @@ class ThemeManager {
 }
 
 /**
+ * User Menu Manager - Handles user menu dropdown with logout functionality
+ */
+class UserMenuManager {
+    constructor() {
+        this.userButton = document.querySelector('.user-menu');
+        this.dropdown = document.querySelector('.user-dropdown');
+
+        if (this.userButton && this.dropdown) {
+            this.init();
+        }
+    }
+
+    init() {
+        this.userButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu-container')) {
+                this.closeDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !this.dropdown.hidden) {
+                this.closeDropdown();
+                this.userButton.focus();
+            }
+        });
+    }
+
+    toggleDropdown() {
+        if (this.dropdown.hidden) {
+            this.openDropdown();
+        } else {
+            this.closeDropdown();
+        }
+    }
+
+    openDropdown() {
+        this.dropdown.hidden = false;
+        this.userButton.setAttribute('aria-expanded', 'true');
+    }
+
+    closeDropdown() {
+        this.dropdown.hidden = true;
+        this.userButton.setAttribute('aria-expanded', 'false');
+    }
+}
+
+/**
  * Header Scroll Controller - Lightweight scroll-based hide/reveal behavior
  * Professional implementation with RAF throttling and accessibility support
  */
@@ -334,6 +386,7 @@ class HeaderScrollController {
 // Initialize controllers when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new ThemeManager();
+    new UserMenuManager();
     const scrollController = new HeaderScrollController();
     
     // Register service worker for PWA functionality
@@ -370,10 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             {{template "theme-menu" .}}
-            
-            <button class="user-menu" aria-label="User menu">
-                <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
-            </button>
+
+            {{template "user-menu" .}}
         </div>
     </div>
 </header>
@@ -428,6 +479,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     System
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "user-menu"}}
+<div class="user-menu-container">
+    <button class="user-menu" aria-label="User menu" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
+    </button>
+    <div class="user-dropdown" hidden>
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path></svg>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{if .User}}{{.User.Username}}{{else}}Guest{{end}}</div>
+                    <div class="user-email">{{if .User}}{{.User.Email}}{{end}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="user-section">
+            <a href="/profile" class="user-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path></svg>
+                View Profile
+            </a>
+            <a href="/auth/devices" class="user-menu-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M216,64H176V56a48,48,0,0,0-48-48,48.05,48.05,0,0,0-48,48,8,8,0,0,0,16,0,32,32,0,0,1,64,0v8H40A16,16,0,0,0,24,80V208a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V80A16,16,0,0,0,216,64Zm0,144H40V80H216V208Zm-88-60a12,12,0,1,1,12,12A12,12,0,0,1,128,148Z"></path></svg>
+                Manage Devices
+            </a>
+        </div>
+        <div class="user-section">
+            <form action="/auth/logout" method="POST" class="logout-form">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <button type="submit" class="user-menu-item user-menu-logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"></path></svg>
+                    Sign Out
+                </button>
+            </form>
         </div>
     </div>
 </div>

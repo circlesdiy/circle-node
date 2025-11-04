@@ -43,23 +43,32 @@ func CSRFMiddleware(config CSRFConfig) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip CSRF check for safe methods
 			if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" {
-				// Generate and set token for GET requests
-				token, err := generateCSRFToken(config.Secret)
-				if err != nil {
-					http.Error(w, "Failed to generate CSRF token", http.StatusInternalServerError)
-					return
-				}
+				var token string
 
-				// Set cookie
-				http.SetCookie(w, &http.Cookie{
-					Name:     config.CookieName,
-					Value:    token,
-					Path:     "/",
-					HttpOnly: true,
-					Secure:   config.SecureCookie,
-					SameSite: config.SameSite,
-					MaxAge:   86400, // 24 hours
-				})
+				// Check if valid token already exists in cookie
+				if existingCookie, err := r.Cookie(config.CookieName); err == nil && existingCookie.Value != "" {
+					// Reuse existing token
+					token = existingCookie.Value
+				} else {
+					// Generate new token only if none exists
+					var err error
+					token, err = generateCSRFToken(config.Secret)
+					if err != nil {
+						http.Error(w, "Failed to generate CSRF token", http.StatusInternalServerError)
+						return
+					}
+
+					// Set cookie with new token
+					http.SetCookie(w, &http.Cookie{
+						Name:     config.CookieName,
+						Value:    token,
+						Path:     "/",
+						HttpOnly: true,
+						Secure:   config.SecureCookie,
+						SameSite: config.SameSite,
+						MaxAge:   86400, // 24 hours
+					})
+				}
 
 				// Add token to context
 				ctx := context.WithValue(r.Context(), csrfTokenKey, token)

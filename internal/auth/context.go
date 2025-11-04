@@ -1,6 +1,10 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"circles.diy/internal/domain"
+)
 
 type contextKey string
 
@@ -10,13 +14,15 @@ const (
 )
 
 // WithUser adds a user to the request context
-func WithUser(ctx context.Context, user *User) context.Context {
+// Accepts *domain.User to avoid exposing auth-specific types
+func WithUser(ctx context.Context, user *domain.User) context.Context {
 	return context.WithValue(ctx, userContextKey, user)
 }
 
 // GetUser retrieves the user from the request context
-func GetUser(ctx context.Context) *User {
-	if user, ok := ctx.Value(userContextKey).(*User); ok {
+// Returns *domain.User to avoid circular dependencies
+func GetUser(ctx context.Context) *domain.User {
+	if user, ok := ctx.Value(userContextKey).(*domain.User); ok {
 		return user
 	}
 	return nil

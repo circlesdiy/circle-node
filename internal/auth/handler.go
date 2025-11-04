@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"circles.diy/internal/domain"
 	httphelpers "circles.diy/internal/http"
 	"circles.diy/internal/templates"
 	"github.com/fxamacker/webauthn"
@@ -216,7 +217,9 @@ func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
 	h.clearSessionCookie(w)
 
 	h.logger.Info("User logged out", "user_id", session.UserID, "session_id", session.ID)
-	httphelpers.JSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
+
+	// Redirect to login page
+	http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
 }
 
 // handleGetSession returns current session info
@@ -297,7 +300,7 @@ func (h *Handler) handleGetDevices(w http.ResponseWriter, r *http.Request) {
 // Helper methods
 
 // getCurrentUser extracts the current user from the request
-func (h *Handler) getCurrentUser(r *http.Request) (*Session, *User, error) {
+func (h *Handler) getCurrentUser(r *http.Request) (*Session, *domain.User, error) {
 	// Get session token from cookie
 	cookie, err := r.Cookie("session_token")
 	if err != nil {

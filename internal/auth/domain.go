@@ -5,20 +5,24 @@ import (
 	"encoding/base64"
 	"time"
 
+	"circles.diy/internal/domain"
 	"github.com/fxamacker/webauthn"
 )
 
-// User represents a user in the authentication system
+// User wraps domain.User with authentication-specific functionality
 // Implements the webauthn.User interface for fxamacker/webauthn
 type User struct {
-	ID              string    `json:"id"`
-	Username        string    `json:"username"`
-	Email           string    `json:"email"`
-	AccountStatus   string    `json:"account_status"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	DeletedAt       *time.Time `json:"deleted_at,omitempty"`
+	*domain.User
+}
 
+// NewUser creates an auth.User from a domain.User
+func NewUser(u *domain.User) *User {
+	return &User{User: u}
+}
+
+// ToDomain returns the underlying domain.User
+func (u *User) ToDomain() *domain.User {
+	return u.User
 }
 
 // ToWebAuthnUser converts to fxamacker webauthn.User struct

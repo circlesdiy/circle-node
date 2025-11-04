@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"circles.diy/internal/auth"
+	"circles.diy/internal/middleware"
 	"circles.diy/internal/templates"
 )
 
@@ -15,6 +17,10 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	if path == "/profile" {
 		// Internal profile view (owner's dashboard)
 		data := templates.GetMockProfileInternalData()
+
+		// Add user from context to template data
+		data.User = auth.GetUser(r.Context())
+		data.CSRFToken = middleware.GetCSRFToken(r)
 
 		err := templates.GetTemplates().ProfileInternal.ExecuteTemplate(w, "profile-internal", data)
 		if err != nil {
@@ -34,6 +40,10 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		// For demo purposes, we'll use the mock data regardless of handle
 		// In a real app, you'd look up the user by handle
 		data := templates.GetMockProfileData(handle, false) // isOwner = false for external view
+
+		// Add user from context to template data
+		data.User = auth.GetUser(r.Context())
+		data.CSRFToken = middleware.GetCSRFToken(r)
 
 		err := templates.GetTemplates().ProfilePublic.ExecuteTemplate(w, "profile-public", data)
 		if err != nil {

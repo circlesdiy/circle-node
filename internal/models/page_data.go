@@ -1,5 +1,7 @@
 package models
 
+import "circles.diy/internal/domain"
+
 type PageData struct {
 	Success   bool
 	CSRFToken string
@@ -15,6 +17,7 @@ type BaseData struct {
 	ActiveNav string
 	Theme     ThemeSettings
 	CSRFToken string
+	User      *domain.User `json:"user,omitempty"`
 }
 
 type DashboardData struct {

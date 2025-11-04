@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"circles.diy/internal/domain"
 	"github.com/fxamacker/webauthn"
 	"github.com/google/uuid"
 )
@@ -84,18 +85,21 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 	// Generate user ID as UUID
 	userID := uuid.New().String()
 
-	// Create user object for WebAuthn
-	user := &User{
+	// Create domain user
+	domainUser := &domain.User{
 		ID:            userID,
 		Username:      username,
 		Email:         email,
-		AccountStatus: "active",
+		AccountStatus: domain.AccountStatusActive,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
 
+	// Wrap in auth.User for WebAuthn functionality
+	authUser := NewUser(domainUser)
+
 	// Convert to WebAuthn user (with empty credentials for registration)
-	webauthnUser := user.ToWebAuthnUser([]WebAuthnCredential{})
+	webauthnUser := authUser.ToWebAuthnUser([]WebAuthnCredential{})
 
 	// Create WebAuthn creation options using fxamacker API
 	options, err := webauthn.NewAttestationOptions(s.config.Config, webauthnUser)
@@ -112,9 +116,9 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		Challenge: challengeStr,
 		Type:      "registration",
 		Options: map[string]interface{}{
-			"user_id":  user.ID,
-			"username": user.Username,
-			"email":    user.Email,
+			"user_id":  domainUser.ID,
+			"username": domainUser.Username,
+			"email":    domainUser.Email,
 		},
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Duration(s.config.Timeout) * time.Millisecond),
@@ -124,13 +128,13 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		return nil, fmt.Errorf("failed to store challenge: %w", err)
 	}
 
-	s.logger.Info("Registration challenge created", "user_id", user.ID, "challenge_id", challengeRecord.ID, "challenge_str", challengeStr)
+	s.logger.Info("Registration challenge created", "user_id", domainUser.ID, "challenge_id", challengeRecord.ID, "challenge_str", challengeStr)
 
 	return options, nil
 }
 
 // FinishRegistration completes the WebAuthn registration process
-func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.PublicKeyCredentialAttestation, r *http.Request) (*User, error) {
+func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.PublicKeyCredentialAttestation, r *http.Request) (*domain.User, error) {
 	s.logger.Info("Finishing WebAuthn registration")
 
 	// Get client data (already parsed by fxamacker)
@@ -174,33 +178,33 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		return nil, fmt.Errorf("invalid RP ID hash")
 	}
 
-	// Create user
-	user := &User{
+	// Create domain user
+	domainUser := &domain.User{
 		ID:            userID,
 		Username:      username,
 		Email:         email,
-		AccountStatus: "active",
+		AccountStatus: domain.AccountStatusActive,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
 
-	if err := s.repo.CreateUser(ctx, user); err != nil {
+	if err := s.repo.CreateUser(ctx, domainUser); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	// Create default profile for the user
-	profileID, err := s.repo.CreateDefaultProfile(ctx, user.ID, user.Username)
+	profileID, err := s.repo.CreateDefaultProfile(ctx, domainUser.ID, domainUser.Username)
 	if err != nil {
-		s.logger.Warn("Failed to create default profile", "error", err, "user_id", user.ID)
+		s.logger.Warn("Failed to create default profile", "error", err, "user_id", domainUser.ID)
 		// Don't fail registration if profile creation fails
 	} else {
-		s.logger.Info("Created default profile", "profile_id", profileID, "user_id", user.ID)
+		s.logger.Info("Created default profile", "profile_id", profileID, "user_id", domainUser.ID)
 	}
 
 	// Create credential
 	credential := &WebAuthnCredential{
 		ID:                GenerateID(),
-		UserID:            user.ID,
+		UserID:            domainUser.ID,
 		CredentialID:      response.ID,
 		PublicKey:         base64.StdEncoding.EncodeToString(response.RawID), // Store raw ID as public key placeholder
 		CredentialType:    "public-key",
@@ -218,7 +222,7 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 	}
 
 	// Create device record
-	device := s.createDeviceFromRequest(user.ID, r)
+	device := s.createDeviceFromRequest(domainUser.ID, r)
 	if err := s.repo.CreateDevice(ctx, device); err != nil {
 		s.logger.Warn("Failed to create device record", "error", err)
 	}
@@ -228,9 +232,9 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		s.logger.Warn("Failed to complete challenge", "error", err)
 	}
 
-	s.logger.Info("Registration completed successfully", "user_id", user.ID, "credential_id", credential.ID)
+	s.logger.Info("Registration completed successfully", "user_id", domainUser.ID, "credential_id", credential.ID)
 
-	return user, nil
+	return domainUser, nil
 }
 
 // Authentication flow
@@ -257,8 +261,11 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 		return nil, fmt.Errorf("no credentials found for user")
 	}
 
+	// Wrap domain user in auth.User for WebAuthn functionality
+	authUser := NewUser(user)
+
 	// Convert to WebAuthn user
-	webauthnUser := user.ToWebAuthnUser(credentials)
+	webauthnUser := authUser.ToWebAuthnUser(credentials)
 
 	// Create WebAuthn assertion options using fxamacker API
 	options, err := webauthn.NewAssertionOptions(s.config.Config, webauthnUser)
@@ -362,7 +369,7 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 // Session management
 
 // CreateSession creates a new session for a user
-func (s *Service) CreateSession(ctx context.Context, user *User, r *http.Request) (*Session, error) {
+func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.Request) (*Session, error) {
 	sessionToken, err := GenerateSecureToken(64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate session token: %w", err)
@@ -425,7 +432,7 @@ func (s *Service) CreateSession(ctx context.Context, user *User, r *http.Request
 }
 
 // ValidateSession validates a session token and returns the session if valid
-func (s *Service) ValidateSession(ctx context.Context, token string) (*Session, *User, error) {
+func (s *Service) ValidateSession(ctx context.Context, token string) (*Session, *domain.User, error) {
 	session, err := s.repo.GetSessionByToken(ctx, token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get session: %w", err)
