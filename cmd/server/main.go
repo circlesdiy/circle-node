@@ -43,10 +43,33 @@ func main() {
 	// Setup routes
 	mux := setupRoutes(application)
 
-	// Apply middleware chain
+	// Apply middleware chain with CSRF protection
+	// Note: WebAuthn endpoints are exempted from CSRF as they have built-in challenge/origin validation
+	csrfConfig := middleware.CSRFConfig{
+		Secret:       application.Config.Security.CSRFSecret,
+		SecureCookie: !application.Config.IsDevelopment(), // HTTPS only in production
+		SkipPaths: []string{
+			// Static assets don't need CSRF
+			"/static/",
+			// WebAuthn endpoints have built-in challenge/origin validation
+			"/auth/register/begin",
+			"/auth/register/finish",
+			"/auth/login/begin",
+			"/auth/login/finish",
+			// Validation endpoints (public, safe for CSRF exemption)
+			"/auth/check-username",
+			"/auth/check-email",
+			// API endpoints
+			"/api/",
+			// Health check
+			"/health",
+		},
+	}
+
 	handler := middleware.Chain(
 		mux,
 		middleware.SecurityMiddleware,
+		middleware.CSRFMiddleware(csrfConfig),
 		middleware.RateLimitMiddleware,
 	)
 
@@ -67,23 +90,26 @@ func main() {
 func setupRoutes(app *app.App) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	// Manifesto & user research routes
+	// Register authentication routes
+	app.AuthHandler.RegisterRoutes(mux)
+
+	// Manifesto & user research routes (public)
 	mux.HandleFunc("/", handlers.HomeHandler)
 	mux.HandleFunc("/feedback", handlers.FeedbackHandler)
 
-	// App routes
-	mux.HandleFunc("/dashboard", handlers.DashboardHandler)
-	mux.HandleFunc("/dashboard/", handlers.DashboardHandler)
-	mux.HandleFunc("/profile", handlers.ProfileHandler)
-	mux.HandleFunc("/profile/", handlers.ProfileHandler)
-	mux.HandleFunc("/circles", handlers.CirclesHandler)
-	mux.HandleFunc("/circles/", handlers.CirclesHandler)
-	mux.HandleFunc("/chat", handlers.ChatHandler)
-	mux.HandleFunc("/chat/", handlers.ChatHandler)
-	mux.HandleFunc("/gather", handlers.GatherHandler)
-	mux.HandleFunc("/gather/", handlers.GatherHandler)
-	mux.HandleFunc("/marketplace", handlers.MarketplaceHandler)
-	mux.HandleFunc("/marketplace/", handlers.MarketplaceHandler)
+	// App routes (protected - require authentication)
+	mux.HandleFunc("/dashboard", app.AuthHandler.RequireAuth(handlers.DashboardHandler))
+	mux.HandleFunc("/dashboard/", app.AuthHandler.RequireAuth(handlers.DashboardHandler))
+	mux.HandleFunc("/profile", app.AuthHandler.RequireAuth(handlers.ProfileHandler))
+	mux.HandleFunc("/profile/", app.AuthHandler.RequireAuth(handlers.ProfileHandler))
+	mux.HandleFunc("/circles", app.AuthHandler.RequireAuth(handlers.CirclesHandler))
+	mux.HandleFunc("/circles/", app.AuthHandler.RequireAuth(handlers.CirclesHandler))
+	mux.HandleFunc("/chat", app.AuthHandler.RequireAuth(handlers.ChatHandler))
+	mux.HandleFunc("/chat/", app.AuthHandler.RequireAuth(handlers.ChatHandler))
+	mux.HandleFunc("/gather", app.AuthHandler.RequireAuth(handlers.GatherHandler))
+	mux.HandleFunc("/gather/", app.AuthHandler.RequireAuth(handlers.GatherHandler))
+	mux.HandleFunc("/marketplace", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
+	mux.HandleFunc("/marketplace/", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 
 	// Static asset routes
 	mux.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +117,12 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	})
 	mux.HandleFunc("/static/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ServeStaticFile(w, r, "static/js/htmx.min.js", "application/javascript; charset=utf-8")
+	})
+	mux.HandleFunc("/static/js/auth-login.js", func(w http.ResponseWriter, r *http.Request) {
+		handlers.ServeStaticFile(w, r, "static/js/auth-login.js", "application/javascript; charset=utf-8")
+	})
+	mux.HandleFunc("/static/js/auth-register.js", func(w http.ResponseWriter, r *http.Request) {
+		handlers.ServeStaticFile(w, r, "static/js/auth-register.js", "application/javascript; charset=utf-8")
 	})
 	mux.HandleFunc("/static/img/", handlers.ServeStaticImage)
 

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/webauthn"
+	"github.com/google/uuid"
 )
 
 // Service handles authentication business logic
@@ -46,7 +47,7 @@ func DefaultWebAuthnConfig() *WebAuthnConfig {
 			RPID:                    "localhost",
 			RPName:                  "Circles.DIY",
 			RPIcon:                  "",
-			AuthenticatorAttachment: "", // Allow all
+			AuthenticatorAttachment: webauthn.AuthenticatorCrossPlatform, // Prefer external authenticators (1Password, security keys, etc.)
 			ResidentKey:             webauthn.ResidentKeyDiscouraged,
 			UserVerification:        webauthn.UserVerificationPreferred,
 			Attestation:             webauthn.AttestationNone,
@@ -80,11 +81,8 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		return nil, fmt.Errorf("email already exists")
 	}
 
-	// Generate user ID
-	userID, err := GenerateSecureToken(32)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate user ID: %w", err)
-	}
+	// Generate user ID as UUID
+	userID := uuid.New().String()
 
 	// Create user object for WebAuthn
 	user := &User{
@@ -105,11 +103,13 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		return nil, fmt.Errorf("failed to create attestation options: %w", err)
 	}
 
-	// Store challenge
+	// Store challenge (no UserID yet since user doesn't exist in DB during registration)
+	// Use RawURLEncoding (without padding) to match what the WebAuthn client sends
+	challengeStr := base64.RawURLEncoding.EncodeToString(options.Challenge)
 	challengeRecord := &AuthenticationChallenge{
 		ID:        GenerateID(),
-		UserID:    &user.ID,
-		Challenge: base64.URLEncoding.EncodeToString(options.Challenge),
+		UserID:    nil, // User doesn't exist yet - will be created after challenge is completed
+		Challenge: challengeStr,
 		Type:      "registration",
 		Options: map[string]interface{}{
 			"user_id":  user.ID,
@@ -124,7 +124,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		return nil, fmt.Errorf("failed to store challenge: %w", err)
 	}
 
-	s.logger.Info("Registration challenge created", "user_id", user.ID, "challenge_id", challengeRecord.ID)
+	s.logger.Info("Registration challenge created", "user_id", user.ID, "challenge_id", challengeRecord.ID, "challenge_str", challengeStr)
 
 	return options, nil
 }
@@ -135,6 +135,8 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 
 	// Get client data (already parsed by fxamacker)
 	clientData := response.ClientData
+
+	s.logger.Info("Looking up challenge", "challenge", clientData.Challenge)
 
 	challenge, err := s.repo.GetAuthenticationChallenge(ctx, clientData.Challenge)
 	if err != nil {
@@ -184,6 +186,15 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	// Create default profile for the user
+	profileID, err := s.repo.CreateDefaultProfile(ctx, user.ID, user.Username)
+	if err != nil {
+		s.logger.Warn("Failed to create default profile", "error", err, "user_id", user.ID)
+		// Don't fail registration if profile creation fails
+	} else {
+		s.logger.Info("Created default profile", "profile_id", profileID, "user_id", user.ID)
 	}
 
 	// Create credential
@@ -259,7 +270,7 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 	challengeRecord := &AuthenticationChallenge{
 		ID:        GenerateID(),
 		UserID:    &user.ID,
-		Challenge: base64.URLEncoding.EncodeToString(options.Challenge),
+		Challenge: base64.RawURLEncoding.EncodeToString(options.Challenge),
 		Type:      "authentication",
 		Options: map[string]interface{}{
 			"user_id": user.ID,
@@ -320,8 +331,12 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 
 	// Update sign count (replay attack protection)
 	newSignCount := int(response.AuthnData.Counter)
-	if newSignCount <= credential.SignCount {
-		return nil, fmt.Errorf("potential replay attack detected")
+	s.logger.Info("Sign count check", "new", newSignCount, "stored", credential.SignCount)
+
+	// Only enforce sign count increment if the stored count is > 0
+	// Some authenticators (like 1Password) may not support sign counts or start at 0
+	if credential.SignCount > 0 && newSignCount <= credential.SignCount {
+		return nil, fmt.Errorf("potential replay attack detected: sign count did not increment (stored: %d, received: %d)", credential.SignCount, newSignCount)
 	}
 
 	if err := s.repo.UpdateWebAuthnCredentialSignCount(ctx, credential.CredentialID, newSignCount); err != nil {
@@ -380,10 +395,17 @@ func (s *Service) CreateSession(ctx context.Context, user *User, r *http.Request
 		}
 	}
 
+	// Get user's active profile
+	activeProfileID, err := s.repo.GetUserActiveProfile(ctx, user.ID)
+	if err != nil {
+		s.logger.Warn("Failed to get active profile", "error", err, "user_id", user.ID)
+	}
+
 	session := &Session{
 		ID:                         GenerateID(),
 		UserID:                     user.ID,
 		DeviceID:                   deviceID,
+		ActiveProfileID:            activeProfileID,
 		AuthenticatedCredentialIDs: "[]", // JSON array of credential IDs used
 		SessionToken:               sessionToken,
 		RefreshToken:               refreshToken,
@@ -531,8 +553,8 @@ func parseBrowser(ua string) string {
 
 // GenerateID generates a new UUID-like ID
 func GenerateID() string {
-	id, _ := GenerateSecureToken(16)
-	return id
+	// Generate a proper UUID v4
+	return uuid.New().String()
 }
 
 // Cleanup operations

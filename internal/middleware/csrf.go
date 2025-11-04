@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"circles.diy/internal/utils"
 )
@@ -66,9 +67,16 @@ func CSRFMiddleware(config CSRFConfig) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Check if path should skip CSRF
+			// Check if path should skip CSRF (supports both exact match and prefix match)
 			for _, path := range config.SkipPaths {
-				if r.URL.Path == path {
+				// If path ends with /, treat as prefix match
+				if strings.HasSuffix(path, "/") {
+					if strings.HasPrefix(r.URL.Path, path) {
+						next.ServeHTTP(w, r)
+						return
+					}
+				} else if r.URL.Path == path {
+					// Exact match
 					next.ServeHTTP(w, r)
 					return
 				}

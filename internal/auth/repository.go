@@ -117,6 +117,59 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 	return &user, nil
 }
 
+// Profile operations (temporary until profile domain is created)
+
+// CreateDefaultProfile creates a default profile for a new user
+func (r *Repository) CreateDefaultProfile(ctx context.Context, userID, username string) (string, error) {
+	profileID := GenerateID()
+	handle := username // Use username as initial handle
+	now := time.Now()
+
+	query := `
+		INSERT INTO profiles (id, user_id, handle, name, display_name, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id`
+
+	err := r.db.QueryRow(ctx, query,
+		profileID, userID, handle, username, username, true, now, now).Scan(&profileID)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Create default profile settings
+	settingsQuery := `
+		INSERT INTO profile_settings (profile_id, is_public, updated_at)
+		VALUES ($1, $2, $3)`
+
+	_, err = r.db.Exec(ctx, settingsQuery, profileID, true, now)
+	if err != nil {
+		return "", err
+	}
+
+	return profileID, nil
+}
+
+// GetUserActiveProfile gets the user's active profile ID
+func (r *Repository) GetUserActiveProfile(ctx context.Context, userID string) (*string, error) {
+	query := `
+		SELECT id FROM profiles
+		WHERE user_id = $1 AND is_active = true AND deleted_at IS NULL
+		ORDER BY created_at ASC
+		LIMIT 1`
+
+	var profileID string
+	err := r.db.QueryRow(ctx, query, userID).Scan(&profileID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &profileID, nil
+}
+
 // WebAuthn Credential operations
 
 // CreateWebAuthnCredential stores a new WebAuthn credential
@@ -312,7 +365,7 @@ func (r *Repository) CreateSession(ctx context.Context, session *Session) error 
 func (r *Repository) GetSessionByToken(ctx context.Context, token string) (*Session, error) {
 	query := `
 		SELECT id, user_id, device_id, active_profile_id, authenticated_credential_ids,
-			   session_token, refresh_token, ip_address, user_agent, auth_level,
+			   session_token, refresh_token, ip_address::text, user_agent, auth_level,
 			   created_at, last_activity_at, expires_at, revoked_at
 		FROM sessions
 		WHERE session_token = $1 AND revoked_at IS NULL`

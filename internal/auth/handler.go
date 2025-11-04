@@ -301,11 +301,18 @@ func (h *Handler) getCurrentUser(r *http.Request) (*Session, *User, error) {
 	// Get session token from cookie
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
+		h.logger.Info("No session cookie found", "error", err, "path", r.URL.Path)
 		return nil, nil, err
 	}
 
 	// Validate and get session
-	return h.service.ValidateSession(r.Context(), cookie.Value)
+	session, user, err := h.service.ValidateSession(r.Context(), cookie.Value)
+	if err != nil {
+		h.logger.Info("Session validation failed", "error", err, "path", r.URL.Path)
+		return nil, nil, err
+	}
+
+	return session, user, nil
 }
 
 // setSessionCookie sets the session cookie
@@ -341,7 +348,15 @@ func (h *Handler) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, user, err := h.getCurrentUser(r)
 		if err != nil {
-			httphelpers.JSONError(w, http.StatusUnauthorized, "Authentication required")
+			// Check if this is an HTMX request
+			if r.Header.Get("HX-Request") == "true" {
+				// For HTMX requests, send HX-Redirect header
+				w.Header().Set("HX-Redirect", "/auth/login")
+				w.WriteHeader(http.StatusUnauthorized)
+			} else {
+				// For regular browser requests, redirect to login
+				http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
+			}
 			return
 		}
 
@@ -374,7 +389,8 @@ func (h *Handler) RequireAuthLevel(level int) func(http.HandlerFunc) http.Handle
 // handleLoginPage renders the login page
 func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 	// If user is already logged in, redirect to dashboard
-	if user := GetUser(r.Context()); user != nil {
+	_, user, err := h.getCurrentUser(r)
+	if err == nil && user != nil {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
@@ -391,7 +407,7 @@ func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 		data["Success"] = successMsg
 	}
 
-	err := templates.GetTemplates().AuthLogin.ExecuteTemplate(w, "auth-login", data)
+	err = templates.GetTemplates().AuthLogin.ExecuteTemplate(w, "auth-login", data)
 	if err != nil {
 		h.logger.Error("Failed to render login page", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -401,7 +417,8 @@ func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 // handleRegisterPage renders the registration page
 func (h *Handler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
 	// If user is already logged in, redirect to dashboard
-	if user := GetUser(r.Context()); user != nil {
+	_, user, err := h.getCurrentUser(r)
+	if err == nil && user != nil {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
@@ -415,7 +432,7 @@ func (h *Handler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
 		data["Error"] = errorMsg
 	}
 
-	err := templates.GetTemplates().AuthRegister.ExecuteTemplate(w, "auth-register", data)
+	err = templates.GetTemplates().AuthRegister.ExecuteTemplate(w, "auth-register", data)
 	if err != nil {
 		h.logger.Error("Failed to render register page", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

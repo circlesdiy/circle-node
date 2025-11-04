@@ -15,14 +15,21 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 		return
 	}
 
-	// Get file info for cache headers
-	fileInfo, err := os.Stat(filePath)
+	// Read the file
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			http.NotFound(w, r)
 		} else {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	// Get file info for cache headers
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -39,7 +46,8 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 		}
 	}
 
-	// Set response headers
+	// CRITICAL: Set Content-Type header BEFORE writing any content
+	// This ensures it's not overridden and respects X-Content-Type-Options: nosniff
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Last-Modified", lastModified)
 	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache for 1 hour
@@ -49,8 +57,8 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 		w.Header().Set("Vary", "Accept-Encoding")
 	}
 
-	// Serve the file
-	http.ServeFile(w, r, filePath)
+	// Write the file content
+	w.Write(content)
 }
 
 func ServeStaticImage(w http.ResponseWriter, r *http.Request) {

@@ -150,6 +150,10 @@
     gap: 1.25rem;
 }
 
+.auth-form[hidden] {
+    display: none;
+}
+
 /* Form Groups */
 .form-group {
     display: flex;
@@ -323,6 +327,11 @@
     border-radius: var(--container-radius);
     color: var(--text-secondary);
     font-size: 0.9rem;
+}
+
+/* Respect hidden attribute */
+.auth-status[hidden] {
+    display: none;
 }
 
 .auth-spinner {
