@@ -1,0 +1,243 @@
+{{define "base-auth"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Favicon: auto-selects by media query -->
+    <link rel="icon" href="/static/img/favicon-light.svg" type="svg+xml" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="/static/img/favicon-dark.svg" type="svg+xml" media="(prefers-color-scheme: light)">
+
+    <!-- PNG fallback for browsers that don't love SVG favicons -->
+    <link rel="icon" href="/static/img/favicon-light.png" sizes="any">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://circles.diy/">
+    <meta property="og:title" content="circles.diy - The Community Platform for Creatives">
+    <meta property="og:description"
+        content="A social platform for communities, creators and collaborators. Built on principles of community stewardship, not capital extraction.">
+    <meta property="og:site_name" content="circles.diy">
+    <meta property="og:image" content="https://circles.diy/static/img/circles-og-image.jpeg">
+
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="https://circles.diy/">
+    <meta property="twitter:title" content="circles.diy - The Community Platform for Creatives">
+    <meta property="twitter:description"
+        content="A social platform for communities, creators and collaborators. Built on principles of community stewardship, not capital extraction.">
+    <meta property="twitter:image" content="https://circles.diy/static/img/circles-og-image.jpeg">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="circles.diy">
+    <link rel="apple-touch-icon" href="/static/img/icon-192.png">
+
+    <title>{{.Title}} - circles.diy</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {{block "head" .}}{{end}}
+</head>
+<body>
+    <div class="page-container">
+        <main>
+            {{block "main" .}}{{end}}
+        </main>
+    </div>
+
+    <script src="/static/js/htmx.min.js"></script>
+    <script>
+// Theme Manager Implementation - Global for all pages
+class ThemeManager {
+    constructor() {
+        this.themeButton = document.querySelector('.theme-menu');
+        this.dropdown = document.querySelector('.theme-dropdown');
+        this.radiusOptions = document.querySelectorAll('.radius-option');
+        this.themeOptions = document.querySelectorAll('.theme-option');
+        this.root = document.documentElement;
+
+        if (this.themeButton && this.dropdown) {
+            this.init();
+        }
+    }
+
+    init() {
+        this.loadPreferences();
+
+        this.themeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+
+        this.radiusOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const radius = option.dataset.radius;
+                this.setRadius(radius);
+            });
+        });
+
+        this.themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const theme = option.dataset.theme;
+                this.setTheme(theme);
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.theme-menu-container')) {
+                this.closeDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !this.dropdown.hidden) {
+                this.closeDropdown();
+                this.themeButton.focus();
+            }
+        });
+    }
+
+    toggleDropdown() {
+        if (this.dropdown.hidden) {
+            this.openDropdown();
+        } else {
+            this.closeDropdown();
+        }
+    }
+
+    openDropdown() {
+        this.dropdown.hidden = false;
+        this.themeButton.setAttribute('aria-expanded', 'true');
+    }
+
+    closeDropdown() {
+        this.dropdown.hidden = true;
+        this.themeButton.setAttribute('aria-expanded', 'false');
+    }
+
+    setRadius(radius) {
+        this.root.style.setProperty('--container-radius', radius + 'px');
+
+        this.radiusOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.radius === radius);
+        });
+
+        localStorage.setItem('theme-radius', radius);
+
+        // Save to server
+        fetch('/api/theme/radius', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ radius: parseInt(radius) })
+        });
+    }
+
+    setTheme(theme) {
+        document.body.classList.remove('theme-light', 'theme-dark', 'theme-system');
+        document.body.classList.add(`theme-${theme}`);
+
+        if (theme === 'light') {
+            this.applyLightTheme();
+        } else if (theme === 'dark') {
+            this.applyDarkTheme();
+        } else {
+            this.applySystemTheme();
+        }
+
+        this.themeOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.theme === theme);
+        });
+
+        localStorage.setItem('theme-mode', theme);
+
+        // Save to server
+        fetch('/api/theme/mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: theme })
+        });
+    }
+
+    applyLightTheme() {
+        this.root.style.setProperty('--bg-primary', '#ffffff');
+        this.root.style.setProperty('--bg-secondary', '#f5f5f5');
+        this.root.style.setProperty('--bg-tertiary', '#f9f9f9');
+        this.root.style.setProperty('--text-primary', '#000000');
+        this.root.style.setProperty('--text-secondary', '#666666');
+        this.root.style.setProperty('--text-tertiary', '#999999');
+        this.root.style.setProperty('--border-primary', '#000000');
+        this.root.style.setProperty('--border-secondary', '#cccccc');
+        this.root.style.setProperty('--border-light', '#eeeeee');
+        this.root.style.setProperty('--accent-primary', '#000000');
+        this.root.style.setProperty('--accent-secondary', '#ffffff');
+        this.root.style.setProperty('--hover-bg', '#f5f5f5');
+        this.root.style.setProperty('--active-bg', '#000000');
+        this.root.style.setProperty('--active-text', '#ffffff');
+        this.root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.1)');
+    }
+
+    applyDarkTheme() {
+        this.root.style.setProperty('--bg-primary', '#000000');
+        this.root.style.setProperty('--bg-secondary', '#0a0a0a');
+        this.root.style.setProperty('--bg-tertiary', '#111111');
+        this.root.style.setProperty('--text-primary', '#ffffff');
+        this.root.style.setProperty('--text-secondary', '#a3a3a3');
+        this.root.style.setProperty('--text-tertiary', '#666666');
+        this.root.style.setProperty('--border-primary', '#ffffff');
+        this.root.style.setProperty('--border-secondary', '#333333');
+        this.root.style.setProperty('--border-light', '#222222');
+        this.root.style.setProperty('--accent-primary', '#ffffff');
+        this.root.style.setProperty('--accent-secondary', '#000000');
+        this.root.style.setProperty('--hover-bg', '#1a1a1a');
+        this.root.style.setProperty('--active-bg', '#ffffff');
+        this.root.style.setProperty('--active-text', '#000000');
+        this.root.style.setProperty('--shadow-color', 'rgba(255, 255, 255, 0.1)');
+    }
+
+    applySystemTheme() {
+        const properties = [
+            '--bg-primary', '--bg-secondary', '--bg-tertiary',
+            '--text-primary', '--text-secondary', '--text-tertiary',
+            '--border-primary', '--border-secondary', '--border-light',
+            '--accent-primary', '--accent-secondary',
+            '--hover-bg', '--active-bg', '--active-text', '--shadow-color'
+        ];
+
+        properties.forEach(prop => {
+            this.root.style.removeProperty(prop);
+        });
+    }
+
+    loadPreferences() {
+        const savedRadius = localStorage.getItem('theme-radius') || '{{.Theme.Radius}}';
+        this.setRadius(savedRadius);
+
+        const savedTheme = localStorage.getItem('theme-mode') || '{{.Theme.Mode}}';
+        this.setTheme(savedTheme);
+    }
+}
+
+// Initialize theme manager when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new ThemeManager();
+
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
+});
+    </script>
+    {{block "scripts" .}}{{end}}
+</body>
+</html>
+{{end}}
