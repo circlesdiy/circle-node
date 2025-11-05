@@ -36,8 +36,10 @@ func NewRedis(ctx context.Context, cfg *config.Config, logger *zap.Logger) (*Red
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
-	logger.Info("💾 redis",
+	logger.Info("Cache: Connected")
+	logger.Debug("redis details",
 		zap.Int("db", cfg.Redis.Database),
+		zap.Int("pool", cfg.Redis.PoolSize),
 	)
 
 	return &Redis{

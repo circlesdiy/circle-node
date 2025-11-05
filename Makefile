@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Circles.DIY Makefile"
+	@echo "circles.diy Makefile"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make build        - Build the application binary"

@@ -49,7 +49,8 @@ func NewPostgres(ctx context.Context, cfg *config.Config, logger *zap.Logger) (*
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	logger.Info("📊 postgres",
+	logger.Info("Database: Connected")
+	logger.Debug("postgres details",
 		zap.String("db", cfg.Database.Database),
 		zap.Int("pool", cfg.Database.MaxConnections),
 	)

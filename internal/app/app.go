@@ -111,8 +111,8 @@ func (a *App) Run() error {
 
 	// Start HTTP server in a goroutine
 	go func() {
-		a.Logger.Info("starting http server",
-			zap.String("port", a.Server.Addr),
+		a.Logger.Info("Server",
+			zap.String("url", formatServerURL(a.Server.Addr, a.Config.IsDevelopment())),
 		)
 		serverErrors <- a.Server.ListenAndServe()
 	}()
@@ -142,7 +142,7 @@ func (a *App) Run() error {
 			return fmt.Errorf("graceful shutdown failed: %w", err)
 		}
 
-		a.Logger.Info("server stopped gracefully")
+		a.Logger.Info("server stopped successfully")
 	}
 
 	return nil
@@ -150,11 +150,11 @@ func (a *App) Run() error {
 
 // Shutdown gracefully shuts down the application
 func (a *App) Shutdown(ctx context.Context) error {
-	a.Logger.Info("initiating graceful shutdown...")
+	a.Logger.Info("initiating graceful shutdown")
 
 	// Shutdown HTTP server first
 	if a.Server != nil {
-		a.Logger.Info("shutting down http server...")
+		a.Logger.Info("shutting down http server")
 		if err := a.Server.Shutdown(ctx); err != nil {
 			a.Logger.Error("error shutting down http server", zap.Error(err))
 		}
@@ -162,7 +162,6 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	// Close Redis connection
 	if a.Redis != nil {
-		a.Logger.Info("closing redis connection...")
 		if err := a.Redis.Close(); err != nil {
 			a.Logger.Error("error closing redis connection", zap.Error(err))
 		}
@@ -170,7 +169,6 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 	// Close database connection pool
 	if a.Postgres != nil {
-		a.Logger.Info("closing database connection pool...")
 		a.Postgres.Close()
 	}
 
@@ -193,6 +191,19 @@ func (a *App) HealthCheck(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// formatServerURL formats the server listening URL
+func formatServerURL(addr string, isDev bool) string {
+	protocol := "http"
+	if !isDev {
+		protocol = "https"
+	}
+	// addr is in format ":8080", so we add localhost
+	if addr[0] == ':' {
+		return fmt.Sprintf("%s://localhost%s", protocol, addr)
+	}
+	return fmt.Sprintf("%s://%s", protocol, addr)
 }
 
 // initLogger creates and configures the logger based on config

@@ -183,24 +183,20 @@ func logStartupInfo(app *app.App, startTime time.Time) {
 
 	elapsed := time.Since(startTime)
 
-	// Single compact startup message
-	logger.Info("🔵 Started circles.diy",
+	// Clean startup message for users
+	logger.Info("Starting circles.diy",
 		zap.String("version", version.Version),
+	)
+	logger.Info("Environment",
 		zap.String("environment", cfg.Server.Environment),
+	)
+
+	// Detailed info for debugging
+	logger.Debug("startup details",
 		zap.String("url", formatServerURL(cfg.Server.Port, cfg.IsDevelopment())),
 		zap.Int("pid", os.Getpid()),
 		zap.String("started", formatDuration(elapsed)),
 	)
-
-	//	[2025-11-05 10:30:45] INFO Starting MyApp v2.3.1
-	//
-	// [2025-11-05 10:30:45] INFO Environment: production
-	// [2025-11-05 10:30:45] INFO Node.js v20.10.0
-	// [2025-11-05 10:30:46] INFO Database connected: postgres://db.example.com:5432/myapp
-	// [2025-11-05 10:30:46] INFO Redis connected: redis://cache:6379
-	// [2025-11-05 10:30:46] INFO Loaded 47 routes
-	// [2025-11-05 10:30:46] INFO Server listening on http://0.0.0.0:8080 (PID: 1234)
-	// [2025-11-05 10:30:46] INFO Startup complete in 1.2s
 }
 
 // maskPassword formats database URL with masked password

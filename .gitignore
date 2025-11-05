@@ -59,6 +59,7 @@ static/css/style.css
 *.dll
 *.so
 *.dylib
+bin/
 
 # Database files
 *.db
