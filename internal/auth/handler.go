@@ -2,23 +2,24 @@ package auth
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"circles.diy/internal/domain"
+	domainauth "circles.diy/internal/domain/auth"
 	httphelpers "circles.diy/internal/http"
 	"circles.diy/internal/templates"
 	"github.com/fxamacker/webauthn"
+	"go.uber.org/zap"
 )
 
 // Handler handles HTTP requests for authentication
 type Handler struct {
 	service *Service
-	logger  *slog.Logger
+	logger  *zap.Logger
 }
 
 // NewHandler creates a new authentication handler
-func NewHandler(service *Service, logger *slog.Logger) *Handler {
+func NewHandler(service *Service, logger *zap.Logger) *Handler {
 	return &Handler{
 		service: service,
 		logger:  logger,
@@ -76,12 +77,12 @@ func (h *Handler) handleRegistrationBegin(w http.ResponseWriter, r *http.Request
 	// Begin registration
 	options, err := h.service.BeginRegistration(r.Context(), req.Username, req.Email)
 	if err != nil {
-		h.logger.Error("Failed to begin registration", "error", err, "username", req.Username)
+		h.logger.Error("Failed to begin registration", zap.Error(err), zap.String("username", req.Username))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Registration failed")
 		return
 	}
 
-	h.logger.Info("Registration begun", "username", req.Username)
+	h.logger.Info("Registration begun", zap.String("username", req.Username))
 	httphelpers.JSONResponse(w, http.StatusOK, options)
 }
 
@@ -96,7 +97,7 @@ func (h *Handler) handleRegistrationFinish(w http.ResponseWriter, r *http.Reques
 	// Complete registration
 	user, err := h.service.FinishRegistration(r.Context(), &response, r)
 	if err != nil {
-		h.logger.Error("Failed to finish registration", "error", err)
+		h.logger.Error("Failed to finish registration", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Registration failed")
 		return
 	}
@@ -104,7 +105,7 @@ func (h *Handler) handleRegistrationFinish(w http.ResponseWriter, r *http.Reques
 	// Create session
 	session, err := h.service.CreateSession(r.Context(), user, r)
 	if err != nil {
-		h.logger.Error("Failed to create session after registration", "error", err)
+		h.logger.Error("Failed to create session after registration", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Session creation failed")
 		return
 	}
@@ -112,7 +113,7 @@ func (h *Handler) handleRegistrationFinish(w http.ResponseWriter, r *http.Reques
 	// Set session cookie
 	h.setSessionCookie(w, session.SessionToken)
 
-	h.logger.Info("Registration completed", "user_id", user.ID, "username", user.Username)
+	h.logger.Info("Registration completed", zap.String("user_id", user.ID), zap.String("username", user.Username))
 
 	// Return user info (without sensitive data)
 	userResponse := map[string]interface{}{
@@ -148,12 +149,12 @@ func (h *Handler) handleAuthenticationBegin(w http.ResponseWriter, r *http.Reque
 	// Begin authentication
 	options, err := h.service.BeginAuthentication(r.Context(), req.Username)
 	if err != nil {
-		h.logger.Error("Failed to begin authentication", "error", err, "username", req.Username)
+		h.logger.Error("Failed to begin authentication", zap.Error(err), zap.String("username", req.Username))
 		httphelpers.JSONError(w, http.StatusUnauthorized, "Authentication failed")
 		return
 	}
 
-	h.logger.Info("Authentication begun", "username", req.Username)
+	h.logger.Info("Authentication begun", zap.String("username", req.Username))
 	httphelpers.JSONResponse(w, http.StatusOK, options)
 }
 
@@ -168,7 +169,7 @@ func (h *Handler) handleAuthenticationFinish(w http.ResponseWriter, r *http.Requ
 	// Complete authentication
 	session, err := h.service.FinishAuthentication(r.Context(), &response, r)
 	if err != nil {
-		h.logger.Error("Failed to finish authentication", "error", err)
+		h.logger.Error("Failed to finish authentication", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusUnauthorized, "Authentication failed")
 		return
 	}
@@ -176,7 +177,7 @@ func (h *Handler) handleAuthenticationFinish(w http.ResponseWriter, r *http.Requ
 	// Set session cookie
 	h.setSessionCookie(w, session.SessionToken)
 
-	h.logger.Info("Authentication completed", "user_id", session.UserID, "session_id", session.ID)
+	h.logger.Debug("Authentication completed", zap.String("user_id", session.UserID), zap.String("session_id", session.ID))
 
 	// Return session info (without sensitive tokens)
 	sessionResponse := map[string]interface{}{
@@ -208,7 +209,7 @@ func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Revoke session
 	if err := h.service.RevokeSession(r.Context(), session.ID); err != nil {
-		h.logger.Error("Failed to revoke session", "error", err, "session_id", session.ID)
+		h.logger.Error("Failed to revoke session", zap.Error(err), zap.String("session_id", session.ID))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Logout failed")
 		return
 	}
@@ -216,7 +217,7 @@ func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
 	// Clear session cookie
 	h.clearSessionCookie(w)
 
-	h.logger.Info("User logged out", "user_id", session.UserID, "session_id", session.ID)
+	h.logger.Info("User logged out", zap.String("user_id", session.UserID), zap.String("session_id", session.ID))
 
 	// Redirect to login page
 	http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
@@ -271,7 +272,7 @@ func (h *Handler) handleGetDevices(w http.ResponseWriter, r *http.Request) {
 	// Get user's WebAuthn credentials (representing devices/authenticators)
 	credentials, err := h.service.repo.GetWebAuthnCredentialsByUserID(r.Context(), user.ID)
 	if err != nil {
-		h.logger.Error("Failed to get user credentials", "error", err, "user_id", user.ID)
+		h.logger.Error("Failed to get user credentials", zap.Error(err), zap.String("user_id", user.ID))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to get devices")
 		return
 	}
@@ -300,18 +301,18 @@ func (h *Handler) handleGetDevices(w http.ResponseWriter, r *http.Request) {
 // Helper methods
 
 // getCurrentUser extracts the current user from the request
-func (h *Handler) getCurrentUser(r *http.Request) (*Session, *domain.User, error) {
+func (h *Handler) getCurrentUser(r *http.Request) (*domainauth.Session, *domain.User, error) {
 	// Get session token from cookie
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		h.logger.Info("No session cookie found", "error", err, "path", r.URL.Path)
+		h.logger.Debug("No session cookie found", zap.Error(err), zap.String("path", r.URL.Path))
 		return nil, nil, err
 	}
 
 	// Validate and get session
 	session, user, err := h.service.ValidateSession(r.Context(), cookie.Value)
 	if err != nil {
-		h.logger.Info("Session validation failed", "error", err, "path", r.URL.Path)
+		h.logger.Debug("Session validation failed", zap.Error(err), zap.String("path", r.URL.Path))
 		return nil, nil, err
 	}
 
@@ -324,7 +325,7 @@ func (h *Handler) setSessionCookie(w http.ResponseWriter, token string) {
 		Name:     "session_token",
 		Value:    token,
 		Path:     "/",
-		MaxAge:   int(DefaultSessionDuration.Seconds()),
+		MaxAge:   int(domainauth.DefaultSessionDuration.Seconds()),
 		HttpOnly: true,
 		Secure:   false, // Set to true in production with HTTPS
 		SameSite: http.SameSiteLaxMode,
@@ -412,7 +413,7 @@ func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	err = templates.GetTemplates().AuthLogin.ExecuteTemplate(w, "auth-login", data)
 	if err != nil {
-		h.logger.Error("Failed to render login page", "error", err)
+		h.logger.Error("Failed to render login page", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
@@ -437,7 +438,7 @@ func (h *Handler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
 
 	err = templates.GetTemplates().AuthRegister.ExecuteTemplate(w, "auth-register", data)
 	if err != nil {
-		h.logger.Error("Failed to render register page", "error", err)
+		h.logger.Error("Failed to render register page", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
@@ -463,7 +464,7 @@ func (h *Handler) handleCheckUsername(w http.ResponseWriter, r *http.Request) {
 	// Check if username exists
 	exists, err := h.service.repo.UsernameExists(r.Context(), req.Username)
 	if err != nil {
-		h.logger.Error("Failed to check username", "error", err)
+		h.logger.Error("Failed to check username", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check username")
 		return
 	}
@@ -492,7 +493,7 @@ func (h *Handler) handleCheckEmail(w http.ResponseWriter, r *http.Request) {
 	// Check if email exists
 	exists, err := h.service.repo.EmailExists(r.Context(), req.Email)
 	if err != nil {
-		h.logger.Error("Failed to check email", "error", err)
+		h.logger.Error("Failed to check email", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check email")
 		return
 	}

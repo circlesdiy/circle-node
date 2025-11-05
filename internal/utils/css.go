@@ -3,25 +3,25 @@ package utils
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 
 	"circles.diy/internal/config"
+	"go.uber.org/zap"
 )
 
-// substituteCSSVariables replaces CSS variables with their actual values 
+// substituteCSSVariables replaces CSS variables with their actual values
 // in media query contexts only, leaving other CSS custom properties intact
 func substituteCSSVariables(cssContent string) (string, error) {
 	// Get the breakpoint variable mappings
 	variables := config.GetVariableMap()
-	
+
 	// Regex to match @media rules that contain CSS variables
 	// This matches: @media (...var(--breakpoint-name)...)
 	mediaQueryRegex := regexp.MustCompile(`(@media[^{]*var\(--breakpoint-[^}]*\)[^{]*\{)`)
-	
+
 	// Find all media query blocks that contain CSS variables
 	result := mediaQueryRegex.ReplaceAllStringFunc(cssContent, func(mediaQuery string) string {
 		// Replace each CSS variable in this media query
@@ -33,16 +33,16 @@ func substituteCSSVariables(cssContent string) (string, error) {
 		}
 		return processedQuery
 	})
-	
+
 	return result, nil
 }
 
-func BuildCSS() error {
+func BuildCSS(logger *zap.Logger) error {
 	// ITCSS Layer directories in correct specificity order
 	cssDirectories := []string{
 		"static/css/01-settings",
 		"static/css/02-tools",
-		"static/css/03-generic", 
+		"static/css/03-generic",
 		"static/css/04-elements",
 		"static/css/05-objects",
 		"static/css/06-components",
@@ -65,7 +65,6 @@ func BuildCSS() error {
 	// Process each ITCSS layer directory
 	for _, cssDir := range cssDirectories {
 		if _, err := os.Stat(cssDir); os.IsNotExist(err) {
-			log.Printf("CSS directory not found: %s, skipping", cssDir)
 			continue
 		}
 
@@ -76,7 +75,6 @@ func BuildCSS() error {
 		}
 
 		if len(files) == 0 {
-			log.Printf("No CSS files found in %s, skipping", cssDir)
 			continue
 		}
 
@@ -127,15 +125,14 @@ func BuildCSS() error {
 			}
 
 			file.Close()
-			log.Printf("Added %s to compiled CSS", cssFile)
 		}
 	}
 
-	log.Printf("CSS compiled successfully to %s", outputFile)
+	logger.Debug("CSS compiled successfully", zap.String("output", outputFile))
 	return nil
 }
 
-func WatchCSSFiles() {
+func WatchCSSFiles(logger *zap.Logger) {
 	cssDir := "static/css"
 	lastModTime := time.Time{}
 
@@ -158,11 +155,11 @@ func WatchCSSFiles() {
 		})
 
 		if err != nil {
-			log.Printf("Error watching CSS files: %v", err)
+			logger.Warn("error watching CSS files", zap.Error(err))
 		} else if hasChanges {
-			log.Println("CSS files changed, rebuilding...")
-			if err := BuildCSS(); err != nil {
-				log.Printf("Error rebuilding CSS: %v", err)
+			logger.Debug("CSS files changed, rebuilding...")
+			if err := BuildCSS(logger); err != nil {
+				logger.Error("error rebuilding CSS", zap.Error(err))
 			}
 		}
 

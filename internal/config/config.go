@@ -10,14 +10,14 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Redis    RedisConfig    `yaml:"redis"`
-	Auth     AuthConfig     `yaml:"auth"`
-	Security SecurityConfig `yaml:"security"`
-	Logging  LoggingConfig  `yaml:"logging"`
+	Server    ServerConfig    `yaml:"server"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Redis     RedisConfig     `yaml:"redis"`
+	Auth      AuthConfig      `yaml:"auth"`
+	Security  SecurityConfig  `yaml:"security"`
+	Logging   LoggingConfig   `yaml:"logging"`
 	Templates TemplatesConfig `yaml:"templates"`
-	Static   StaticConfig   `yaml:"static"`
+	Static    StaticConfig    `yaml:"static"`
 }
 
 type ServerConfig struct {
@@ -54,19 +54,19 @@ type RedisConfig struct {
 }
 
 type AuthConfig struct {
-	SessionDuration       time.Duration `yaml:"session_duration"`
-	RefreshTokenDuration  time.Duration `yaml:"refresh_token_duration"`
-	WebAuthnTimeout       time.Duration `yaml:"webauthn_timeout"`
-	WebAuthnRPName        string        `yaml:"webauthn_rp_name"`
-	WebAuthnRPID          string        `yaml:"webauthn_rp_id"`
-	WebAuthnRPOrigin      string        `yaml:"webauthn_rp_origin"`
+	SessionDuration      time.Duration `yaml:"session_duration"`
+	RefreshTokenDuration time.Duration `yaml:"refresh_token_duration"`
+	WebAuthnTimeout      time.Duration `yaml:"webauthn_timeout"`
+	WebAuthnRPName       string        `yaml:"webauthn_rp_name"`
+	WebAuthnRPID         string        `yaml:"webauthn_rp_id"`
+	WebAuthnRPOrigin     string        `yaml:"webauthn_rp_origin"`
 }
 
 type SecurityConfig struct {
-	CSRFSecret         string        `yaml:"csrf_secret"`
-	RateLimitRequests  int           `yaml:"rate_limit_requests"`
-	RateLimitWindow    time.Duration `yaml:"rate_limit_window"`
-	BCryptCost         int           `yaml:"bcrypt_cost"`
+	CSRFSecret        string        `yaml:"csrf_secret"`
+	RateLimitRequests int           `yaml:"rate_limit_requests"`
+	RateLimitWindow   time.Duration `yaml:"rate_limit_window"`
+	BCryptCost        int           `yaml:"bcrypt_cost"`
 }
 
 type LoggingConfig struct {
@@ -245,8 +245,8 @@ func (c *Config) applyEnvOverrides() {
 func (c *Config) Validate() error {
 	// Validate environment
 	if c.Server.Environment != "development" &&
-	   c.Server.Environment != "staging" &&
-	   c.Server.Environment != "production" {
+		c.Server.Environment != "staging" &&
+		c.Server.Environment != "production" {
 		return fmt.Errorf("invalid environment: %s", c.Server.Environment)
 	}
 
@@ -282,7 +282,7 @@ func (c *Config) Validate() error {
 
 	// Warn about default CSRF secret in production
 	if c.Server.Environment == "production" &&
-	   c.Security.CSRFSecret == "change-this-to-a-random-32-byte-string" {
+		c.Security.CSRFSecret == "change-this-to-a-random-32-byte-string" {
 		return fmt.Errorf("must set a secure CSRF secret in production")
 	}
 

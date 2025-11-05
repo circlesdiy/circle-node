@@ -49,10 +49,9 @@ func NewPostgres(ctx context.Context, cfg *config.Config, logger *zap.Logger) (*
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	logger.Info("database connection established",
-		zap.String("host", cfg.Database.Host),
-		zap.Int("port", cfg.Database.Port),
-		zap.String("database", cfg.Database.Database),
+	logger.Info("📊 postgres",
+		zap.String("db", cfg.Database.Database),
+		zap.Int("pool", cfg.Database.MaxConnections),
 	)
 
 	return &Postgres{
@@ -69,7 +68,7 @@ func (p *Postgres) Close() {
 
 // RunMigrations runs all embedded SQL migrations
 func (p *Postgres) RunMigrations(ctx context.Context) error {
-	p.logger.Info("starting database migrations")
+	p.logger.Debug("starting database migrations")
 
 	// Create migrations table if it doesn't exist
 	if err := p.createMigrationsTable(ctx); err != nil {
@@ -104,7 +103,7 @@ func (p *Postgres) RunMigrations(ctx context.Context) error {
 			continue
 		}
 
-		p.logger.Info("applying migration", zap.String("file", filename))
+		p.logger.Debug("applying migration", zap.String("file", filename))
 
 		// Read migration file
 		content, err := migrationsFS.ReadFile("migrations/" + filename)
@@ -138,10 +137,10 @@ func (p *Postgres) RunMigrations(ctx context.Context) error {
 			return fmt.Errorf("failed to commit migration %s: %w", filename, err)
 		}
 
-		p.logger.Info("successfully applied migration", zap.String("file", filename))
+		p.logger.Debug("successfully applied migration", zap.String("file", filename))
 	}
 
-	p.logger.Info("database migrations completed", zap.Int("total", len(migrationFiles)))
+	p.logger.Debug("database migrations completed", zap.Int("total", len(migrationFiles)))
 	return nil
 }
 

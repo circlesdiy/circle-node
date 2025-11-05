@@ -6,22 +6,23 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"circles.diy/internal/domain"
+	domainauth "circles.diy/internal/domain/auth"
 	"github.com/fxamacker/webauthn"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // Service handles authentication business logic
 type Service struct {
 	repo   *Repository
 	config *WebAuthnConfig
-	logger *slog.Logger
+	logger *zap.Logger
 }
 
 // WebAuthnConfig holds WebAuthn configuration
@@ -31,7 +32,7 @@ type WebAuthnConfig struct {
 }
 
 // NewService creates a new authentication service
-func NewService(repo *Repository, config *WebAuthnConfig, logger *slog.Logger) *Service {
+func NewService(repo *Repository, config *WebAuthnConfig, logger *zap.Logger) *Service {
 	return &Service{
 		repo:   repo,
 		config: config,
@@ -62,7 +63,7 @@ func DefaultWebAuthnConfig() *WebAuthnConfig {
 
 // BeginRegistration starts the WebAuthn registration process
 func (s *Service) BeginRegistration(ctx context.Context, username, email string) (*webauthn.PublicKeyCredentialCreationOptions, error) {
-	s.logger.Info("Beginning WebAuthn registration", "username", username)
+	s.logger.Info("Beginning WebAuthn registration", zap.String("username", username))
 
 	// Check if user already exists
 	existingUser, err := s.repo.GetUserByUsername(ctx, username)
@@ -99,7 +100,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 	authUser := NewUser(domainUser)
 
 	// Convert to WebAuthn user (with empty credentials for registration)
-	webauthnUser := authUser.ToWebAuthnUser([]WebAuthnCredential{})
+	webauthnUser := authUser.ToWebAuthnUser([]domainauth.WebAuthnCredential{})
 
 	// Create WebAuthn creation options using fxamacker API
 	options, err := webauthn.NewAttestationOptions(s.config.Config, webauthnUser)
@@ -110,7 +111,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 	// Store challenge (no UserID yet since user doesn't exist in DB during registration)
 	// Use RawURLEncoding (without padding) to match what the WebAuthn client sends
 	challengeStr := base64.RawURLEncoding.EncodeToString(options.Challenge)
-	challengeRecord := &AuthenticationChallenge{
+	challengeRecord := &domainauth.AuthenticationChallenge{
 		ID:        GenerateID(),
 		UserID:    nil, // User doesn't exist yet - will be created after challenge is completed
 		Challenge: challengeStr,
@@ -128,7 +129,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		return nil, fmt.Errorf("failed to store challenge: %w", err)
 	}
 
-	s.logger.Info("Registration challenge created", "user_id", domainUser.ID, "challenge_id", challengeRecord.ID, "challenge_str", challengeStr)
+	s.logger.Info("Registration challenge created", zap.String("user_id", domainUser.ID), zap.String("challenge_id", challengeRecord.ID), zap.String("challenge_str", challengeStr))
 
 	return options, nil
 }
@@ -140,7 +141,7 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 	// Get client data (already parsed by fxamacker)
 	clientData := response.ClientData
 
-	s.logger.Info("Looking up challenge", "challenge", clientData.Challenge)
+	s.logger.Info("Looking up challenge", zap.String("challenge", clientData.Challenge))
 
 	challenge, err := s.repo.GetAuthenticationChallenge(ctx, clientData.Challenge)
 	if err != nil {
@@ -195,14 +196,14 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 	// Create default profile for the user
 	profileID, err := s.repo.CreateDefaultProfile(ctx, domainUser.ID, domainUser.Username)
 	if err != nil {
-		s.logger.Warn("Failed to create default profile", "error", err, "user_id", domainUser.ID)
+		s.logger.Warn("Failed to create default profile", zap.Error(err), zap.String("user_id", domainUser.ID))
 		// Don't fail registration if profile creation fails
 	} else {
-		s.logger.Info("Created default profile", "profile_id", profileID, "user_id", domainUser.ID)
+		s.logger.Info("Created default profile", zap.String("profile_id", profileID), zap.String("user_id", domainUser.ID))
 	}
 
 	// Create credential
-	credential := &WebAuthnCredential{
+	credential := &domainauth.WebAuthnCredential{
 		ID:                GenerateID(),
 		UserID:            domainUser.ID,
 		CredentialID:      response.ID,
@@ -224,15 +225,29 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 	// Create device record
 	device := s.createDeviceFromRequest(domainUser.ID, r)
 	if err := s.repo.CreateDevice(ctx, device); err != nil {
-		s.logger.Warn("Failed to create device record", "error", err)
+		s.logger.Warn("Failed to create device record", zap.Error(err))
+	} else {
+		// Link device to credential
+		deviceCred := &domainauth.DeviceCredential{
+			ID:           GenerateID(),
+			DeviceID:     device.ID,
+			CredentialID: credential.ID,
+			LinkedAt:     time.Now(),
+			LastUsedAt:   nil, // Will be set on first authentication use
+		}
+		if err := s.repo.LinkDeviceCredential(ctx, deviceCred); err != nil {
+			s.logger.Warn("Failed to link device to credential", zap.Error(err), zap.String("device_id", device.ID), zap.String("credential_id", credential.ID))
+		} else {
+			s.logger.Info("Linked device to credential", zap.String("device_id", device.ID), zap.String("credential_id", credential.ID))
+		}
 	}
 
 	// Complete challenge
 	if err := s.repo.CompleteAuthenticationChallenge(ctx, challenge.ID); err != nil {
-		s.logger.Warn("Failed to complete challenge", "error", err)
+		s.logger.Warn("Failed to complete challenge", zap.Error(err))
 	}
 
-	s.logger.Info("Registration completed successfully", "user_id", domainUser.ID, "credential_id", credential.ID)
+	s.logger.Info("Registration completed successfully", zap.String("user_id", domainUser.ID), zap.String("credential_id", credential.ID))
 
 	return domainUser, nil
 }
@@ -241,7 +256,7 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 
 // BeginAuthentication starts the WebAuthn authentication process
 func (s *Service) BeginAuthentication(ctx context.Context, username string) (*webauthn.PublicKeyCredentialRequestOptions, error) {
-	s.logger.Info("Beginning WebAuthn authentication", "username", username)
+	s.logger.Info("Beginning WebAuthn authentication", zap.String("username", username))
 
 	// Get user
 	user, err := s.repo.GetUserByUsername(ctx, username)
@@ -274,7 +289,7 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 	}
 
 	// Store challenge
-	challengeRecord := &AuthenticationChallenge{
+	challengeRecord := &domainauth.AuthenticationChallenge{
 		ID:        GenerateID(),
 		UserID:    &user.ID,
 		Challenge: base64.RawURLEncoding.EncodeToString(options.Challenge),
@@ -290,13 +305,13 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 		return nil, fmt.Errorf("failed to store challenge: %w", err)
 	}
 
-	s.logger.Info("Authentication challenge created", "user_id", user.ID, "challenge_id", challengeRecord.ID)
+	s.logger.Info("Authentication challenge created", zap.String("user_id", user.ID), zap.String("challenge_id", challengeRecord.ID))
 
 	return options, nil
 }
 
 // FinishAuthentication completes the WebAuthn authentication process
-func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.PublicKeyCredentialAssertion, r *http.Request) (*Session, error) {
+func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.PublicKeyCredentialAssertion, r *http.Request) (*domainauth.Session, error) {
 	s.logger.Info("Finishing WebAuthn authentication")
 
 	// Get client data (already parsed by fxamacker)
@@ -338,7 +353,7 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 
 	// Update sign count (replay attack protection)
 	newSignCount := int(response.AuthnData.Counter)
-	s.logger.Info("Sign count check", "new", newSignCount, "stored", credential.SignCount)
+	s.logger.Debug("Sign count check", zap.Int("new", newSignCount), zap.Int("stored", credential.SignCount))
 
 	// Only enforce sign count increment if the stored count is > 0
 	// Some authenticators (like 1Password) may not support sign counts or start at 0
@@ -356,12 +371,32 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// Complete challenge
-	if err := s.repo.CompleteAuthenticationChallenge(ctx, challenge.ID); err != nil {
-		s.logger.Warn("Failed to complete challenge", "error", err)
+	// Link device to credential (if we have a device)
+	if session.DeviceID != nil {
+		// Try to link or update device-credential association
+		deviceCred := &domainauth.DeviceCredential{
+			ID:           GenerateID(),
+			DeviceID:     *session.DeviceID,
+			CredentialID: credential.ID,
+			LinkedAt:     time.Now(),
+			LastUsedAt:   &session.CreatedAt,
+		}
+
+		// ON CONFLICT DO NOTHING in the query will handle if link already exists
+		if err := s.repo.LinkDeviceCredential(ctx, deviceCred); err != nil {
+			s.logger.Debug("Device-credential link exists or failed", zap.Error(err))
+		}
+
+		// Update last used timestamp
+		if err := s.repo.UpdateDeviceCredentialLastUsed(ctx, *session.DeviceID, credential.ID, time.Now()); err != nil {
+			s.logger.Debug("Failed to update device-credential last used", zap.Error(err))
+		}
 	}
 
-	s.logger.Info("Authentication completed successfully", "user_id", user.ID, "session_id", session.ID)
+	// Complete challenge
+	if err := s.repo.CompleteAuthenticationChallenge(ctx, challenge.ID); err != nil {
+		s.logger.Warn("Failed to complete challenge", zap.Error(err))
+	}
 
 	return session, nil
 }
@@ -369,13 +404,13 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 // Session management
 
 // CreateSession creates a new session for a user
-func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.Request) (*Session, error) {
-	sessionToken, err := GenerateSecureToken(64)
+func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.Request) (*domainauth.Session, error) {
+	sessionToken, err := domainauth.GenerateSecureToken(64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate session token: %w", err)
 	}
 
-	refreshToken, err := GenerateSecureToken(64)
+	refreshToken, err := domainauth.GenerateSecureToken(64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -391,24 +426,35 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 	if device == nil {
 		device = s.createDeviceFromRequest(user.ID, r)
 		if err := s.repo.CreateDevice(ctx, device); err != nil {
-			s.logger.Warn("Failed to create device record", "error", err)
+			// If device creation fails (likely duplicate), try to fetch it again
+			s.logger.Debug("Device creation failed, attempting to fetch existing device", zap.Error(err))
+			device, fetchErr := s.repo.GetDeviceByFingerprint(ctx, user.ID, fingerprint)
+			if fetchErr != nil {
+				s.logger.Warn("Failed to create or fetch device record", zap.Error(err), zap.Error(fetchErr))
+			} else if device != nil {
+				deviceID = &device.ID
+				// Update last seen since we just used it
+				if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now()); err != nil {
+					s.logger.Warn("Failed to update device last seen", zap.Error(err))
+				}
+			}
 		} else {
 			deviceID = &device.ID
 		}
 	} else {
 		deviceID = &device.ID
 		if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now()); err != nil {
-			s.logger.Warn("Failed to update device last seen", "error", err)
+			s.logger.Warn("Failed to update device last seen", zap.Error(err))
 		}
 	}
 
 	// Get user's active profile
 	activeProfileID, err := s.repo.GetUserActiveProfile(ctx, user.ID)
 	if err != nil {
-		s.logger.Warn("Failed to get active profile", "error", err, "user_id", user.ID)
+		s.logger.Warn("Failed to get active profile", zap.Error(err), zap.String("user_id", user.ID))
 	}
 
-	session := &Session{
+	session := &domainauth.Session{
 		ID:                         GenerateID(),
 		UserID:                     user.ID,
 		DeviceID:                   deviceID,
@@ -418,10 +464,10 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 		RefreshToken:               refreshToken,
 		IPAddress:                  getClientIP(r),
 		UserAgent:                  r.UserAgent(),
-		AuthLevel:                  AuthLevelBasic,
+		AuthLevel:                  int(domainauth.AuthLevelBasic),
 		CreatedAt:                  time.Now(),
 		LastActivityAt:             time.Now(),
-		ExpiresAt:                  time.Now().Add(DefaultSessionDuration),
+		ExpiresAt:                  time.Now().Add(domainauth.DefaultSessionDuration),
 	}
 
 	if err := s.repo.CreateSession(ctx, session); err != nil {
@@ -432,7 +478,7 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 }
 
 // ValidateSession validates a session token and returns the session if valid
-func (s *Service) ValidateSession(ctx context.Context, token string) (*Session, *domain.User, error) {
+func (s *Service) ValidateSession(ctx context.Context, token string) (*domainauth.Session, *domain.User, error) {
 	session, err := s.repo.GetSessionByToken(ctx, token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get session: %w", err)
@@ -444,7 +490,7 @@ func (s *Service) ValidateSession(ctx context.Context, token string) (*Session, 
 
 	// Update last activity
 	if err := s.repo.UpdateSessionActivity(ctx, session.ID, time.Now()); err != nil {
-		s.logger.Warn("Failed to update session activity", "error", err)
+		s.logger.Warn("Failed to update session activity", zap.Error(err))
 	}
 
 	// Get user
@@ -473,8 +519,8 @@ func (s *Service) generateDeviceFingerprint(r *http.Request) string {
 }
 
 // createDeviceFromRequest creates a device record from HTTP request
-func (s *Service) createDeviceFromRequest(userID string, r *http.Request) *Device {
-	return &Device{
+func (s *Service) createDeviceFromRequest(userID string, r *http.Request) *domainauth.Device {
+	return &domainauth.Device{
 		ID:                GenerateID(),
 		UserID:            userID,
 		DeviceFingerprint: s.generateDeviceFingerprint(r),
@@ -568,14 +614,14 @@ func GenerateID() string {
 
 // RunCleanup performs cleanup of expired records
 func (s *Service) RunCleanup(ctx context.Context) error {
-	s.logger.Info("Running authentication cleanup")
+	s.logger.Debug("running auth cleanup")
 
 	if err := s.repo.CleanupExpiredChallenges(ctx); err != nil {
-		s.logger.Warn("Failed to cleanup expired challenges", "error", err)
+		s.logger.Warn("cleanup challenges failed", zap.Error(err))
 	}
 
 	if err := s.repo.CleanupExpiredSessions(ctx); err != nil {
-		s.logger.Warn("Failed to cleanup expired sessions", "error", err)
+		s.logger.Warn("cleanup sessions failed", zap.Error(err))
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package templates
 
 import (
 	"html/template"
-	"log"
 )
 
 type Templates struct {
@@ -74,7 +73,6 @@ func InitTemplates() error {
 		return err
 	}
 
-	log.Println("All templates loaded successfully from embedded filesystem")
 	return nil
 }
 

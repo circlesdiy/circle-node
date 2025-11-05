@@ -2,40 +2,44 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"circles.diy/internal/app"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/middleware"
 	"circles.diy/internal/templates"
 	"circles.diy/internal/utils"
+	"circles.diy/internal/version"
 	"go.uber.org/zap"
 )
 
 func main() {
+	startTime := time.Now()
 	ctx := context.Background()
 
 	// Initialize application
 	application, err := app.New(ctx)
 	if err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
+		fmt.Fprintf(os.Stderr, "Failed to initialize application: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Build CSS
 	if application.Config.IsDevelopment() && application.Config.Static.HotReload {
-		application.Logger.Info("starting CSS file watcher...")
-		go utils.WatchCSSFiles()
+		application.Logger.Debug("starting CSS file watcher...")
+		go utils.WatchCSSFiles(application.Logger)
 	} else {
-		application.Logger.Info("building CSS...")
-		if err := utils.BuildCSS(); err != nil {
+		application.Logger.Debug("building CSS...")
+		if err := utils.BuildCSS(application.Logger); err != nil {
 			application.Logger.Fatal("failed to build CSS", zap.Error(err))
 		}
 	}
 
 	// Initialize templates
-	application.Logger.Info("initializing templates...")
+	application.Logger.Debug("initializing templates...")
 	if err := templates.InitTemplates(); err != nil {
 		application.Logger.Fatal("failed to initialize templates", zap.Error(err))
 	}
@@ -76,8 +80,31 @@ func main() {
 	// Setup HTTP server
 	application.SetupHTTPServer(handler)
 
-	// Log available routes
-	logRoutes(application.Logger)
+	// Log startup information
+	logStartupInfo(application, startTime)
+
+	// Start background cleanup goroutine for expired auth records
+	go func() {
+		application.Logger.Debug("🧹 cleanup job started (runs hourly)")
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+
+		// Run cleanup immediately on startup
+		cleanupCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		if err := application.AuthService.RunCleanup(cleanupCtx); err != nil {
+			application.Logger.Warn("cleanup failed", zap.Error(err))
+		}
+		cancel()
+
+		// Then run periodically
+		for range ticker.C {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			if err := application.AuthService.RunCleanup(cleanupCtx); err != nil {
+				application.Logger.Warn("cleanup failed", zap.Error(err))
+			}
+			cancel()
+		}
+	}()
 
 	// Run application (blocks until shutdown signal)
 	if err := application.Run(); err != nil {
@@ -149,18 +176,56 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	return mux
 }
 
-// logRoutes logs all available routes
-func logRoutes(logger *zap.Logger) {
-	logger.Info("routes configured",
-		zap.Strings("routes", []string{
-			"/ - Manifesto landing page",
-			"/dashboard - Dashboard with templates + HTMX",
-			"/profile - Profile page with templates + HTMX",
-			"/circles - Circles page with templates + HTMX",
-			"/chat - Chat page with templates + HTMX",
-			"/gather - Events page with templates + HTMX",
-			"/marketplace - Marketplace page with templates + HTMX",
-			"/health - Health check endpoint",
-		}),
+// logStartupInfo logs concise startup information
+func logStartupInfo(app *app.App, startTime time.Time) {
+	logger := app.Logger
+	cfg := app.Config
+
+	elapsed := time.Since(startTime)
+
+	// Single compact startup message
+	logger.Info("🔵 Started circles.diy",
+		zap.String("version", version.Version),
+		zap.String("environment", cfg.Server.Environment),
+		zap.String("url", formatServerURL(cfg.Server.Port, cfg.IsDevelopment())),
+		zap.Int("pid", os.Getpid()),
+		zap.String("started", formatDuration(elapsed)),
 	)
+
+	//	[2025-11-05 10:30:45] INFO Starting MyApp v2.3.1
+	//
+	// [2025-11-05 10:30:45] INFO Environment: production
+	// [2025-11-05 10:30:45] INFO Node.js v20.10.0
+	// [2025-11-05 10:30:46] INFO Database connected: postgres://db.example.com:5432/myapp
+	// [2025-11-05 10:30:46] INFO Redis connected: redis://cache:6379
+	// [2025-11-05 10:30:46] INFO Loaded 47 routes
+	// [2025-11-05 10:30:46] INFO Server listening on http://0.0.0.0:8080 (PID: 1234)
+	// [2025-11-05 10:30:46] INFO Startup complete in 1.2s
+}
+
+// maskPassword formats database URL with masked password
+func maskPassword(host string, port int, user, database string) string {
+	return fmt.Sprintf("postgres://%s:***@%s:%d/%s", user, host, port, database)
+}
+
+// formatRedisURL formats Redis connection URL
+func formatRedisURL(host string, port, database int) string {
+	return fmt.Sprintf("redis://%s:%d/%d", host, port, database)
+}
+
+// formatServerURL formats the server listening URL
+func formatServerURL(port string, isDev bool) string {
+	protocol := "http"
+	if !isDev {
+		protocol = "https"
+	}
+	return fmt.Sprintf("%s://localhost:%s", protocol, port)
+}
+
+// formatDuration formats duration in a human-readable way
+func formatDuration(d time.Duration) string {
+	if d < time.Second {
+		return fmt.Sprintf("%dms", d.Milliseconds())
+	}
+	return fmt.Sprintf("%.2fs", d.Seconds())
 }

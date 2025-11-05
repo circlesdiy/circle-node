@@ -36,9 +36,8 @@ func NewRedis(ctx context.Context, cfg *config.Config, logger *zap.Logger) (*Red
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
-	logger.Info("redis connection established",
-		zap.String("addr", cfg.RedisAddr()),
-		zap.Int("database", cfg.Redis.Database),
+	logger.Info("💾 redis",
+		zap.Int("db", cfg.Redis.Database),
 	)
 
 	return &Redis{

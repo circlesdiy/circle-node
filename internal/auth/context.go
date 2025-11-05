@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"circles.diy/internal/domain"
+	domainauth "circles.diy/internal/domain/auth"
 )
 
 type contextKey string
@@ -29,13 +30,13 @@ func GetUser(ctx context.Context) *domain.User {
 }
 
 // WithSession adds a session to the request context
-func WithSession(ctx context.Context, session *Session) context.Context {
+func WithSession(ctx context.Context, session *domainauth.Session) context.Context {
 	return context.WithValue(ctx, sessionContextKey, session)
 }
 
 // GetSession retrieves the session from the request context
-func GetSession(ctx context.Context) *Session {
-	if session, ok := ctx.Value(sessionContextKey).(*Session); ok {
+func GetSession(ctx context.Context) *domainauth.Session {
+	if session, ok := ctx.Value(sessionContextKey).(*domainauth.Session); ok {
 		return session
 	}
 	return nil

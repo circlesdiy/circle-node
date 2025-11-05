@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,11 +17,11 @@ import (
 
 // App represents the application with all its dependencies
 type App struct {
-	Config      *config.Config
-	Logger      *zap.Logger
-	Postgres    *storage.Postgres
-	Redis       *storage.Redis
-	Server      *http.Server
+	Config   *config.Config
+	Logger   *zap.Logger
+	Postgres *storage.Postgres
+	Redis    *storage.Redis
+	Server   *http.Server
 
 	// Authentication components
 	AuthService *auth.Service
@@ -43,27 +42,27 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
-	logger.Info("starting application",
+	logger.Debug("starting application",
 		zap.String("environment", cfg.Server.Environment),
 		zap.String("port", cfg.Server.Port),
 	)
 
 	// Initialize PostgreSQL
-	logger.Info("connecting to database...")
+	logger.Debug("connecting to database...")
 	postgres, err := storage.NewPostgres(ctx, cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	// Run migrations
-	logger.Info("running database migrations...")
+	logger.Debug("running database migrations...")
 	if err := postgres.RunMigrations(ctx); err != nil {
 		postgres.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// Initialize Redis
-	logger.Info("connecting to redis...")
+	logger.Debug("connecting to redis...")
 	redis, err := storage.NewRedis(ctx, cfg, logger)
 	if err != nil {
 		postgres.Close()
@@ -71,17 +70,12 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	// Initialize authentication system
-	logger.Info("initializing authentication system...")
+	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
 	authConfig := auth.DefaultWebAuthnConfig()
 
-	// Create slog logger for auth system (conversion from zap)
-	slogLogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
-	authService := auth.NewService(authRepo, authConfig, slogLogger)
-	authHandler := auth.NewHandler(authService, slogLogger)
+	authService := auth.NewService(authRepo, authConfig, logger)
+	authHandler := auth.NewHandler(authService, logger)
 
 	app := &App{
 		Config:      cfg,
@@ -118,7 +112,7 @@ func (a *App) Run() error {
 	// Start HTTP server in a goroutine
 	go func() {
 		a.Logger.Info("starting http server",
-			zap.String("addr", a.Server.Addr),
+			zap.String("port", a.Server.Addr),
 		)
 		serverErrors <- a.Server.ListenAndServe()
 	}()
@@ -207,8 +201,18 @@ func initLogger(cfg *config.Config) (*zap.Logger, error) {
 
 	if cfg.IsDevelopment() {
 		zapConfig = zap.NewDevelopmentConfig()
-		zapConfig.EncoderConfig.TimeKey = "timestamp"
-		zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		// Use console encoding for better readability in development
+		zapConfig.Encoding = "console"
+		zapConfig.EncoderConfig.TimeKey = "T"
+		zapConfig.EncoderConfig.LevelKey = "L"
+		zapConfig.EncoderConfig.NameKey = "N"
+		zapConfig.EncoderConfig.CallerKey = "" // Disable caller for cleaner output
+		zapConfig.EncoderConfig.MessageKey = "M"
+		zapConfig.EncoderConfig.StacktraceKey = "S"
+		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		zapConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("15:04:05")
+		zapConfig.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+		zapConfig.EncoderConfig.ConsoleSeparator = " "
 	} else {
 		zapConfig = zap.NewProductionConfig()
 	}
@@ -225,13 +229,6 @@ func initLogger(cfg *config.Config) (*zap.Logger, error) {
 		zapConfig.Level = zap.NewAtomicLevelAt(zap.ErrorLevel)
 	default:
 		zapConfig.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
-	}
-
-	// Set encoding format
-	if cfg.Logging.Format == "console" {
-		zapConfig.Encoding = "console"
-	} else {
-		zapConfig.Encoding = "json"
 	}
 
 	// Set output paths

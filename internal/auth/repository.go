@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"circles.diy/internal/domain"
+	domainauth "circles.diy/internal/domain/auth"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -174,7 +175,7 @@ func (r *Repository) GetUserActiveProfile(ctx context.Context, userID string) (*
 // WebAuthn Credential operations
 
 // CreateWebAuthnCredential stores a new WebAuthn credential
-func (r *Repository) CreateWebAuthnCredential(ctx context.Context, cred *WebAuthnCredential) error {
+func (r *Repository) CreateWebAuthnCredential(ctx context.Context, cred *domainauth.WebAuthnCredential) error {
 	query := `
 		INSERT INTO webauthn_credentials (
 			id, user_id, credential_id, public_key, credential_type, sign_count,
@@ -192,7 +193,7 @@ func (r *Repository) CreateWebAuthnCredential(ctx context.Context, cred *WebAuth
 }
 
 // GetWebAuthnCredentialsByUserID retrieves all credentials for a user
-func (r *Repository) GetWebAuthnCredentialsByUserID(ctx context.Context, userID string) ([]WebAuthnCredential, error) {
+func (r *Repository) GetWebAuthnCredentialsByUserID(ctx context.Context, userID string) ([]domainauth.WebAuthnCredential, error) {
 	query := `
 		SELECT id, user_id, credential_id, public_key, credential_type, sign_count,
 			   transports, aaguid, attestation_format, attestation_object,
@@ -207,9 +208,9 @@ func (r *Repository) GetWebAuthnCredentialsByUserID(ctx context.Context, userID 
 	}
 	defer rows.Close()
 
-	var credentials []WebAuthnCredential
+	var credentials []domainauth.WebAuthnCredential
 	for rows.Next() {
-		var cred WebAuthnCredential
+		var cred domainauth.WebAuthnCredential
 		var lastUsedAt, revokedAt sql.NullTime
 
 		err := rows.Scan(
@@ -237,7 +238,7 @@ func (r *Repository) GetWebAuthnCredentialsByUserID(ctx context.Context, userID 
 }
 
 // GetWebAuthnCredentialByID retrieves a specific credential by ID
-func (r *Repository) GetWebAuthnCredentialByID(ctx context.Context, credentialID string) (*WebAuthnCredential, error) {
+func (r *Repository) GetWebAuthnCredentialByID(ctx context.Context, credentialID string) (*domainauth.WebAuthnCredential, error) {
 	query := `
 		SELECT id, user_id, credential_id, public_key, credential_type, sign_count,
 			   transports, aaguid, attestation_format, attestation_object,
@@ -245,7 +246,7 @@ func (r *Repository) GetWebAuthnCredentialByID(ctx context.Context, credentialID
 		FROM webauthn_credentials
 		WHERE credential_id = $1 AND revoked_at IS NULL`
 
-	var cred WebAuthnCredential
+	var cred domainauth.WebAuthnCredential
 	var lastUsedAt, revokedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, credentialID).Scan(
@@ -286,7 +287,7 @@ func (r *Repository) UpdateWebAuthnCredentialSignCount(ctx context.Context, cred
 // Device operations
 
 // CreateDevice creates a new device record
-func (r *Repository) CreateDevice(ctx context.Context, device *Device) error {
+func (r *Repository) CreateDevice(ctx context.Context, device *domainauth.Device) error {
 	query := `
 		INSERT INTO devices (
 			id, user_id, device_fingerprint, friendly_name, device_type,
@@ -302,14 +303,14 @@ func (r *Repository) CreateDevice(ctx context.Context, device *Device) error {
 }
 
 // GetDeviceByFingerprint retrieves a device by its fingerprint
-func (r *Repository) GetDeviceByFingerprint(ctx context.Context, userID, fingerprint string) (*Device, error) {
+func (r *Repository) GetDeviceByFingerprint(ctx context.Context, userID, fingerprint string) (*domainauth.Device, error) {
 	query := `
 		SELECT id, user_id, device_fingerprint, friendly_name, device_type,
 			   os, browser, is_trusted, last_verified_at, first_seen_at, last_seen_at, revoked_at
 		FROM devices
 		WHERE user_id = $1 AND device_fingerprint = $2 AND revoked_at IS NULL`
 
-	var device Device
+	var device domainauth.Device
 	var lastVerifiedAt, revokedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, userID, fingerprint).Scan(
@@ -342,10 +343,36 @@ func (r *Repository) UpdateDeviceLastSeen(ctx context.Context, deviceID string, 
 	return err
 }
 
+// DeviceCredential operations
+
+// LinkDeviceCredential creates a link between a device and a credential
+func (r *Repository) LinkDeviceCredential(ctx context.Context, deviceCred *domainauth.DeviceCredential) error {
+	query := `
+		INSERT INTO device_credentials (id, device_id, credential_id, linked_at)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (device_id, credential_id) DO NOTHING`
+
+	_, err := r.db.Exec(ctx, query,
+		deviceCred.ID, deviceCred.DeviceID, deviceCred.CredentialID, deviceCred.LinkedAt)
+
+	return err
+}
+
+// UpdateDeviceCredentialLastUsed updates the last used timestamp for a device credential link
+func (r *Repository) UpdateDeviceCredentialLastUsed(ctx context.Context, deviceID, credentialID string, lastUsed time.Time) error {
+	query := `
+		UPDATE device_credentials
+		SET last_used_at = $1
+		WHERE device_id = $2 AND credential_id = $3`
+
+	_, err := r.db.Exec(ctx, query, lastUsed, deviceID, credentialID)
+	return err
+}
+
 // Session operations
 
 // CreateSession creates a new user session
-func (r *Repository) CreateSession(ctx context.Context, session *Session) error {
+func (r *Repository) CreateSession(ctx context.Context, session *domainauth.Session) error {
 	query := `
 		INSERT INTO sessions (
 			id, user_id, device_id, active_profile_id, authenticated_credential_ids,
@@ -363,7 +390,7 @@ func (r *Repository) CreateSession(ctx context.Context, session *Session) error 
 }
 
 // GetSessionByToken retrieves a session by its token
-func (r *Repository) GetSessionByToken(ctx context.Context, token string) (*Session, error) {
+func (r *Repository) GetSessionByToken(ctx context.Context, token string) (*domainauth.Session, error) {
 	query := `
 		SELECT id, user_id, device_id, active_profile_id, authenticated_credential_ids,
 			   session_token, refresh_token, ip_address::text, user_agent, auth_level,
@@ -371,7 +398,7 @@ func (r *Repository) GetSessionByToken(ctx context.Context, token string) (*Sess
 		FROM sessions
 		WHERE session_token = $1 AND revoked_at IS NULL`
 
-	var session Session
+	var session domainauth.Session
 	var deviceID, activeProfileID sql.NullString
 	var revokedAt sql.NullTime
 
@@ -419,7 +446,7 @@ func (r *Repository) RevokeSession(ctx context.Context, sessionID string) error 
 // Authentication Challenge operations
 
 // CreateAuthenticationChallenge creates a new authentication challenge
-func (r *Repository) CreateAuthenticationChallenge(ctx context.Context, challenge *AuthenticationChallenge) error {
+func (r *Repository) CreateAuthenticationChallenge(ctx context.Context, challenge *domainauth.AuthenticationChallenge) error {
 	optionsJSON, err := json.Marshal(challenge.Options)
 	if err != nil {
 		return fmt.Errorf("failed to marshal challenge options: %w", err)
@@ -439,14 +466,14 @@ func (r *Repository) CreateAuthenticationChallenge(ctx context.Context, challeng
 }
 
 // GetAuthenticationChallenge retrieves a challenge by its challenge string
-func (r *Repository) GetAuthenticationChallenge(ctx context.Context, challengeStr string) (*AuthenticationChallenge, error) {
+func (r *Repository) GetAuthenticationChallenge(ctx context.Context, challengeStr string) (*domainauth.AuthenticationChallenge, error) {
 	query := `
 		SELECT id, user_id, challenge, type, required_credential_id, options,
 			   created_at, expires_at, completed_at
 		FROM authentication_challenges
 		WHERE challenge = $1`
 
-	var challenge AuthenticationChallenge
+	var challenge domainauth.AuthenticationChallenge
 	var userID, requiredCredentialID sql.NullString
 	var completedAt sql.NullTime
 	var optionsJSON []byte
@@ -490,7 +517,7 @@ func (r *Repository) CompleteAuthenticationChallenge(ctx context.Context, challe
 // Recovery Method operations
 
 // CreateRecoveryMethod creates a new recovery method
-func (r *Repository) CreateRecoveryMethod(ctx context.Context, method *RecoveryMethod) error {
+func (r *Repository) CreateRecoveryMethod(ctx context.Context, method *domainauth.RecoveryMethod) error {
 	query := `
 		INSERT INTO recovery_methods (
 			id, user_id, type, encrypted_secret, salt, is_verified,
@@ -506,7 +533,7 @@ func (r *Repository) CreateRecoveryMethod(ctx context.Context, method *RecoveryM
 }
 
 // GetRecoveryMethodsByUserID retrieves all recovery methods for a user
-func (r *Repository) GetRecoveryMethodsByUserID(ctx context.Context, userID string) ([]RecoveryMethod, error) {
+func (r *Repository) GetRecoveryMethodsByUserID(ctx context.Context, userID string) ([]domainauth.RecoveryMethod, error) {
 	query := `
 		SELECT id, user_id, type, encrypted_secret, salt, is_verified,
 			   remaining_uses, verified_at, last_used_at, expires_at, created_at, revoked_at
@@ -520,9 +547,9 @@ func (r *Repository) GetRecoveryMethodsByUserID(ctx context.Context, userID stri
 	}
 	defer rows.Close()
 
-	var methods []RecoveryMethod
+	var methods []domainauth.RecoveryMethod
 	for rows.Next() {
-		var method RecoveryMethod
+		var method domainauth.RecoveryMethod
 		var remainingUses sql.NullInt32
 		var verifiedAt, lastUsedAt, expiresAt, revokedAt sql.NullTime
 

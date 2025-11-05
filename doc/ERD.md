@@ -2,7 +2,6 @@ erDiagram
   User ||--o{ Profile : has
   User ||--o{ Session : has
   User ||--|| UserModeration : has
-  User ||--o{ ExternalIdentity : maps
   User ||--o{ WebAuthnCredential : has
   User ||--o{ Device : owns
   User ||--o{ RecoveryMethod : configured
@@ -74,21 +73,11 @@ erDiagram
     string Username UK
     string Email UK
     string AccountStatus
+    string ThemeMode
+    string ThemeRadius
     datetime CreatedAt
     datetime UpdatedAt
     datetime DeletedAt
-  }
-
-  ExternalIdentity {
-    string ID PK
-    string OwnerType
-    string OwnerID FK
-    string DID UK
-    string PublicKey
-    string Provider
-    string Proof
-    datetime CreatedAt
-    datetime UpdatedAt
   }
 
   WebAuthnCredential {
