@@ -1,6 +1,10 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"circles.diy/internal/utils"
+)
 
 type User struct {
 	ID     string `json:"id"`
@@ -9,6 +13,16 @@ type User struct {
 	Avatar string `json:"avatar"`
 	Bio    string `json:"bio"`
 	Banner string `json:"banner"`
+}
+
+// GetAvatar returns the avatar URL or fallback if empty
+func (u *User) GetAvatar() string {
+	return utils.GetAvatarURL(u.Avatar)
+}
+
+// GetBanner returns the banner URL or fallback if empty
+func (u *User) GetBanner() string {
+	return utils.GetBannerURL(u.Banner)
 }
 
 type ProfileStats struct {
@@ -42,4 +56,14 @@ type Profile struct {
 	IsConnected bool            `json:"is_connected"`           // Whether viewer is connected to this profile
 	IsOwner     bool            `json:"is_owner"`               // Whether viewer owns this profile
 	IsVerified  bool            `json:"is_verified,omitempty"`  // Future: verification badge
+}
+
+// GetAvatar returns the avatar URL or fallback if empty
+func (p *Profile) GetAvatar() string {
+	return utils.GetAvatarURL(p.AvatarURL)
+}
+
+// GetBanner returns the banner URL or fallback if empty
+func (p *Profile) GetBanner() string {
+	return utils.GetBannerURL(p.BannerURL)
 }

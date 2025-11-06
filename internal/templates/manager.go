@@ -17,6 +17,13 @@ type Templates struct {
 	Chat            *template.Template
 	Gather          *template.Template
 	Marketplace     *template.Template
+
+	// Components
+	Modal       *template.Template
+	Toast       *template.Template
+	CircleCard  *template.Template
+	CircleForm  *template.Template
+	EmptyState  *template.Template
 }
 
 var templates *Templates
@@ -69,6 +76,27 @@ func InitTemplates() error {
 	}
 
 	templates.Marketplace, err = parseTemplateFromEmbedded("marketplace", "html/pages/marketplace.html")
+	if err != nil {
+		return err
+	}
+
+	// Parse component templates
+	templates.Modal, err = parseTemplateFromEmbedded("modal", "html/components/modal.html")
+	if err != nil {
+		return err
+	}
+
+	templates.Toast, err = parseTemplateFromEmbedded("toast", "html/components/toast.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleCard, err = parseTemplateFromEmbedded("circle-card", "html/components/circle-card.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleForm, err = parseTemplateFromEmbedded("circle-form", "html/components/circle-form.html")
 	if err != nil {
 		return err
 	}

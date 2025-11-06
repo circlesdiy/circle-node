@@ -2,7 +2,7 @@
 <div class="circle-card" data-active="{{.Active}}" data-role="{{.UserRole}}"  >
     <div class="circle-card-header">
         <div class="circle-card-thumbnail-wrapper">
-            <img src="{{.Thumbnail}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
+            <img src="{{.GetThumbnail}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
             <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
                 {{if .Active}}{{.OnlineCount}} online{{end}}
             </div>
@@ -11,13 +11,9 @@
             {{if eq .UserRole "owner"}}Owner{{else if eq .UserRole "admin"}}Admin{{else}}Member{{end}}
         </div>
     </div>
-    
+
     <div class="circle-card-banner">
-        {{if .Banner}}
-        <img src="{{.Banner}}" alt="{{.Name}} banner" class="circle-banner" />
-        {{else}}
-        <div class="circle-banner-placeholder"></div>
-        {{end}}
+        <img src="{{.GetBanner}}" alt="{{.Name}} banner" class="circle-banner" />
     </div>
     
     <div class="circle-card-content">

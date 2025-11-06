@@ -1,0 +1,98 @@
+{{define "circle-form"}}
+<form class="circle-form" {{if .CircleID}}hx-post="/api/circles/{{.CircleID}}"{{else}}hx-post="/api/circles"{{end}} hx-swap="none">
+  <h2 class="modal-title">{{if .CircleID}}Edit Circle{{else}}Create a New Circle{{end}}</h2>
+  <p class="modal-description">{{if .CircleID}}Update your circle details{{else}}Start building your community{{end}}</p>
+
+  <div class="form-group">
+    <label class="form-label" for="circle-name">
+      Circle Name <span class="form-label-required">*</span>
+    </label>
+    <input
+      class="form-input"
+      type="text"
+      id="circle-name"
+      name="name"
+      value="{{.Name}}"
+      required
+      maxlength="255"
+      placeholder="Choose a memorable name"
+      autofocus
+    />
+    <span class="form-help">Required • Max 255 characters</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="circle-description">Description</label>
+    <textarea
+      class="form-input"
+      id="circle-description"
+      name="description"
+      rows="4"
+      maxlength="500"
+      placeholder="What's this circle about?"
+    >{{.Description}}</textarea>
+    <span class="form-help character-count" data-max="500">0 / 500 characters</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Visibility</label>
+    <div class="radio-group">
+      <label class="radio-option">
+        <input type="radio" name="visibility" value="public" {{if or (not .Visibility) (eq .Visibility "public")}}checked{{end}} />
+        <div class="radio-content">
+          <span class="radio-title">Public</span>
+          <span class="radio-description">Anyone can view and join</span>
+        </div>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="visibility" value="private" {{if eq .Visibility "private"}}checked{{end}} />
+        <div class="radio-content">
+          <span class="radio-title">Private</span>
+          <span class="radio-description">Invitation only</span>
+        </div>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="visibility" value="unlisted" {{if eq .Visibility "unlisted"}}checked{{end}} />
+        <div class="radio-content">
+          <span class="radio-title">Unlisted</span>
+          <span class="radio-description">Only those with the link can find it</span>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="checkbox-label">
+      <input type="checkbox" name="auto_mod_enabled" {{if .AutoModEnabled}}checked{{end}} />
+      <span>Enable auto-moderation</span>
+    </label>
+    <span class="form-help">Automatically filter inappropriate content</span>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-text" onclick="closeModal()">Cancel</button>
+    <button type="submit" class="btn btn-primary">
+      {{if .CircleID}}Save Changes{{else}}Create Circle{{end}}
+    </button>
+  </div>
+</form>
+
+<script>
+// Character counter for description
+(function() {
+  const textarea = document.getElementById('circle-description');
+  const counter = document.querySelector('.character-count');
+
+  if (textarea && counter) {
+    function updateCount() {
+      const length = textarea.value.length;
+      const max = textarea.getAttribute('maxlength');
+      counter.textContent = `${length} / ${max} characters`;
+    }
+
+    textarea.addEventListener('input', updateCount);
+    updateCount(); // Initial count
+  }
+})();
+</script>
+{{end}}

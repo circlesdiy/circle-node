@@ -1,5 +1,7 @@
 package models
 
+import "circles.diy/internal/utils"
+
 type Circle struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`
@@ -12,6 +14,16 @@ type Circle struct {
 	JoinedDate   string `json:"joined_date"`
 	LastActivity string `json:"last_activity"`
 	Active       bool   `json:"active"`
+}
+
+// GetThumbnail returns the thumbnail URL or fallback if empty
+func (c *Circle) GetThumbnail() string {
+	return utils.GetThumbnailURL(c.Thumbnail)
+}
+
+// GetBanner returns the banner URL or fallback if empty
+func (c *Circle) GetBanner() string {
+	return utils.GetBannerURL(c.Banner)
 }
 
 type Discussion struct {

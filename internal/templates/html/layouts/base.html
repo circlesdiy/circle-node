@@ -42,7 +42,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     {{block "head" .}}{{end}}
 </head>
-<body>
+<body hx-boost="true">
     <div class="page-container">
         {{template "header" .}}
         
@@ -51,8 +51,23 @@
         </main>
     </div>
 
+    <!-- Toast container for notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Modal container -->
+    <dialog id="modal" class="modal">
+            <div id="modal-body" class="modal-body">
+                <!-- Modal content will be loaded here -->
+            </div>
+    </div>
+
     <script src="/static/js/htmx.min.js"></script>
+    <!-- <script src="/static/js/htmx-helpers.js"></script> -->
     <script>
+        function closeModal(){
+            const element = document.getElementById('modal-content');
+            if (element.close) element.close()
+        }
 // Theme Manager Implementation - Global for all pages
 class ThemeManager {
     constructor() {
@@ -383,11 +398,15 @@ class HeaderScrollController {
     }
 }
 
+let themeManager;
+let useMenuManager;
+let scrollController;
+
 // Initialize controllers when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ThemeManager();
-    new UserMenuManager();
-    const scrollController = new HeaderScrollController();
+    if (!themeManager) themeManager = new ThemeManager();
+    if (!useMenuManager) useMenuManager = new UserMenuManager();
+    if (!scrollController) scrollController = new HeaderScrollController();
     
     // Register service worker for PWA functionality
     if ('serviceWorker' in navigator) {

@@ -95,8 +95,14 @@ func (h *CircleHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 // RegisterRoutes registers all circle routes with the mux
 func (h *CircleHandler) RegisterRoutes(mux *http.ServeMux, authHandler *auth.Handler) {
+	// Page routes
 	mux.HandleFunc("/circles", authHandler.RequireAuth(h.Handle))
 	mux.HandleFunc("/circles/", authHandler.RequireAuth(h.Handle))
+
+	// API routes for HTMX
+	mux.HandleFunc("/api/circles", authHandler.RequireAuth(h.handleAPICreateCircle))
+	mux.HandleFunc("/api/circles/form", authHandler.RequireAuth(h.handleAPICircleForm))
+	mux.HandleFunc("/api/circles/", authHandler.RequireAuth(h.handleAPICircleActions))
 }
 
 // handleListCircles shows the main circles page with user's circles and public circles
@@ -668,4 +674,301 @@ func (h *CircleHandler) handleRemoveMember(w http.ResponseWriter, r *http.Reques
 	// Return success
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Member removed successfully"))
+}
+
+// API Handlers for HTMX
+
+// handleAPICircleForm renders the circle form in a modal
+func (h *CircleHandler) handleAPICircleForm(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Check if this is for editing an existing circle
+	circleID := r.URL.Query().Get("id")
+
+	var data map[string]interface{}
+
+	if circleID != "" {
+		// Get the circle for editing
+		circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+		if err != nil {
+			h.logger.Error("failed to get circle",
+				zap.String("circle_id", circleID),
+				zap.Error(err),
+			)
+			RenderError(w, h.logger, http.StatusInternalServerError, "Failed to load circle")
+			return
+		}
+
+		if circle == nil {
+			RenderError(w, h.logger, http.StatusNotFound, "Circle not found")
+			return
+		}
+
+		data = map[string]interface{}{
+			"CircleID":       circle.ID,
+			"Name":           circle.Name,
+			"Description":    circle.Description,
+			"Visibility":     circle.Visibility,
+			"AutoModEnabled": circle.AutoModEnabled,
+		}
+	} else {
+		// New circle form
+		data = map[string]interface{}{
+			"CircleID":       "",
+			"Name":           "",
+			"Description":    "",
+			"Visibility":     "private",
+			"AutoModEnabled": false,
+		}
+	}
+
+	RenderFragment(w, h.logger, "circle-form", data)
+}
+
+// handleAPICreateCircle handles circle creation via HTMX
+func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Parse form
+	if err := r.ParseForm(); err != nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
+		return
+	}
+
+	name := strings.TrimSpace(r.FormValue("name"))
+	description := r.FormValue("description")
+	visibility := r.FormValue("visibility")
+	autoModEnabled := r.FormValue("auto_mod_enabled") == "on"
+
+	// Validate
+	if name == "" {
+		RenderValidationError(w, h.logger, "name", "Circle name is required")
+		return
+	}
+
+	// Create circle
+	circle, err := h.circleService.CreateCircle(
+		r.Context(),
+		name,
+		description,
+		visibility,
+		autoModEnabled,
+		profileID,
+	)
+	if err != nil {
+		h.logger.Error("failed to create circle",
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("circle created via API",
+		zap.String("circle_id", circle.ID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return success and redirect
+	RenderSuccess(w, h.logger, "Circle created successfully!")
+	SendHTMXRedirect(w, "/circles")
+}
+
+// handleAPICircleActions handles various circle API actions
+func (h *CircleHandler) handleAPICircleActions(w http.ResponseWriter, r *http.Request) {
+	// Extract circle ID from path /api/circles/{id}/...
+	path := strings.TrimPrefix(r.URL.Path, "/api/circles/")
+	parts := strings.Split(path, "/")
+
+	if len(parts) == 0 || parts[0] == "" {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	circleID := parts[0]
+
+	// Route to specific action
+	if len(parts) == 1 {
+		// /api/circles/{id} - Update or delete
+		switch r.Method {
+		case http.MethodPost:
+			h.handleAPIUpdateCircle(w, r, circleID)
+		case http.MethodDelete:
+			h.handleAPIDeleteCircle(w, r, circleID)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	} else if len(parts) >= 2 {
+		action := parts[1]
+		switch action {
+		case "form":
+			// GET /api/circles/{id}/form - Get edit form
+			if r.Method == http.MethodGet {
+				r.URL.RawQuery = "id=" + circleID
+				h.handleAPICircleForm(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		case "leave":
+			// POST /api/circles/{id}/leave
+			if r.Method == http.MethodPost {
+				h.handleAPILeaveCircle(w, r, circleID)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		default:
+			http.Error(w, "Not found", http.StatusNotFound)
+		}
+	}
+}
+
+// handleAPIUpdateCircle handles updating a circle via HTMX
+func (h *CircleHandler) handleAPIUpdateCircle(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Parse form
+	if err := r.ParseForm(); err != nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
+		return
+	}
+
+	// Build updates map
+	updates := make(map[string]interface{})
+	if name := strings.TrimSpace(r.FormValue("name")); name != "" {
+		updates["name"] = name
+	}
+	if description := r.FormValue("description"); description != "" {
+		updates["description"] = description
+	}
+	if visibility := r.FormValue("visibility"); visibility != "" {
+		updates["visibility"] = visibility
+	}
+	updates["auto_mod_enabled"] = r.FormValue("auto_mod_enabled") == "on"
+
+	// Update circle
+	err := h.circleService.UpdateCircle(r.Context(), circleID, updates, profileID)
+	if err != nil {
+		h.logger.Error("failed to update circle",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("circle updated via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return success and refresh
+	RenderSuccess(w, h.logger, "Circle updated successfully!")
+	SendHTMXRefresh(w)
+}
+
+// handleAPIDeleteCircle handles deleting a circle via HTMX
+func (h *CircleHandler) handleAPIDeleteCircle(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	err := h.circleService.DeleteCircle(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to delete circle",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("circle deleted via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return success - the card will be removed by HTMX
+	RenderSuccess(w, h.logger, "Circle deleted successfully")
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleAPILeaveCircle handles leaving a circle via HTMX
+func (h *CircleHandler) handleAPILeaveCircle(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	err := h.circleService.LeaveCircle(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to leave circle",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("member left circle via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return success - the card will be removed by HTMX
+	RenderSuccess(w, h.logger, "You left the circle")
+	w.WriteHeader(http.StatusOK)
 }

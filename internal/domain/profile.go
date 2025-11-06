@@ -3,6 +3,8 @@ package domain
 import (
 	"encoding/json"
 	"time"
+
+	"circles.diy/internal/utils"
 )
 
 // Profile represents a user's social identity
@@ -30,6 +32,16 @@ func (p *Profile) IsDeleted() bool {
 // IsAvailable checks if the profile is active and not deleted
 func (p *Profile) IsAvailable() bool {
 	return p.IsActive && p.DeletedAt == nil
+}
+
+// GetAvatar returns the avatar URL or fallback if empty
+func (p *Profile) GetAvatar() string {
+	return utils.GetAvatarURL(p.AvatarURL)
+}
+
+// GetBanner returns the banner URL or fallback if empty
+func (p *Profile) GetBanner() string {
+	return utils.GetBannerURL(p.BannerURL)
 }
 
 // ProfileSettings represents settings and preferences for a profile

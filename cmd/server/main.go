@@ -147,6 +147,9 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/static/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ServeStaticFile(w, r, "static/js/htmx.min.js", "application/javascript; charset=utf-8")
 	})
+	mux.HandleFunc("/static/js/htmx-helpers.js", func(w http.ResponseWriter, r *http.Request) {
+		handlers.ServeStaticFile(w, r, "static/js/htmx-helpers.js", "application/javascript; charset=utf-8")
+	})
 	mux.HandleFunc("/static/js/auth-login.js", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ServeStaticFile(w, r, "static/js/auth-login.js", "application/javascript; charset=utf-8")
 	})
