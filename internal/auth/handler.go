@@ -462,7 +462,7 @@ func (h *Handler) handleCheckUsername(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if username exists
-	exists, err := h.service.repo.UsernameExists(r.Context(), req.Username)
+	exists, err := h.service.CheckUsernameExists(r.Context(), req.Username)
 	if err != nil {
 		h.logger.Error("Failed to check username", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check username")
@@ -491,7 +491,7 @@ func (h *Handler) handleCheckEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if email exists
-	exists, err := h.service.repo.EmailExists(r.Context(), req.Email)
+	exists, err := h.service.CheckEmailExists(r.Context(), req.Email)
 	if err != nil {
 		h.logger.Error("Failed to check email", zap.Error(err))
 		httphelpers.JSONError(w, http.StatusInternalServerError, "Failed to check email")

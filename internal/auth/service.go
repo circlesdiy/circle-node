@@ -13,6 +13,9 @@ import (
 
 	"circles.diy/internal/domain"
 	domainauth "circles.diy/internal/domain/auth"
+	"circles.diy/internal/preferences"
+	"circles.diy/internal/profile"
+	"circles.diy/internal/user"
 	"github.com/fxamacker/webauthn"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -20,9 +23,12 @@ import (
 
 // Service handles authentication business logic
 type Service struct {
-	repo   *Repository
-	config *WebAuthnConfig
-	logger *zap.Logger
+	repo           *Repository
+	userService    *user.Service
+	profileService *profile.Service
+	prefsService   *preferences.Service
+	config         *WebAuthnConfig
+	logger         *zap.Logger
 }
 
 // WebAuthnConfig holds WebAuthn configuration
@@ -32,11 +38,21 @@ type WebAuthnConfig struct {
 }
 
 // NewService creates a new authentication service
-func NewService(repo *Repository, config *WebAuthnConfig, logger *zap.Logger) *Service {
+func NewService(
+	repo *Repository,
+	userService *user.Service,
+	profileService *profile.Service,
+	prefsService *preferences.Service,
+	config *WebAuthnConfig,
+	logger *zap.Logger,
+) *Service {
 	return &Service{
-		repo:   repo,
-		config: config,
-		logger: logger,
+		repo:           repo,
+		userService:    userService,
+		profileService: profileService,
+		prefsService:   prefsService,
+		config:         config,
+		logger:         logger,
 	}
 }
 
@@ -66,7 +82,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 	s.logger.Info("Beginning WebAuthn registration", zap.String("username", username))
 
 	// Check if user already exists
-	existingUser, err := s.repo.GetUserByUsername(ctx, username)
+	existingUser, err := s.userService.GetByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check existing user: %w", err)
 	}
@@ -75,7 +91,7 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 	}
 
 	// Check if email already exists
-	existingEmail, err := s.repo.GetUserByEmail(ctx, email)
+	existingEmail, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check existing email: %w", err)
 	}
@@ -189,17 +205,24 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		UpdatedAt:     time.Now(),
 	}
 
-	if err := s.repo.CreateUser(ctx, domainUser); err != nil {
+	if err := s.userService.Create(ctx, domainUser); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	// Create default profile for the user
-	profileID, err := s.repo.CreateDefaultProfile(ctx, domainUser.ID, domainUser.Username)
+	defaultProfile, err := s.profileService.CreateDefault(ctx, domainUser.ID, domainUser.Username)
 	if err != nil {
-		s.logger.Warn("Failed to create default profile", zap.Error(err), zap.String("user_id", domainUser.ID))
-		// Don't fail registration if profile creation fails
+		s.logger.Error("Failed to create default profile", zap.Error(err), zap.String("user_id", domainUser.ID))
+		return nil, fmt.Errorf("failed to create default profile: %w", err)
+	}
+	s.logger.Info("Created default profile", zap.String("profile_id", defaultProfile.ID), zap.String("user_id", domainUser.ID))
+
+	// Create default user preferences
+	if err := s.prefsService.CreateDefaultUserPreferences(ctx, domainUser.ID); err != nil {
+		s.logger.Warn("Failed to create default user preferences", zap.Error(err), zap.String("user_id", domainUser.ID))
+		// Don't fail registration if preferences creation fails
 	} else {
-		s.logger.Info("Created default profile", zap.String("profile_id", profileID), zap.String("user_id", domainUser.ID))
+		s.logger.Info("Created default user preferences", zap.String("user_id", domainUser.ID))
 	}
 
 	// Create credential
@@ -259,7 +282,7 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 	s.logger.Info("Beginning WebAuthn authentication", zap.String("username", username))
 
 	// Get user
-	user, err := s.repo.GetUserByUsername(ctx, username)
+	user, err := s.userService.GetByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -335,7 +358,7 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 	}
 
 	// Get user
-	user, err := s.repo.GetUserByID(ctx, credential.UserID)
+	user, err := s.userService.GetByID(ctx, credential.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -449,7 +472,7 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 	}
 
 	// Get user's active profile
-	activeProfileID, err := s.repo.GetUserActiveProfile(ctx, user.ID)
+	activeProfileID, err := s.profileService.GetActiveForUser(ctx, user.ID)
 	if err != nil {
 		s.logger.Warn("Failed to get active profile", zap.Error(err), zap.String("user_id", user.ID))
 	}
@@ -494,7 +517,7 @@ func (s *Service) ValidateSession(ctx context.Context, token string) (*domainaut
 	}
 
 	// Get user
-	user, err := s.repo.GetUserByID(ctx, session.UserID)
+	user, err := s.userService.GetByID(ctx, session.UserID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -608,6 +631,20 @@ func parseBrowser(ua string) string {
 func GenerateID() string {
 	// Generate a proper UUID v4
 	return uuid.New().String()
+}
+
+// Delegation methods for handlers
+
+// CheckUsernameExists checks if a username is already taken
+// This delegates to the user service for cleaner separation of concerns
+func (s *Service) CheckUsernameExists(ctx context.Context, username string) (bool, error) {
+	return s.userService.CheckUsernameExists(ctx, username)
+}
+
+// CheckEmailExists checks if an email is already registered
+// This delegates to the user service for cleaner separation of concerns
+func (s *Service) CheckEmailExists(ctx context.Context, email string) (bool, error) {
+	return s.userService.CheckEmailExists(ctx, email)
 }
 
 // Cleanup operations

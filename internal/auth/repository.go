@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"circles.diy/internal/domain"
 	domainauth "circles.diy/internal/domain/auth"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,154 +22,6 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-// User operations
-
-// CreateUser creates a new user in the database
-func (r *Repository) CreateUser(ctx context.Context, user *domain.User) error {
-	query := `
-		INSERT INTO users (id, username, email, account_status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`
-
-	_, err := r.db.Exec(ctx, query,
-		user.ID, user.Username, user.Email, user.AccountStatus,
-		user.CreatedAt, user.UpdatedAt)
-
-	return err
-}
-
-// GetUserByID retrieves a user by their ID
-func (r *Repository) GetUserByID(ctx context.Context, id string) (*domain.User, error) {
-	query := `
-		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
-		FROM users WHERE id = $1 AND deleted_at IS NULL`
-
-	var user domain.User
-	var deletedAt sql.NullTime
-
-	err := r.db.QueryRow(ctx, query, id).Scan(
-		&user.ID, &user.Username, &user.Email, &user.AccountStatus,
-		&user.CreatedAt, &user.UpdatedAt, &deletedAt)
-
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	if deletedAt.Valid {
-		user.DeletedAt = &deletedAt.Time
-	}
-
-	return &user, nil
-}
-
-// GetUserByUsername retrieves a user by their username
-func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
-	query := `
-		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
-		FROM users WHERE username = $1 AND deleted_at IS NULL`
-
-	var user domain.User
-	var deletedAt sql.NullTime
-
-	err := r.db.QueryRow(ctx, query, username).Scan(
-		&user.ID, &user.Username, &user.Email, &user.AccountStatus,
-		&user.CreatedAt, &user.UpdatedAt, &deletedAt)
-
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	if deletedAt.Valid {
-		user.DeletedAt = &deletedAt.Time
-	}
-
-	return &user, nil
-}
-
-// GetUserByEmail retrieves a user by their email
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := `
-		SELECT id, username, email, account_status, created_at, updated_at, deleted_at
-		FROM users WHERE email = $1 AND deleted_at IS NULL`
-
-	var user domain.User
-	var deletedAt sql.NullTime
-
-	err := r.db.QueryRow(ctx, query, email).Scan(
-		&user.ID, &user.Username, &user.Email, &user.AccountStatus,
-		&user.CreatedAt, &user.UpdatedAt, &deletedAt)
-
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	if deletedAt.Valid {
-		user.DeletedAt = &deletedAt.Time
-	}
-
-	return &user, nil
-}
-
-// Profile operations (temporary until profile domain is created)
-
-// CreateDefaultProfile creates a default profile for a new user
-func (r *Repository) CreateDefaultProfile(ctx context.Context, userID, username string) (string, error) {
-	profileID := GenerateID()
-	handle := username // Use username as initial handle
-	now := time.Now()
-
-	query := `
-		INSERT INTO profiles (id, user_id, handle, name, display_name, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id`
-
-	err := r.db.QueryRow(ctx, query,
-		profileID, userID, handle, username, username, true, now, now).Scan(&profileID)
-
-	if err != nil {
-		return "", err
-	}
-
-	// Create default profile settings
-	settingsQuery := `
-		INSERT INTO profile_settings (profile_id, is_public, updated_at)
-		VALUES ($1, $2, $3)`
-
-	_, err = r.db.Exec(ctx, settingsQuery, profileID, true, now)
-	if err != nil {
-		return "", err
-	}
-
-	return profileID, nil
-}
-
-// GetUserActiveProfile gets the user's active profile ID
-func (r *Repository) GetUserActiveProfile(ctx context.Context, userID string) (*string, error) {
-	query := `
-		SELECT id FROM profiles
-		WHERE user_id = $1 AND is_active = true AND deleted_at IS NULL
-		ORDER BY created_at ASC
-		LIMIT 1`
-
-	var profileID string
-	err := r.db.QueryRow(ctx, query, userID).Scan(&profileID)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return &profileID, nil
-}
 
 // WebAuthn Credential operations
 
@@ -598,26 +449,6 @@ func (r *Repository) UseRecoveryMethod(ctx context.Context, methodID string) err
 
 	_, err := r.db.Exec(ctx, query, time.Now(), methodID)
 	return err
-}
-
-// Validation methods
-
-// UsernameExists checks if a username is already taken
-func (r *Repository) UsernameExists(ctx context.Context, username string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)`
-
-	var exists bool
-	err := r.db.QueryRow(ctx, query, username).Scan(&exists)
-	return exists, err
-}
-
-// EmailExists checks if an email is already registered
-func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`
-
-	var exists bool
-	err := r.db.QueryRow(ctx, query, email).Scan(&exists)
-	return exists, err
 }
 
 // Cleanup methods for expired records

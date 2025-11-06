@@ -40,6 +40,12 @@ type ProfileRepository interface {
 	CreateProfileSettings(ctx context.Context, settings *ProfileSettings) error
 	GetProfileSettings(ctx context.Context, profileID string) (*ProfileSettings, error)
 	UpdateProfileSettings(ctx context.Context, settings *ProfileSettings) error
+
+	// Atomic operations
+	CreateProfileWithSettings(ctx context.Context, profile *Profile, settings *ProfileSettings) error
+
+	// Active profile management
+	GetActiveProfileByUserID(ctx context.Context, userID string) (*string, error)
 }
 
 // UserModerationRepository defines the interface for user moderation operations

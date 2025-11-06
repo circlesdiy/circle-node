@@ -10,7 +10,10 @@ import (
 
 	"circles.diy/internal/auth"
 	"circles.diy/internal/config"
+	"circles.diy/internal/preferences"
+	"circles.diy/internal/profile"
 	"circles.diy/internal/storage"
+	"circles.diy/internal/user"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -22,6 +25,11 @@ type App struct {
 	Postgres *storage.Postgres
 	Redis    *storage.Redis
 	Server   *http.Server
+
+	// Domain services
+	UserService        *user.Service
+	ProfileService     *profile.Service
+	PreferencesService *preferences.Service
 
 	// Authentication components
 	AuthService *auth.Service
@@ -69,21 +77,39 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
+	// Initialize domain services
+	logger.Debug("initializing domain services...")
+
+	// User service
+	userRepo := user.NewRepository(postgres.Pool)
+	userService := user.NewService(userRepo, logger)
+
+	// Profile service
+	profileRepo := profile.NewRepository(postgres.Pool)
+	profileService := profile.NewService(profileRepo, logger)
+
+	// Preferences service
+	prefsRepo := preferences.NewRepository(postgres.Pool)
+	prefsService := preferences.NewService(prefsRepo, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
 	authConfig := auth.DefaultWebAuthnConfig()
 
-	authService := auth.NewService(authRepo, authConfig, logger)
+	authService := auth.NewService(authRepo, userService, profileService, prefsService, authConfig, logger)
 	authHandler := auth.NewHandler(authService, logger)
 
 	app := &App{
-		Config:      cfg,
-		Logger:      logger,
-		Postgres:    postgres,
-		Redis:       redis,
-		AuthService: authService,
-		AuthHandler: authHandler,
+		Config:             cfg,
+		Logger:             logger,
+		Postgres:           postgres,
+		Redis:              redis,
+		UserService:        userService,
+		ProfileService:     profileService,
+		PreferencesService: prefsService,
+		AuthService:        authService,
+		AuthHandler:        authHandler,
 	}
 
 	return app, nil
