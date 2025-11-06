@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"circles.diy/internal/auth"
+	"circles.diy/internal/circle"
 	"circles.diy/internal/config"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/preferences"
@@ -31,6 +32,7 @@ type App struct {
 	UserService        *user.Service
 	ProfileService     *profile.Service
 	PreferencesService *preferences.Service
+	CircleService      *circle.Service
 
 	// Authentication components
 	AuthService *auth.Service
@@ -40,6 +42,7 @@ type App struct {
 	ProfileHandler interface {
 		Handle(w http.ResponseWriter, r *http.Request)
 	}
+	CircleHandler *handlers.CircleHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -98,6 +101,10 @@ func New(ctx context.Context) (*App, error) {
 	prefsRepo := preferences.NewRepository(postgres.Pool)
 	prefsService := preferences.NewService(prefsRepo, logger)
 
+	// Circle service
+	circleRepo := circle.NewRepository(postgres.Pool)
+	circleService := circle.NewService(circleRepo, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
@@ -109,6 +116,7 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize feature handlers
 	logger.Debug("initializing feature handlers...")
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
+	circleHandler := handlers.NewCircleHandler(circleService, prefsService, logger)
 
 	app := &App{
 		Config:             cfg,
@@ -118,9 +126,11 @@ func New(ctx context.Context) (*App, error) {
 		UserService:        userService,
 		ProfileService:     profileService,
 		PreferencesService: prefsService,
+		CircleService:      circleService,
 		AuthService:        authService,
 		AuthHandler:        authHandler,
 		ProfileHandler:     profileHandler,
+		CircleHandler:      circleHandler,
 	}
 
 	return app, nil

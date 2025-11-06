@@ -8,6 +8,7 @@ type CircleRepository interface {
 	CreateCircle(ctx context.Context, circle *Circle) error
 	GetCircleByID(ctx context.Context, id string) (*Circle, error)
 	GetCirclesByOwnerID(ctx context.Context, ownerProfileID string) ([]Circle, error)
+	GetCirclesByMemberID(ctx context.Context, memberProfileID string) ([]Circle, error)
 	GetPublicCircles(ctx context.Context, limit, offset int) ([]Circle, error)
 	UpdateCircle(ctx context.Context, circle *Circle) error
 	DeleteCircle(ctx context.Context, id string) error
@@ -18,8 +19,15 @@ type CircleRepository interface {
 	GetMembershipByCircleAndProfile(ctx context.Context, circleID, profileID string) (*CircleMembership, error)
 	GetMembershipsByCircleID(ctx context.Context, circleID string) ([]CircleMembership, error)
 	GetMembershipsByProfileID(ctx context.Context, profileID string) ([]CircleMembership, error)
+	GetActiveMembershipsByCircleID(ctx context.Context, circleID string) ([]CircleMembership, error)
+	GetPendingInvitationsByProfileID(ctx context.Context, profileID string) ([]CircleMembership, error)
+	GetCircleMembersByCircleID(ctx context.Context, circleID string, limit, offset int) ([]CircleMembership, error)
+	CountMembersByCircleID(ctx context.Context, circleID string) (int, error)
 	UpdateMembership(ctx context.Context, membership *CircleMembership) error
 	DeleteMembership(ctx context.Context, id string) error
+
+	// Atomic operations
+	CreateCircleWithOwnership(ctx context.Context, circle *Circle, membership *CircleMembership) error
 
 	// Event operations
 	CreateEvent(ctx context.Context, event *Event) error
