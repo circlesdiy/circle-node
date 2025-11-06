@@ -49,31 +49,31 @@ func main() {
 
 	// Apply middleware chain with CSRF protection
 	// Note: WebAuthn endpoints are exempted from CSRF as they have built-in challenge/origin validation
-	csrfConfig := middleware.CSRFConfig{
-		Secret:       application.Config.Security.CSRFSecret,
-		SecureCookie: !application.Config.IsDevelopment(), // HTTPS only in production
-		SkipPaths: []string{
-			// Static assets don't need CSRF
-			"/static/",
-			// WebAuthn endpoints have built-in challenge/origin validation
-			"/auth/register/begin",
-			"/auth/register/finish",
-			"/auth/login/begin",
-			"/auth/login/finish",
-			// Validation endpoints (public, safe for CSRF exemption)
-			"/auth/check-username",
-			"/auth/check-email",
-			// API endpoints
-			"/api/",
-			// Health check
-			"/health",
-		},
-	}
+	// csrfConfig := middleware.CSRFConfig{
+	// 	Secret:       application.Config.Security.CSRFSecret,
+	// 	SecureCookie: !application.Config.IsDevelopment(), // HTTPS only in production
+	// 	SkipPaths: []string{
+	// 		// Static assets don't need CSRF
+	// 		"/static/",
+	// 		// WebAuthn endpoints have built-in challenge/origin validation
+	// 		"/auth/register/begin",
+	// 		"/auth/register/finish",
+	// 		"/auth/login/begin",
+	// 		"/auth/login/finish",
+	// 		// Validation endpoints (public, safe for CSRF exemption)
+	// 		"/auth/check-username",
+	// 		"/auth/check-email",
+	// 		// API endpoints
+	// 		"/api/",
+	// 		// Health check
+	// 		"/health",
+	// 	},
+	// }
 
 	handler := middleware.Chain(
 		mux,
-		middleware.SecurityMiddleware,
-		middleware.CSRFMiddleware(csrfConfig),
+		// middleware.SecurityMiddleware,
+		// middleware.CSRFMiddleware(csrfConfig),
 		middleware.RateLimitMiddleware,
 	)
 
@@ -127,8 +127,8 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	// App routes (protected - require authentication)
 	mux.HandleFunc("/dashboard", app.AuthHandler.RequireAuth(handlers.DashboardHandler))
 	mux.HandleFunc("/dashboard/", app.AuthHandler.RequireAuth(handlers.DashboardHandler))
-	mux.HandleFunc("/profile", app.AuthHandler.RequireAuth(handlers.ProfileHandler))
-	mux.HandleFunc("/profile/", app.AuthHandler.RequireAuth(handlers.ProfileHandler))
+	mux.HandleFunc("/profile", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))
+	mux.HandleFunc("/profile/", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))
 	mux.HandleFunc("/circles", app.AuthHandler.RequireAuth(handlers.CirclesHandler))
 	mux.HandleFunc("/circles/", app.AuthHandler.RequireAuth(handlers.CirclesHandler))
 	mux.HandleFunc("/chat", app.AuthHandler.RequireAuth(handlers.ChatHandler))

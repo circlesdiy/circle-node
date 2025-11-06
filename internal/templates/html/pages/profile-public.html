@@ -5,13 +5,13 @@
 {{define "main"}}
 <div class="profile-page">
     <div class="profile-banner">
-        <img src="{{.Profile.Banner}}" alt="Profile banner" />
+        <img src="{{.Profile.BannerURL}}" alt="Profile banner" />
     </div>
-    
+
     <div class="profile-container">
         <div class="profile-header">
             <div class="profile-avatar-large">
-                <img src="{{.Profile.Avatar}}" alt="{{.Profile.Handle}}" />
+                <img src="{{.Profile.AvatarURL}}" alt="{{.Profile.Handle}}" />
             </div>
             <div class="profile-info">
                 <h1 class="profile-name">{{.Profile.Name}}</h1>

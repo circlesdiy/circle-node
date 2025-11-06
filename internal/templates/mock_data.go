@@ -1,8 +1,6 @@
 package templates
 
 import (
-	"fmt"
-
 	"circles.diy/internal/models"
 	"circles.diy/internal/utils"
 )
@@ -22,6 +20,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "1",
 				User: models.User{
+
 					ID:     "maia",
 					Handle: "@maia",
 					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=48&h=48&fit=crop&crop=face",
@@ -38,6 +37,7 @@ func GetMockDashboardData() models.DashboardData {
 					{
 						ID: "f1_r1",
 						User: models.User{
+
 							ID:     "wood_enthusiast",
 							Handle: "@wood_enthusiast",
 							Avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
@@ -51,6 +51,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "2",
 				User: models.User{
+
 					ID:     "heathtyler",
 					Handle: "@heathtyler",
 					Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=48&h=48&fit=crop&crop=face",
@@ -67,6 +68,7 @@ func GetMockDashboardData() models.DashboardData {
 					{
 						ID: "f1_r1",
 						User: models.User{
+
 							ID:     "bookworm",
 							Handle: "@bookworm",
 							Avatar: "https://images.unsplash.com/photo-1635830609300-ad974ad25d6a?w=32&h=32&fit=crop&crop=face",
@@ -78,6 +80,7 @@ func GetMockDashboardData() models.DashboardData {
 							{
 								ID: "f1_r1_r1",
 								User: models.User{
+
 									ID:     "heathtyler",
 									Handle: "@heathtyler",
 									Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=48&h=48&fit=crop&crop=face",
@@ -89,6 +92,7 @@ func GetMockDashboardData() models.DashboardData {
 									{
 										ID: "f1_r1_r1_r1",
 										User: models.User{
+
 											ID:     "bookworm",
 											Handle: "@bookworm",
 											Avatar: "https://images.unsplash.com/photo-1635830609300-ad974ad25d6a?w=32&h=32&fit=crop&crop=face",
@@ -100,6 +104,7 @@ func GetMockDashboardData() models.DashboardData {
 											{
 												ID: "f1_r1_r1_r1_r1",
 												User: models.User{
+
 													ID:     "heathtyler",
 													Handle: "@heathtyler",
 													Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=48&h=48&fit=crop&crop=face",
@@ -110,6 +115,7 @@ func GetMockDashboardData() models.DashboardData {
 													{
 														ID: "f1_r1_r1_r1_r1_r1",
 														User: models.User{
+
 															ID:     "bookworm",
 															Handle: "@bookworm",
 															Avatar: "https://images.unsplash.com/photo-1635830609300-ad974ad25d6a?w=32&h=32&fit=crop&crop=face",
@@ -136,6 +142,7 @@ func GetMockDashboardData() models.DashboardData {
 															{
 																ID: "f1_r1_r1_r1_r1_r1_r1",
 																User: models.User{
+
 																	ID:     "heathtyler",
 																	Handle: "@heathtyler",
 																	Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=48&h=48&fit=crop&crop=face",
@@ -158,6 +165,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "3",
 				User: models.User{
+
 					ID:     "sara_pcb",
 					Handle: "@sara_pcb",
 					Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=48&h=48&auto=format&fit=crop",
@@ -174,6 +182,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "4",
 				User: models.User{
+
 					ID:     "zucc",
 					Handle: "@zucc",
 					Avatar: "https://media.tenor.com/y1mYLo66EuoAAAAM/zucky.gifs",
@@ -201,6 +210,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "1",
 				User: models.User{
+
 					ID:     "maia",
 					Handle: "@maia",
 					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
@@ -217,6 +227,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "2",
 				User: models.User{
+
 					ID:     "sara_pcb",
 					Handle: "@sara_pcb",
 					Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=32&h=32&fit=crop&crop=face",
@@ -233,6 +244,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "4",
 				User: models.User{
+
 					ID:     "green_thumb",
 					Handle: "@green_thumb",
 					Avatar: "https://images.unsplash.com/photo-1565980100090-3c8b3ec27c43?w=32&h=32&fit=crop&crop=face",
@@ -252,6 +264,7 @@ func GetMockDashboardData() models.DashboardData {
 			{
 				ID: "5",
 				User: models.User{
+
 					ID:     "craft_collective",
 					Handle: "@craft_collective",
 					Avatar: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=32&h=32&fit=crop&crop=face",
@@ -295,533 +308,6 @@ func GetMockDashboardData() models.DashboardData {
 		},
 	}
 }
-
-func GetMockProfileData(handle string, isOwner bool) models.ProfileData {
-	baseData := models.BaseData{
-		Title:     fmt.Sprintf("%s - Profile", handle),
-		ActiveNav: "profile",
-		Theme: models.ThemeSettings{
-			Mode:   "system",
-			Radius: "0",
-		},
-		CSRFToken: utils.GenerateCSRFToken(),
-	}
-
-	switch handle {
-	case "@maia":
-		return models.ProfileData{
-			BaseData: baseData,
-			Profile: models.Profile{
-				ID:     "maia",
-				Handle: "@maia",
-				Name:   "Maia Makes",
-				Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=128&h=128&fit=crop&crop=face",
-				Banner: "https://images.unsplash.com/photo-1597960194599-22929afc25b1?w=1200&h=300&fit=crop&crop=center",
-				Bio:    "Woodworker & furniture maker crafting heirloom pieces from sustainably sourced timber. Teaching traditional joinery techniques and sharing the journey from tree to table.",
-				Stats: models.ProfileStats{
-					Posts:       3,
-					Connections: 342,
-					Circles:     5,
-				},
-				IsConnected: false,
-			},
-			Posts: []models.Post{
-				{
-					ID: "1",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Just finished this oak coffee table! Happy to step out of my comfort-zone and share some joinery! This piece is available 💜💸",
-					TimeAgo: "2h ago",
-					Circle:  "Woodworking",
-					Image: &models.MediaItem{
-						URL: "https://images.unsplash.com/photo-1707749522150-e3b1b5f3e079?w=600&h=400&fit=crop&crop=center",
-						Alt: "Oak coffee table project",
-					},
-					CanBuy: true,
-				},
-				{
-					ID: "2",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Spending today selecting timber for the next commission. There's something meditative about running your hands along the grain, feeling for the perfect piece that wants to become a dining table. The wood tells its own story - weather marks, growth patterns, all the years it spent reaching toward light.",
-					TimeAgo: "1d ago",
-					Circle:  "Woodworking",
-				},
-				{
-					ID: "3",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Traditional style - the backbone of solid furniture. Here's the technique I learned from my mentor, passed down through generations of craftspeople. No shortcuts, just sharp tools and patient hands.",
-					TimeAgo: "3d ago",
-					Circle:  "Woodworking",
-					Video: &models.MediaItem{
-						URL: "https://www.pexels.com/download/video/5972633/",
-						Alt: "Video showing old school planing of an uneven timber edge",
-					},
-					Stats: &models.PostStats{
-						Replies: 34,
-						Shares:  67,
-					},
-				},
-			},
-			PostOffset:   1,
-			HasMorePosts: true,
-			IsOwner:      isOwner,
-		}
-
-	case "@heathtyler":
-		return models.ProfileData{
-			BaseData: baseData,
-			Profile: models.Profile{
-				ID:     "heathtyler",
-				Handle: "@heathtyler",
-				Name:   "Heath Tyler",
-				Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=128&h=128&fit=crop&crop=face",
-				Banner: "https://images.unsplash.com/photo-1594623930572-300a3011d9ae?w=1200&h=300&fit=crop&crop=center",
-				Bio:    "Event organizer and BBQ enthusiast bringing the community together through good food and great times. Always ready to fire up the grill and share stories over a cold one.",
-				Stats: models.ProfileStats{
-					Posts:       3,
-					Connections: 158,
-					Circles:     3,
-				},
-				IsConnected: false,
-			},
-			Posts: []models.Post{
-				{
-					ID: "1",
-					User: models.User{
-						ID:     "heathtyler",
-						Handle: "@heathtyler",
-						Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Warming up the barbeque and just got couple cases of the finest bread-water. Keen to see you all... remember 7PM dont be late!",
-					TimeAgo: "15m ago",
-					Circle:  "The Crop Circle",
-					Image: &models.MediaItem{
-						URL: "https://images.unsplash.com/photo-1664463758574-e640a7a998d4?q=80&w=600&auto=format&fit=crop",
-						Alt: "BBQ gathering setup",
-					},
-				},
-				{
-					ID: "2",
-					User: models.User{
-						ID:     "heathtyler",
-						Handle: "@heathtyler",
-						Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Nothing beats the smell of smoky charcoal and good company on a Saturday arvo. Thanks to everyone who came out last weekend - already planning the next one!",
-					TimeAgo: "2d ago",
-					Circle:  "The Crop Circle",
-				},
-				{
-					ID: "3",
-					User: models.User{
-						ID:     "heathtyler",
-						Handle: "@heathtyler",
-						Avatar: "https://images.unsplash.com/photo-1581391528803-54be77ce23e3?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Pro tip: let your falafel rest at room temp for 30 mins before hitting the grill. Game changer for even cooking. Trust me on this one 🔥",
-					TimeAgo: "5d ago",
-					Circle:  "The Crop Circle",
-				},
-			},
-			PostOffset:   1,
-			HasMorePosts: false,
-			IsOwner:      isOwner,
-		}
-
-	case "@sara_pcb":
-		return models.ProfileData{
-			BaseData: baseData,
-			Profile: models.Profile{
-				ID:     "sara_pcb",
-				Handle: "@sara_pcb",
-				Name:   "Sara Electronics",
-				Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop&crop=face",
-				Banner: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&h=300&fit=crop&crop=center",
-				Bio:    "Electronics engineer and educator passionate about making technology accessible. Teaching Arduino, circuit design, and PCB layout to makers of all skill levels.",
-				Stats: models.ProfileStats{
-					Posts:       3,
-					Connections: 287,
-					Circles:     4,
-				},
-				IsConnected: false,
-			},
-			Posts: []models.Post{
-				{
-					ID: "1",
-					User: models.User{
-						ID:     "sara_pcb",
-						Handle: "@sara_pcb",
-						Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "New tutorial series starting: \"Arduino for Beginners\". First session covers basic circuits and programming fundamentals.",
-					TimeAgo: "1h ago",
-					Circle:  "DIY Electronics",
-					Image: &models.MediaItem{
-						URL: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&fit=crop&crop=center",
-						Alt: "Arduino tutorial setup",
-					},
-				},
-				{
-					ID: "2",
-					User: models.User{
-						ID:     "sara_pcb",
-						Handle: "@sara_pcb",
-						Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Just finished designing a custom PCB for automated plant watering. Love how electronics can solve real-world problems! The soil moisture sensors trigger the pump perfectly.",
-					TimeAgo: "3d ago",
-					Circle:  "DIY Electronics",
-				},
-				{
-					ID: "3",
-					User: models.User{
-						ID:     "sara_pcb",
-						Handle: "@sara_pcb",
-						Avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Remember: always double-check your power supply connections before first boot. Saved myself from frying another microcontroller today 😅",
-					TimeAgo: "1w ago",
-					Circle:  "DIY Electronics",
-				},
-			},
-			PostOffset:   1,
-			HasMorePosts: false,
-			IsOwner:      isOwner,
-		}
-
-	case "@zucc":
-		return models.ProfileData{
-			BaseData: baseData,
-			Profile: models.Profile{
-				ID:     "zucc",
-				Handle: "@zucc",
-				Name:   "Mark Zuckerberg",
-				Avatar: "https://media.tenor.com/y1mYLo66EuoAAAAM/zucky.gif",
-				Banner: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=300&fit=crop&crop=center",
-				Bio:    "Washed-out reptilian overlord larping as a human tech-bro. Earth will be mine! *hiss*",
-				Stats: models.ProfileStats{
-					Posts:       3,
-					Connections: 2847,
-					Circles:     2,
-				},
-				IsConnected: false,
-			},
-			Posts: []models.Post{
-				{
-					ID: "1",
-					User: models.User{
-						ID:     "zucc",
-						Handle: "@zucc",
-						Avatar: "https://media.tenor.com/y1mYLo66EuoAAAAM/zucky.gif",
-					},
-					Content: "circles.diy has changed the game forever. \n\nFuck, I wish I'd thought of that.",
-					TimeAgo: "1h ago",
-					Circle:  "Communication Software",
-				},
-				{
-					ID: "2",
-					User: models.User{
-						ID:     "zucc",
-						Handle: "@zucc",
-						Avatar: "https://media.tenor.com/y1mYLo66EuoAAAAM/zucky.gif",
-					},
-					Content: "The future of social platforms isn't about scale - it's about authentic community. Watching this space with great interest. The decentralized approach here is fascinating.",
-					TimeAgo: "2d ago",
-					Circle:  "Communication Software",
-				},
-				{
-					ID: "3",
-					User: models.User{
-						ID:     "zucc",
-						Handle: "@zucc",
-						Avatar: "https://media.tenor.com/y1mYLo66EuoAAAAM/zucky.gif",
-					},
-					Content: "Sometimes the best ideas are the simplest ones. Building tools that actually serve communities instead of extracting from them. Revolutionary concept.",
-					TimeAgo: "3d ago",
-					Circle:  "Communication Software",
-				},
-			},
-			PostOffset:   1,
-			HasMorePosts: false,
-			IsOwner:      isOwner,
-		}
-
-	default:
-		// Return maia as default fallback
-		return models.ProfileData{
-			BaseData: baseData,
-			Profile: models.Profile{
-				ID:     "maia",
-				Handle: "@maia",
-				Name:   "Maia Makes",
-				Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=128&h=128&fit=crop&crop=face",
-				Banner: "https://images.unsplash.com/photo-1597960194599-22929afc25b1?w=1200&h=300&fit=crop&crop=center",
-				Bio:    "Woodworker & furniture maker crafting heirloom pieces from sustainably sourced timber. Teaching traditional joinery techniques and sharing the journey from tree to table.",
-				Stats: models.ProfileStats{
-					Posts:       3,
-					Connections: 342,
-					Circles:     5,
-				},
-				IsConnected: false,
-			},
-			Posts: []models.Post{
-				{
-					ID: "1",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Just finished this oak coffee table! Happy to step out of my comfort-zone and share some joinery! This piece is available 💜💸",
-					TimeAgo: "2h ago",
-					Circle:  "Woodworking",
-					Image: &models.MediaItem{
-						URL: "https://images.unsplash.com/photo-1707749522150-e3b1b5f3e079?w=600&h=400&fit=crop&crop=center",
-						Alt: "Oak coffee table project",
-					},
-					CanBuy: true,
-				},
-				{
-					ID: "2",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Spending today selecting timber for the next commission. There's something meditative about running your hands along the grain, feeling for the perfect piece that wants to become a dining table. The wood tells its own story - weather marks, growth patterns, all the years it spent reaching toward light.",
-					TimeAgo: "1d ago",
-					Circle:  "Woodworking",
-				},
-				{
-					ID: "3",
-					User: models.User{
-						ID:     "maia",
-						Handle: "@maia",
-						Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-					},
-					Content: "Traditional style - the backbone of solid furniture. Here's the technique I learned from my mentor, passed down through generations of craftspeople. No shortcuts, just sharp tools and patient hands.",
-					TimeAgo: "3d ago",
-					Circle:  "Woodworking",
-					Video: &models.MediaItem{
-						URL: "https://www.pexels.com/download/video/5972633/",
-						Alt: "Video showing old school planing of an uneven timber edge",
-					},
-					Stats: &models.PostStats{
-						Replies: 34,
-						Shares:  67,
-					},
-				},
-			},
-			PostOffset:   1,
-			HasMorePosts: true,
-			IsOwner:      isOwner,
-		}
-	}
-}
-
-func GetMockProfileInternalData() models.ProfileData {
-	return models.ProfileData{
-		BaseData: models.BaseData{
-			Title:     "My Profile",
-			ActiveNav: "profile",
-			Theme: models.ThemeSettings{
-				Mode:   "system",
-				Radius: "0",
-			},
-			CSRFToken: utils.GenerateCSRFToken(),
-		},
-		Profile: models.Profile{
-			ID:     "maia",
-			Handle: "@maia",
-			Name:   "Maia Makes",
-			Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=128&h=128&fit=crop&crop=face",
-			Banner: "https://images.unsplash.com/photo-1597960194599-22929afc25b1?w=1200&h=300&fit=crop&crop=center",
-			Bio:    "Woodworker & furniture maker crafting heirloom pieces from sustainably sourced timber. Teaching traditional joinery techniques and sharing the journey from tree to table.",
-			Stats: models.ProfileStats{
-				Posts:       3,
-				Connections: 342,
-				Circles:     5,
-			},
-			IsConnected: false,
-		},
-		Extensions: []models.Extension{
-			{ID: "pos", Name: "Point of Sale", Description: "Sell directly from your profile", Enabled: true},
-			{ID: "analytics", Name: "Analytics", Description: "Get insights about your posts", Enabled: true},
-			{ID: "polls", Name: "Polls & Surveys", Description: "Create community polls", Enabled: false},
-			{ID: "booking", Name: "Schedules and Booking", Description: "Manage a schedule for booking a service", Enabled: true},
-			{ID: "skills", Name: "Skill Exchange", Description: "Offer and request skills", Enabled: false},
-			{ID: "gallery", Name: "Portfolio Gallery", Description: "A customisable and currated showcase", Enabled: true},
-		},
-		Analytics: models.Analytics{
-			ProfileViews:         1247,
-			ProfileViewsChange:   12,
-			PostEngagement:       89,
-			PostEngagementChange: 5,
-			NewConnections:       23,
-			NewConnectionsChange: -3,
-		},
-		Drafts: []models.DraftPost{
-			{
-				ID:      "draft1",
-				Content: "Workshop tour for anyone thinking of booking some time to create their next masterpiece. Also sharing some essential tools and layout considerations I've learned over 15 years of making.",
-				Gallery: []models.MediaItem{
-					{URL: "https://unsplash.com/photos/0CCVIuAjORE/download?ixid=M3wxMjA3fDB8MXxzZWFyY2h8N3x8d29ya3Nob3AlMjB3b29kfGVufDB8fHx8MTc1NjY5MzI3M3ww&force=true&w=640", Alt: "Workshop space"},
-					{URL: "https://unsplash.com/photos/cSqDUEBQUAQ/download?ixid=M3wxMjA3fDB8MXxzZWFyY2h8Nnx8d29ya3Nob3AlMjB3b29kfGVufDB8fHx8MTc1NjY5MzI3M3ww&force=true&w=150&h=120&fit=crop&crop=center", Alt: "Tool rack"},
-					{URL: "https://unsplash.com/photos/PC9EDk5aDtc/download?ixid=M3wxMjA3fDB8MXxzZWFyY2h8MTR8fHdvcmtzaG9wJTIwd29vZHxlbnwwfHx8fDE3NTY2OTMyNzN8MA&force=true&w=150&h=120&fit=crop&crop=center", Alt: "Wood storage"},
-				},
-			},
-		},
-		DraftCount: 1,
-		Posts: []models.Post{
-			{
-				ID: "1",
-				User: models.User{
-					ID:     "maia",
-					Handle: "@maia",
-					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-				},
-				Content: "Just finished this oak coffee table! Happy to step out of my comfort-zone and share some joinery! This piece is available 💜💸",
-				TimeAgo: "2h ago",
-				Circle:  "Woodworking",
-				Image: &models.MediaItem{
-					URL: "https://images.unsplash.com/photo-1707749522150-e3b1b5f3e079?w=600&h=400&fit=crop&crop=center",
-					Alt: "Oak coffee table project",
-				},
-				Stats: &models.PostStats{
-					Replies: 23,
-					Shares:  47,
-					Views:   156,
-				},
-				CanBuy: true,
-				Replies: []models.Reply{
-					{
-						ID: "r1",
-						User: models.User{
-							ID:     "craftsman_joe",
-							Handle: "@craftsman_joe",
-							Avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face",
-						},
-						Content:   "Beautiful work! The grain pattern on that oak is stunning. What finish did you use?",
-						TimeAgo:   "1h ago",
-						Timestamp: "2025-09-12T13:15:00Z",
-					},
-					{
-						ID: "r2",
-						User: models.User{
-							ID:     "sara_builds",
-							Handle: "@sara_builds",
-							Avatar: "https://images.unsplash.com/photo-1616776005756-4dca36124bf9?w=32&h=32&fit=crop&crop=face",
-						},
-						Content:   "Those dovetails are perfect! I'm still practicing mine. Any tips for a beginner?",
-						TimeAgo:   "45m ago",
-						Timestamp: "2025-09-12T13:15:00Z",
-						Replies: []models.Reply{
-							{
-								ID: "r2_1",
-								User: models.User{
-									ID:     "maia",
-									Handle: "@maia",
-									Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-								},
-								Content: "Practice with softer woods first - pine is forgiving! And don't rush the marking out.",
-								TimeAgo: "30m ago",
-							},
-						},
-					},
-					{
-						ID: "r3",
-						User: models.User{
-							ID:     "wood_lover",
-							Handle: "@wood_lover",
-							Avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
-						},
-						Content:   "Is this piece still available? Would love to see more photos if possible.",
-						TimeAgo:   "20m ago",
-						Timestamp: "2025-09-12T13:15:00Z",
-					},
-				},
-			},
-			{
-				ID: "2",
-				User: models.User{
-					ID:     "maia",
-					Handle: "@maia",
-					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-				},
-				Content: "Spending today selecting timber for the next commission. There's something meditative about running your hands along the grain, feeling for the perfect piece that wants to become a dining table. The wood tells its own story - weather marks, growth patterns, the years it spent reaching toward light.",
-				TimeAgo: "1d ago",
-				Circle:  "Woodworking",
-				Stats: &models.PostStats{
-					Replies: 12,
-					Shares:  28,
-					Views:   89,
-				},
-				Replies: []models.Reply{
-					{
-						ID: "r4",
-						User: models.User{
-							ID:     "timber_source",
-							Handle: "@timber_source",
-							Avatar: "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=32&h=32&fit=crop&crop=face",
-						},
-						Content:   "This resonates so much. I always tell my customers that we're not just buying lumber, we're selecting the soul of the piece.",
-						TimeAgo:   "18h ago",
-						Timestamp: "2025-09-12T13:15:00Z",
-					},
-				},
-			},
-			{
-				ID: "3",
-				User: models.User{
-					ID:     "maia",
-					Handle: "@maia",
-					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-				},
-				Content: "Traditional style - the backbone of solid furniture. Here's the technique I learned from my mentor, passed down through generations of craftspeople. No shortcuts, just sharp tools and patient hands.",
-				TimeAgo: "3d ago",
-				Circle:  "Woodworking",
-				Video: &models.MediaItem{
-					URL: "https://www.pexels.com/download/video/5972633/",
-					Alt: "Video showing old school planing of an uneven timber edge",
-				},
-				Stats: &models.PostStats{
-					Replies: 34,
-					Shares:  67,
-				},
-			},
-			{
-				ID: "4",
-				User: models.User{
-					ID:     "maia",
-					Handle: "@maia",
-					Avatar: "https://images.unsplash.com/photo-1653508242641-09fdb7339942?w=32&h=32&fit=crop&crop=face",
-				},
-				Content: "With over a decade in the business, it's nice to still have all my fingers.",
-				TimeAgo: "3d ago",
-				Circle:  "Woodworking",
-				Stats: &models.PostStats{
-					Replies: 16,
-					Shares:  5,
-				},
-			},
-		},
-		PostOffset:   3,
-		HasMorePosts: false,
-		IsOwner:      true,
-	}
-}
-
 func GetMockCirclesPageData() models.CirclesPageData {
 	return models.CirclesPageData{
 		BaseData: models.BaseData{
@@ -1007,6 +493,7 @@ func GetMockChatData() models.ChatPageData {
 				IsOnline:    true,
 				IsGroup:     true,
 				Participants: []models.User{
+
 					{ID: "maria", Handle: "@maria", Name: "Maria Chen", Avatar: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=32&h=32&fit=crop&crop=face"},
 					{ID: "alex", Handle: "@alex", Name: "Alex Ramirez", Avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face"},
 					{ID: "jordan", Handle: "@jordan", Name: "Jordan Kim", Avatar: "https://images.unsplash.com/photo-1494790108755-2616b2e6ead5?w=32&h=32&fit=crop&crop=face"},
@@ -1032,6 +519,7 @@ func GetMockChatData() models.ChatPageData {
 				IsOnline:    false,
 				IsGroup:     true,
 				Participants: []models.User{
+
 					{ID: "sam", Handle: "@sam", Name: "Sam Rodriguez", Avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face"},
 					{ID: "riley", Handle: "@riley", Name: "Riley Park", Avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face"},
 				},
@@ -1064,6 +552,7 @@ func GetMockChatData() models.ChatPageData {
 			IsOnline: true,
 			IsGroup:  true,
 			Participants: []models.User{
+
 				{ID: "maya", Handle: "@maria", Name: "Maria Chen", Avatar: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=48&h=48&fit=crop&crop=face"},
 				{ID: "alex", Handle: "@alex", Name: "Alex Ramirez", Avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face"},
 				{ID: "jordan", Handle: "@jordan", Name: "Jordan Kim", Avatar: "https://images.unsplash.com/photo-1494790108755-2616b2e6ead5?w=32&h=32&fit=crop&crop=face"},
@@ -1075,6 +564,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "Hey everyone! I've been working on the new design system. What do you think about these color combinations?",
 				Timestamp: "10:30 AM",
 				Sender: models.User{
+
 					ID:     "maya",
 					Handle: "@maria",
 					Name:   "Maria Chen",
@@ -1089,6 +579,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "Those shades are perfect! Really captures the minimal vibe.",
 				Timestamp: "10:32 AM",
 				Sender: models.User{
+
 					ID:     "alex",
 					Handle: "@alex",
 					Name:   "Alex Ramirez",
@@ -1103,6 +594,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "I love the direction this is taking! The contrast ratios look accessible af 🔥",
 				Timestamp: "10:35 AM",
 				Sender: models.User{
+
 					ID:     "current_user",
 					Handle: "@you",
 					Name:   "You",
@@ -1117,6 +609,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "Perfect! This is exactly what I had in mind. Should we schedule a call to discuss implementation?",
 				Timestamp: "10:45 AM",
 				Sender: models.User{
+
 					ID:     "jordan",
 					Handle: "@jordan",
 					Name:   "Jordan Kim",
@@ -1131,6 +624,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "Great idea! I'm free this afternoon. How about we gather @ 2 PM?",
 				Timestamp: "10:46 AM",
 				Sender: models.User{
+
 					ID:     "current_user",
 					Handle: "@you",
 					Name:   "You",
@@ -1145,6 +639,7 @@ func GetMockChatData() models.ChatPageData {
 				Content:   "Thanks guys 🫶 Sounds good, talk soon!",
 				Timestamp: "10:48 AM",
 				Sender: models.User{
+
 					ID:     "maya",
 					Handle: "@maria",
 					Name:   "Maria Chen",
@@ -1158,6 +653,7 @@ func GetMockChatData() models.ChatPageData {
 		Contacts: []models.Contact{
 			{
 				User: models.User{
+
 					ID:     "maya",
 					Handle: "@maria",
 					Name:   "Maria Chen",
@@ -1168,6 +664,7 @@ func GetMockChatData() models.ChatPageData {
 			},
 			{
 				User: models.User{
+
 					ID:     "alex",
 					Handle: "@alex",
 					Name:   "Alex Ramirez",
@@ -1178,6 +675,7 @@ func GetMockChatData() models.ChatPageData {
 			},
 			{
 				User: models.User{
+
 					ID:     "emma",
 					Handle: "@emma",
 					Name:   "Emma Wilson",
@@ -1188,6 +686,7 @@ func GetMockChatData() models.ChatPageData {
 			},
 			{
 				User: models.User{
+
 					ID:     "marcus",
 					Handle: "@marcus",
 					Name:   "Marcus Thompson",
@@ -1227,6 +726,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "2.1km",
 				TimeAgo:  "3h ago",
 				Seller: models.User{
+
 					ID:     "maia",
 					Handle: "@maia",
 					Name:   "Maia Makes",
@@ -1254,6 +754,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "3.2km",
 				TimeAgo:  "5h ago",
 				Seller: models.User{
+
 					ID:     "dj_nova",
 					Handle: "@dj_nova",
 					Name:   "Nova",
@@ -1283,6 +784,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "1.8km",
 				TimeAgo:  "2d ago",
 				Seller: models.User{
+
 					ID:     "sara_pcb",
 					Handle: "@sara_pcb",
 					Name:   "Sara Electronics",
@@ -1310,6 +812,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "2.7km",
 				TimeAgo:  "1d ago",
 				Seller: models.User{
+
 					ID:     "vintage_hunter",
 					Handle: "@vintage_hunter",
 					Name:   "Riley Vintage",
@@ -1337,6 +840,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "3.1km",
 				TimeAgo:  "6h ago",
 				Seller: models.User{
+
 					ID:     "green_thumb",
 					Handle: "@green_thumb",
 					Name:   "Mary Gardens",
@@ -1364,6 +868,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "4.2km",
 				TimeAgo:  "4d ago",
 				Seller: models.User{
+
 					ID:     "shutterbug",
 					Handle: "@shutterbug",
 					Name:   "Sarah Kim",
@@ -1391,6 +896,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "12.8km",
 				TimeAgo:  "1w ago",
 				Seller: models.User{
+
 					ID:     "clay_artist",
 					Handle: "@clay_artist",
 					Name:   "Emma Potter",
@@ -1418,6 +924,7 @@ func GetMockMarketplaceData() models.MarketplacePageData {
 				Distance: "3.8km",
 				TimeAgo:  "3d ago",
 				Seller: models.User{
+
 					ID:     "fix_it_felix",
 					Handle: "@fix_it_felix",
 					Name:   "Felix Rodriguez",
@@ -1481,6 +988,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Workshop: Intro to Drum & Bass Mixing",
 				Description: "Learn the fundamentals of crate digging, curation and mixing of D&B sets with industry professionals. From atmospheric to bass-face bangers, we'll cover all the essentials.",
 				Host: models.User{
+
 					ID:     "dj_nova",
 					Handle: "@dj_nova",
 					Name:   "Nova",
@@ -1516,6 +1024,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Community Garden Build Day",
 				Description: "Join us for a hands-on day of building raised beds, planting and creating a sustainable food garden for our local community.",
 				Host: models.User{
+
 					ID:     "green_thumb",
 					Handle: "@green_thumb",
 					Name:   "Mary Gardens",
@@ -1551,6 +1060,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Virtual Reality Art Exhibition",
 				Description: "Explore immersive digital art installations by local artists. Experience the future of creative expression.",
 				Host: models.User{
+
 					ID:     "pixel_artist",
 					Handle: "@pixel_artist",
 					Name:   "Alex Chen",
@@ -1585,6 +1095,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Electronics Repair Café",
 				Description: "Bring your broken electronics and learn to repair them with our expert volunteers. Reduce waste and learn valuable skills.",
 				Host: models.User{
+
 					ID:     "fix_it_felix",
 					Handle: "@fix_it_felix",
 					Name:   "Felix Rodriguez",
@@ -1618,6 +1129,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Photography Walk: Urban Architecture",
 				Description: "Explore the city's architectural gems through your lens. We'll meet at Central Station and walk through various districts capturing both modern and heritage buildings.",
 				Host: models.User{
+
 					ID:     "shutterbug",
 					Handle: "@shutterbug",
 					Name:   "Sarah Kim",
@@ -1653,6 +1165,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Climate Solutions Workshop",
 				Description: "Learn about practical climate action strategies. Join us in-person or online to discuss renewable energy, sustainable living, climate resilience and community initiatives.",
 				Host: models.User{
+
 					ID:     "green_future",
 					Handle: "@green_future",
 					Name:   "Jordan Martinez",
@@ -1691,6 +1204,7 @@ func GetMockGatherData() models.GatherPageData {
 				Title:       "Woodworking Show & Tell",
 				Description: "Monthly gathering to share recent projects, techniques, and connect with fellow woodworkers. BYO project photos!",
 				Host: models.User{
+
 					ID:     "maia",
 					Handle: "@maia",
 					Name:   "Maia Makes",
@@ -1724,6 +1238,7 @@ func GetMockGatherData() models.GatherPageData {
 						Title:   "Don't forget your project photos!",
 						Content: "Reminder to bring photos of your recent work to share with the group. We love seeing what everyone's been creating!",
 						Author: models.User{
+
 							ID:     "maia",
 							Handle: "@maia",
 							Name:   "Maia Makes",

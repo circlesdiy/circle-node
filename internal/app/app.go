@@ -10,6 +10,7 @@ import (
 
 	"circles.diy/internal/auth"
 	"circles.diy/internal/config"
+	"circles.diy/internal/handlers"
 	"circles.diy/internal/preferences"
 	"circles.diy/internal/profile"
 	"circles.diy/internal/storage"
@@ -34,6 +35,11 @@ type App struct {
 	// Authentication components
 	AuthService *auth.Service
 	AuthHandler *auth.Handler
+
+	// Feature handlers
+	ProfileHandler interface {
+		Handle(w http.ResponseWriter, r *http.Request)
+	}
 }
 
 // New creates a new application instance with all dependencies
@@ -100,6 +106,10 @@ func New(ctx context.Context) (*App, error) {
 	authService := auth.NewService(authRepo, userService, profileService, prefsService, authConfig, logger)
 	authHandler := auth.NewHandler(authService, logger)
 
+	// Initialize feature handlers
+	logger.Debug("initializing feature handlers...")
+	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
+
 	app := &App{
 		Config:             cfg,
 		Logger:             logger,
@@ -110,6 +120,7 @@ func New(ctx context.Context) (*App, error) {
 		PreferencesService: prefsService,
 		AuthService:        authService,
 		AuthHandler:        authHandler,
+		ProfileHandler:     profileHandler,
 	}
 
 	return app, nil

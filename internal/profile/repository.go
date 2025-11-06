@@ -23,12 +23,12 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 // CreateProfile creates a new profile in the database
 func (r *Repository) CreateProfile(ctx context.Context, profile *domain.Profile) error {
 	query := `
-		INSERT INTO profiles (id, user_id, handle, name, display_name, bio, avatar_url, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+		INSERT INTO profiles (id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 	_, err := r.db.Exec(ctx, query,
 		profile.ID, profile.UserID, profile.Handle, profile.Name, profile.DisplayName,
-		profile.Bio, profile.AvatarURL, profile.IsActive, profile.CreatedAt, profile.UpdatedAt)
+		profile.Bio, profile.AvatarURL, profile.BannerURL, profile.IsActive, profile.CreatedAt, profile.UpdatedAt)
 
 	return err
 }
@@ -56,12 +56,12 @@ func (r *Repository) CreateProfileWithSettings(ctx context.Context, profile *dom
 
 	// Create profile
 	profileQuery := `
-		INSERT INTO profiles (id, user_id, handle, name, display_name, bio, avatar_url, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+		INSERT INTO profiles (id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 	_, err = tx.Exec(ctx, profileQuery,
 		profile.ID, profile.UserID, profile.Handle, profile.Name, profile.DisplayName,
-		profile.Bio, profile.AvatarURL, profile.IsActive, profile.CreatedAt, profile.UpdatedAt)
+		profile.Bio, profile.AvatarURL, profile.BannerURL, profile.IsActive, profile.CreatedAt, profile.UpdatedAt)
 
 	if err != nil {
 		return err
@@ -86,15 +86,16 @@ func (r *Repository) CreateProfileWithSettings(ctx context.Context, profile *dom
 // GetProfileByID retrieves a profile by its ID
 func (r *Repository) GetProfileByID(ctx context.Context, id string) (*domain.Profile, error) {
 	query := `
-		SELECT id, user_id, handle, name, display_name, bio, avatar_url, is_active, created_at, updated_at, deleted_at
+		SELECT id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at, deleted_at
 		FROM profiles WHERE id = $1 AND deleted_at IS NULL`
 
 	var profile domain.Profile
+	var name, displayName, bio, avatarURL, bannerURL sql.NullString
 	var deletedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&profile.ID, &profile.UserID, &profile.Handle, &profile.Name, &profile.DisplayName,
-		&profile.Bio, &profile.AvatarURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
+		&profile.ID, &profile.UserID, &profile.Handle, &name, &displayName,
+		&bio, &avatarURL, &bannerURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
 		&deletedAt)
 
 	if err != nil {
@@ -104,6 +105,22 @@ func (r *Repository) GetProfileByID(ctx context.Context, id string) (*domain.Pro
 		return nil, err
 	}
 
+	// Assign nullable fields
+	if name.Valid {
+		profile.Name = name.String
+	}
+	if displayName.Valid {
+		profile.DisplayName = displayName.String
+	}
+	if bio.Valid {
+		profile.Bio = bio.String
+	}
+	if avatarURL.Valid {
+		profile.AvatarURL = avatarURL.String
+	}
+	if bannerURL.Valid {
+		profile.BannerURL = bannerURL.String
+	}
 	if deletedAt.Valid {
 		profile.DeletedAt = &deletedAt.Time
 	}
@@ -114,15 +131,16 @@ func (r *Repository) GetProfileByID(ctx context.Context, id string) (*domain.Pro
 // GetProfileByHandle retrieves a profile by its handle
 func (r *Repository) GetProfileByHandle(ctx context.Context, handle string) (*domain.Profile, error) {
 	query := `
-		SELECT id, user_id, handle, name, display_name, bio, avatar_url, is_active, created_at, updated_at, deleted_at
+		SELECT id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at, deleted_at
 		FROM profiles WHERE handle = $1 AND deleted_at IS NULL`
 
 	var profile domain.Profile
+	var name, displayName, bio, avatarURL, bannerURL sql.NullString
 	var deletedAt sql.NullTime
 
 	err := r.db.QueryRow(ctx, query, handle).Scan(
-		&profile.ID, &profile.UserID, &profile.Handle, &profile.Name, &profile.DisplayName,
-		&profile.Bio, &profile.AvatarURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
+		&profile.ID, &profile.UserID, &profile.Handle, &name, &displayName,
+		&bio, &avatarURL, &bannerURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
 		&deletedAt)
 
 	if err != nil {
@@ -132,6 +150,22 @@ func (r *Repository) GetProfileByHandle(ctx context.Context, handle string) (*do
 		return nil, err
 	}
 
+	// Assign nullable fields
+	if name.Valid {
+		profile.Name = name.String
+	}
+	if displayName.Valid {
+		profile.DisplayName = displayName.String
+	}
+	if bio.Valid {
+		profile.Bio = bio.String
+	}
+	if avatarURL.Valid {
+		profile.AvatarURL = avatarURL.String
+	}
+	if bannerURL.Valid {
+		profile.BannerURL = bannerURL.String
+	}
 	if deletedAt.Valid {
 		profile.DeletedAt = &deletedAt.Time
 	}
@@ -142,7 +176,7 @@ func (r *Repository) GetProfileByHandle(ctx context.Context, handle string) (*do
 // GetProfilesByUserID retrieves all profiles for a user
 func (r *Repository) GetProfilesByUserID(ctx context.Context, userID string) ([]domain.Profile, error) {
 	query := `
-		SELECT id, user_id, handle, name, display_name, bio, avatar_url, is_active, created_at, updated_at, deleted_at
+		SELECT id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at, deleted_at
 		FROM profiles WHERE user_id = $1 AND deleted_at IS NULL
 		ORDER BY created_at ASC`
 
@@ -155,17 +189,34 @@ func (r *Repository) GetProfilesByUserID(ctx context.Context, userID string) ([]
 	var profiles []domain.Profile
 	for rows.Next() {
 		var profile domain.Profile
+		var name, displayName, bio, avatarURL, bannerURL sql.NullString
 		var deletedAt sql.NullTime
 
 		err := rows.Scan(
-			&profile.ID, &profile.UserID, &profile.Handle, &profile.Name, &profile.DisplayName,
-			&profile.Bio, &profile.AvatarURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
+			&profile.ID, &profile.UserID, &profile.Handle, &name, &displayName,
+			&bio, &avatarURL, &bannerURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
 			&deletedAt)
 
 		if err != nil {
 			return nil, err
 		}
 
+		// Assign nullable fields
+		if name.Valid {
+			profile.Name = name.String
+		}
+		if displayName.Valid {
+			profile.DisplayName = displayName.String
+		}
+		if bio.Valid {
+			profile.Bio = bio.String
+		}
+		if avatarURL.Valid {
+			profile.AvatarURL = avatarURL.String
+		}
+		if bannerURL.Valid {
+			profile.BannerURL = bannerURL.String
+		}
 		if deletedAt.Valid {
 			profile.DeletedAt = &deletedAt.Time
 		}
@@ -238,15 +289,32 @@ func (r *Repository) GetProfileSettings(ctx context.Context, profileID string) (
 		FROM profile_settings WHERE profile_id = $1`
 
 	var settings domain.ProfileSettings
+	var location, website sql.NullString
+	var interests, socialLinks []byte
+
 	err := r.db.QueryRow(ctx, query, profileID).Scan(
-		&settings.ProfileID, &settings.IsPublic, &settings.Location, &settings.Website,
-		&settings.Interests, &settings.SocialLinks, &settings.UpdatedAt)
+		&settings.ProfileID, &settings.IsPublic, &location, &website,
+		&interests, &socialLinks, &settings.UpdatedAt)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	// Assign nullable fields
+	if location.Valid {
+		settings.Location = location.String
+	}
+	if website.Valid {
+		settings.Website = website.String
+	}
+	if len(interests) > 0 {
+		settings.Interests = interests
+	}
+	if len(socialLinks) > 0 {
+		settings.SocialLinks = socialLinks
 	}
 
 	return &settings, nil
