@@ -1,29 +1,31 @@
 /* Main Navigation Component */
 .main-nav {
     display: flex;
-    gap: 0;
+    gap: 0.5rem;
 }
 
 .nav-item {
-    background: none;
+    background: transparent;
     border: none;
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.15s ease;
-    border-bottom: 2px solid transparent;
-    color: var(--text-primary);
+    transition: all 0.2s ease;
+    border-radius: calc(var(--container-radius) - 4px);
+    color: var(--text-secondary);
     text-decoration: none;
     display: inline-block;
 }
 
 .nav-item:hover {
     background: var(--hover-bg);
+    color: var(--text-primary);
 }
 
 .nav-item[aria-current="page"] {
-    border-bottom-color: var(--border-primary);
-    font-weight: 500;
+    background: var(--active-bg);
+    color: var(--active-text);
 }
 
 /* Navigation responsive styles */

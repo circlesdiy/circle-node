@@ -1,27 +1,30 @@
 /* Featured Circles */
 .featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
 }
 
 .featured-circle {
     background: var(--bg-primary);
     border: 1px solid var(--border-light);
     border-radius: var(--container-radius);
-    padding: 1.5rem;
+    padding: 1.25rem;
     transition: all 0.2s ease;
-    cursor: pointer;
+    display: flex;
+    flex-direction: column;
 }
 
 .featured-circle:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow-color);
+    box-shadow: 0 4px 16px var(--shadow-color);
+    border-color: var(--border-secondary);
 }
 
 .featured-thumbnail {
-    width: 50px;
-    height: 50px;
+    width: 64px;
+    height: 64px;
+    border-radius: calc(var(--container-radius) - 2px);
+    overflow: hidden;
     margin-bottom: 1rem;
 }
 
@@ -29,7 +32,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: var(--container-radius);
 }
 
 .featured-name {
@@ -40,10 +42,11 @@
 }
 
 .featured-description {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
-    line-height: 1.4;
+    line-height: 1.6;
     margin: 0 0 1rem 0;
+    flex: 1;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -54,101 +57,89 @@
 .featured-meta {
     display: flex;
     gap: 1rem;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
     margin-bottom: 1rem;
 }
 
 .join-btn {
     width: 100%;
-    padding: 0.5rem 1rem;
-    background: var(--active-bg);
-    color: var(--active-text);
-    border: 1px solid var(--active-bg);
-    border-radius: calc(var(--container-radius) / 2);
+    padding: 0.625rem;
+    background: var(--accent-primary);
+    color: var(--accent-secondary);
+    border: 1px solid var(--accent-primary);
+    border-radius: calc(var(--container-radius) - 2px);
     cursor: pointer;
+    font-size: 0.875rem;
     font-weight: 500;
     transition: all 0.2s ease;
 }
 
 .join-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px var(--shadow-color);
+    opacity: 0.9;
 }
 
 /* Circles Sidebar */
 .activity-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 1rem;
 }
 
 .activity-item {
     display: flex;
     gap: 0.75rem;
-    padding: 0.75rem;
-    background: var(--bg-secondary);
-    border-radius: calc(var(--container-radius) / 2);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
-.activity-item:hover {
-    background: var(--hover-bg);
+.activity-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 .activity-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    /* border-radius: 50%; */
+    color: var(--text-tertiary);
     flex-shrink: 0;
 }
 
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
 .activity-title {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 0.25rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .activity-meta {
     display: flex;
     gap: 0.5rem;
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
 }
 
-.quick-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+.sidebar-action-btn {
+    width: 100%;
+    padding: 0.625rem;
+    margin-top: 1rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-light);
-    border-radius: calc(var(--container-radius) / 2);
-    color: var(--text-primary);
+    border-radius: calc(var(--container-radius) - 2px);
+    font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 0.85rem;
-    font-weight: 500;
+    color: var(--text-primary);
 }
 
-.quick-action-btn:hover {
+.sidebar-action-btn:hover {
     background: var(--hover-bg);
-    transform: translateY(-1px);
+    border-color: var(--border-secondary);
 }

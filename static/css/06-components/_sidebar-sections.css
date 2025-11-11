@@ -9,18 +9,23 @@
 
 .sidebar-section {
     background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    border: 1px solid var(--border-light);
     padding: 1.5rem;
     transition: all 0.2s ease;
+}
+
+.circles-sidebar {
+    position: sticky;
+    top: 5rem;
+    height: fit-content;
 }
 
 .sidebar-section h3,
 .feed-section h2,
 .discussions-section h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
     color: var(--text-primary);
 }
 
@@ -28,8 +33,6 @@
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border-primary);
-    padding-bottom: 0.5rem;
     color: var(--text-primary);
     display: flex;
     align-items: center;

@@ -1,7 +1,7 @@
 /* Header Component */
 .main-header {
     background: var(--bg-primary);
-    border-bottom: 1px solid var(--border-secondary);
+    border-bottom: 1px solid var(--border-light);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -19,7 +19,7 @@
     .main-header {
         transition: background-color 0.2s ease, border-color 0.2s ease;
     }
-    
+
     .main-header.header-scroll-hidden {
         transform: none;
         opacity: 0.7;
@@ -29,17 +29,16 @@
 .header-content {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 1rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
     gap: 1rem;
 }
 
 .brand {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: fit-content;
     align-items: center;
 }
@@ -47,12 +46,32 @@
 .brand h1 {
     font-size: 1.5rem;
     font-weight: 300;
+    /* letter-spacing: -0.02em; */
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
+}
+
+/* Icon buttons in header */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: calc(var(--container-radius) - 2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.icon-btn:hover {
+    background: var(--hover-bg);
 }
 
 /* Header responsive styles */

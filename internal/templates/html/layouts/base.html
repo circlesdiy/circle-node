@@ -398,15 +398,16 @@ class HeaderScrollController {
     }
 }
 
-let themeManager;
-let useMenuManager;
-let scrollController;
+// Use window object to avoid redeclaration errors with hx-boost
+window.themeManager = window.themeManager || null;
+window.userMenuManager = window.userMenuManager || null;
+window.scrollController = window.scrollController || null;
 
 // Initialize controllers when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    if (!themeManager) themeManager = new ThemeManager();
-    if (!useMenuManager) useMenuManager = new UserMenuManager();
-    if (!scrollController) scrollController = new HeaderScrollController();
+    if (!window.themeManager) window.themeManager = new ThemeManager();
+    if (!window.userMenuManager) window.userMenuManager = new UserMenuManager();
+    if (!window.scrollController) window.scrollController = new HeaderScrollController();
     
     // Register service worker for PWA functionality
     if ('serviceWorker' in navigator) {
@@ -451,11 +452,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {{define "nav"}}
 <nav class="main-nav">
-    <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
+    <!-- <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a> -->
     <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
     <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
     <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>
-    <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a>
+    <!-- <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a> -->
 </nav>
 {{end}}
 

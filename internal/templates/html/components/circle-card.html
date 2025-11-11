@@ -1,34 +1,30 @@
 {{define "circle-card"}}
 <div class="circle-card" data-active="{{.Active}}" data-role="{{.UserRole}}"  >
     <div class="circle-card-header">
+        <img src="{{.GetBanner}}" alt="{{.Name}} banner" class="circle-banner" />
         <div class="circle-card-thumbnail-wrapper">
             <img src="{{.GetThumbnail}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
-            <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
-                {{if .Active}}{{.OnlineCount}} online{{end}}
-            </div>
+        </div>
+        <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
+            {{if .Active}}{{.OnlineCount}} online{{end}}
         </div>
         <div class="circle-role-badge role-{{.UserRole}}">
             {{if eq .UserRole "owner"}}Owner{{else if eq .UserRole "admin"}}Admin{{else}}Member{{end}}
         </div>
     </div>
 
-    <div class="circle-card-banner">
-        <img src="{{.GetBanner}}" alt="{{.Name}} banner" class="circle-banner" />
-    </div>
-    
     <div class="circle-card-content">
-        <div class="circle-header">
-            <h3 class="circle-name">{{.Name}}</h3>
-            <div class="circle-meta">
-                <span class="join-date">Joined {{.JoinedDate}}</span>
-                {{if .LastActivity}}
-                <span class="last-activity">Last active {{.LastActivity}}</span>
-                {{end}}
-            </div>
+        <h3 class="circle-name">{{.Name}}</h3>
+        <div class="circle-meta">
+            <span>Joined {{.JoinedDate}}</span>
+            {{if .LastActivity}}
+            <span>•</span>
+            <span>Last active {{.LastActivity}}</span>
+            {{end}}
         </div>
-        
+
         <p class="circle-description">{{.Description}}</p>
-        
+
         <div class="circle-stats">
             <div class="stat">
                 <span class="stat-value">{{.MemberCount}}</span>

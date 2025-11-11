@@ -102,10 +102,10 @@ class AuthLogin {
 
             const result = await finishResponse.json();
 
-            // Success! Redirect to dashboard
+            // Success! Redirect to circles
             this.showStatus('Success! Redirecting...');
             setTimeout(() => {
-                window.location.href = result.redirect || '/dashboard';
+                window.location.href = result.redirect || '/circles';
             }, 500);
 
         } catch (error) {

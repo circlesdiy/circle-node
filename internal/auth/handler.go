@@ -392,10 +392,10 @@ func (h *Handler) RequireAuthLevel(level int) func(http.HandlerFunc) http.Handle
 
 // handleLoginPage renders the login page
 func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
-	// If user is already logged in, redirect to dashboard
+	// If user is already logged in, redirect to circles
 	_, user, err := h.getCurrentUser(r)
 	if err == nil && user != nil {
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		http.Redirect(w, r, "/circles", http.StatusSeeOther)
 		return
 	}
 
@@ -420,10 +420,10 @@ func (h *Handler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 
 // handleRegisterPage renders the registration page
 func (h *Handler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
-	// If user is already logged in, redirect to dashboard
+	// If user is already logged in, redirect to circles
 	_, user, err := h.getCurrentUser(r)
 	if err == nil && user != nil {
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		http.Redirect(w, r, "/circles", http.StatusSeeOther)
 		return
 	}
 
