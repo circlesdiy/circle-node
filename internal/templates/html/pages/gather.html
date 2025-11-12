@@ -30,40 +30,54 @@
                     <a href="#" class="section-action">View calendar →</a>
                 </div>
 
-                {{range .CircleGatherings}}
-                <div class="circle-gathering" data-circle-id="{{.CircleID}}">
-                    <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <div class="circle-icon" style="background: {{.IconBgColor}};">{{.Icon}}</div>
-                        <div class="circle-gathering-info">
-                            <div class="circle-gathering-name">{{.CircleName}}</div>
-                            <div class="circle-gathering-meta">
-                                {{if eq .GatheringCount 0}}Nothing upcoming
-                                {{else if eq .GatheringCount 1}}1 upcoming gathering
-                                {{else}}{{.GatheringCount}} upcoming gatherings{{end}}
+                {{if .CircleGatherings}}
+                    {{range .CircleGatherings}}
+                    <div class="circle-gathering" data-circle-id="{{.CircleID}}">
+                        <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <div class="circle-icon" style="background: {{.IconBgColor}};">{{.Icon}}</div>
+                            <div class="circle-gathering-info">
+                                <div class="circle-gathering-name">{{.CircleName}}</div>
+                                <div class="circle-gathering-meta">
+                                    {{if eq .GatheringCount 0}}Nothing upcoming
+                                    {{else if eq .GatheringCount 1}}1 upcoming gathering
+                                    {{else}}{{.GatheringCount}} upcoming gatherings{{end}}
+                                </div>
                             </div>
+                            {{if .NeedsCoordination}}
+                            <span class="needs-attention">Needs coordination</span>
+                            {{else if gt .GatheringCount 0}}
+                            <span class="all-set">✓ All set</span>
+                            {{end}}
+                            <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9,18 15,12 9,6"></polyline>
+                            </svg>
                         </div>
-                        {{if .NeedsCoordination}}
-                        <span class="needs-attention">Needs coordination</span>
-                        {{else if gt .GatheringCount 0}}
-                        <span class="all-set">✓ All set</span>
-                        {{end}}
-                        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9,18 15,12 9,6"></polyline>
-                        </svg>
-                    </div>
-                    <div class="circle-events">
-                        {{if .Gatherings}}
-                        {{range .Gatherings}}
-                        {{template "gathering-item" .}}
-                        {{end}}
-                        {{else}}
-                        <div class="empty-state">
-                            <div class="empty-icon">{{.Icon}}</div>
-                            <p>No gatherings planned yet.<br>Want to organize something?</p>
+                        <div class="circle-events">
+                            {{if .Gatherings}}
+                            {{range .Gatherings}}
+                            {{template "gathering-item" .}}
+                            {{end}}
+                            {{else}}
+                            <div class="empty-state">
+                                <div class="empty-icon">{{.Icon}}</div>
+                                <p>No gatherings planned yet.<br>Want to organize something?</p>
+                            </div>
+                            {{end}}
                         </div>
-                        {{end}}
                     </div>
-                </div>
+                    {{end}}
+                {{else}}
+                    <div class="page-empty-state">
+                        <div class="empty-state-icon">🌱</div>
+                        <h3 class="empty-state-title">Start gathering with your circles</h3>
+                        <p class="empty-state-description">
+                            Coordinate meetups, events, and gatherings with the people in your circles.
+                            Create your first circle to get started, or join an existing one to see their upcoming gatherings.
+                        </p>
+                        <div class="empty-state-actions">
+                            <a href="/circles" class="btn btn-primary">Explore Circles</a>
+                        </div>
+                    </div>
                 {{end}}
             </section>
 
@@ -74,24 +88,30 @@
                     <a href="#" class="section-action">Browse domains →</a>
                 </div>
 
-                {{range .DomainDiscovery}}
-                <div class="domain-section">
-                    <div class="domain-header">
-                        <span class="domain-icon">{{.Icon}}</span>
-                        <h3 class="domain-title">{{.Name}}</h3>
-                    </div>
-                    {{if .SerendipityCount}}
-                    <div class="serendipity-indicator">
-                        <span>✨</span>
-                        <span>{{.SerendipityCount}} compatible circles attending gatherings in this domain</span>
+                {{if .DomainDiscovery}}
+                    {{range .DomainDiscovery}}
+                    <div class="domain-section">
+                        <div class="domain-header">
+                            <span class="domain-icon">{{.Icon}}</span>
+                            <h3 class="domain-title">{{.Name}}</h3>
+                        </div>
+                        {{if .SerendipityCount}}
+                        <div class="serendipity-indicator">
+                            <span>✨</span>
+                            <span>{{.SerendipityCount}} compatible circles attending gatherings in this domain</span>
+                        </div>
+                        {{end}}
+                        <div class="domain-events">
+                            {{range .Gatherings}}
+                            {{template "domain-gathering" .}}
+                            {{end}}
+                        </div>
                     </div>
                     {{end}}
-                    <div class="domain-events">
-                        {{range .Gatherings}}
-                        {{template "domain-gathering" .}}
-                        {{end}}
+                {{else}}
+                    <div class="section-empty-state">
+                        <p class="muted-text">No public domain events available right now. Check back later for serendipitous discoveries!</p>
                     </div>
-                </div>
                 {{end}}
             </section>
         </div>

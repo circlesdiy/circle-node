@@ -31,24 +31,29 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get active profile to display profile name
+	// Get active profile
 	session := auth.GetSession(r.Context())
-	var profileName string
-	if session != nil && session.ActiveProfileID != nil {
-		profile, err := h.profileService.GetByID(r.Context(), *session.ActiveProfileID)
-		if err != nil {
-			log.Printf("failed to get profile: %v", err)
-		} else if profile != nil && profile.Name != "" {
-			profileName = profile.DisplayName
-		}
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
 	}
 
-	// If no profile name found, fall back to username
-	if profileName == "" {
+	profileID := *session.ActiveProfileID
+
+	// Get profile to display profile name
+	var profileName string
+	profile, err := h.profileService.GetByID(r.Context(), profileID)
+	if err != nil {
+		log.Printf("failed to get profile: %v", err)
+		profileName = user.Username
+	} else if profile != nil && profile.Name != "" {
+		profileName = profile.DisplayName
+	} else {
 		profileName = user.Username
 	}
 
-	data, err := h.service.GetDashboardData(r.Context(), user.ID)
+	// Get dashboard data using profile ID
+	data, err := h.service.GetDashboardData(r.Context(), profileID)
 	if err != nil {
 		log.Printf("dashboard error: %v", err)
 		data = h.getEmptyDashboard()

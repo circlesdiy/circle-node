@@ -12,6 +12,7 @@ import (
 	"circles.diy/internal/circle"
 	"circles.diy/internal/config"
 	"circles.diy/internal/dashboard"
+	"circles.diy/internal/gather"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/preferences"
 	"circles.diy/internal/profile"
@@ -35,6 +36,7 @@ type App struct {
 	PreferencesService *preferences.Service
 	CircleService      *circle.Service
 	DashboardService   *dashboard.Service
+	GatherService      *gather.Service
 
 	// Authentication components
 	AuthService *auth.Service
@@ -46,6 +48,7 @@ type App struct {
 	}
 	CircleHandler    *handlers.CircleHandler
 	DashboardHandler *handlers.DashboardHandler
+	GatherHandler    *handlers.GatherHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -112,6 +115,10 @@ func New(ctx context.Context) (*App, error) {
 	dashboardRepo := dashboard.NewPostgresRepository(postgres.Pool)
 	dashboardService := dashboard.NewService(dashboardRepo, logger)
 
+	// Gather service
+	gatherRepo := gather.NewPostgresRepository(postgres.Pool)
+	gatherService := gather.NewService(gatherRepo, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
@@ -125,6 +132,7 @@ func New(ctx context.Context) (*App, error) {
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
 	circleHandler := handlers.NewCircleHandler(circleService, prefsService, logger)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
+	gatherHandler := handlers.NewGatherHandler(gatherService, profileService)
 
 	app := &App{
 		Config:             cfg,
@@ -136,11 +144,13 @@ func New(ctx context.Context) (*App, error) {
 		PreferencesService: prefsService,
 		CircleService:      circleService,
 		DashboardService:   dashboardService,
+		GatherService:      gatherService,
 		AuthService:        authService,
 		AuthHandler:        authHandler,
 		ProfileHandler:     profileHandler,
 		CircleHandler:      circleHandler,
 		DashboardHandler:   dashboardHandler,
+		GatherHandler:      gatherHandler,
 	}
 
 	return app, nil

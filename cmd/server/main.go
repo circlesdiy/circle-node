@@ -135,8 +135,8 @@ func setupRoutes(app *app.App) *http.ServeMux {
 
 	mux.HandleFunc("/chat", app.AuthHandler.RequireAuth(handlers.ChatHandler))
 	mux.HandleFunc("/chat/", app.AuthHandler.RequireAuth(handlers.ChatHandler))
-	mux.HandleFunc("/gather", app.AuthHandler.RequireAuth(handlers.GatherHandler))
-	mux.HandleFunc("/gather/", app.AuthHandler.RequireAuth(handlers.GatherHandler))
+	mux.HandleFunc("/gather", app.AuthHandler.RequireAuth(app.GatherHandler.Handle))
+	mux.HandleFunc("/gather/", app.AuthHandler.RequireAuth(app.GatherHandler.Handle))
 	mux.HandleFunc("/marketplace", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 	mux.HandleFunc("/marketplace/", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 
