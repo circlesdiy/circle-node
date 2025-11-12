@@ -11,6 +11,7 @@ import (
 	"circles.diy/internal/auth"
 	"circles.diy/internal/circle"
 	"circles.diy/internal/config"
+	"circles.diy/internal/dashboard"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/preferences"
 	"circles.diy/internal/profile"
@@ -33,6 +34,7 @@ type App struct {
 	ProfileService     *profile.Service
 	PreferencesService *preferences.Service
 	CircleService      *circle.Service
+	DashboardService   *dashboard.Service
 
 	// Authentication components
 	AuthService *auth.Service
@@ -42,7 +44,8 @@ type App struct {
 	ProfileHandler interface {
 		Handle(w http.ResponseWriter, r *http.Request)
 	}
-	CircleHandler *handlers.CircleHandler
+	CircleHandler    *handlers.CircleHandler
+	DashboardHandler *handlers.DashboardHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -105,6 +108,10 @@ func New(ctx context.Context) (*App, error) {
 	circleRepo := circle.NewRepository(postgres.Pool)
 	circleService := circle.NewService(circleRepo, logger)
 
+	// Dashboard service
+	dashboardRepo := dashboard.NewPostgresRepository(postgres.Pool)
+	dashboardService := dashboard.NewService(dashboardRepo, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
@@ -117,6 +124,7 @@ func New(ctx context.Context) (*App, error) {
 	logger.Debug("initializing feature handlers...")
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
 	circleHandler := handlers.NewCircleHandler(circleService, prefsService, logger)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
 
 	app := &App{
 		Config:             cfg,
@@ -127,10 +135,12 @@ func New(ctx context.Context) (*App, error) {
 		ProfileService:     profileService,
 		PreferencesService: prefsService,
 		CircleService:      circleService,
+		DashboardService:   dashboardService,
 		AuthService:        authService,
 		AuthHandler:        authHandler,
 		ProfileHandler:     profileHandler,
 		CircleHandler:      circleHandler,
+		DashboardHandler:   dashboardHandler,
 	}
 
 	return app, nil

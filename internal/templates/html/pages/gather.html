@@ -14,10 +14,10 @@
                 <span class="status-dot"></span>
                 <span>Open to connections at events</span>
             </div>
-            <label class="toggle-switch">
-                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+            <div class="serendipity-toggle">
                 <span>Enable serendipity mode</span>
-            </label>
+                <div class="toggle-switch active" data-setting="serendipity_mode"></div>
+            </div>
         </div>
     </div>
 
@@ -226,12 +226,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle switches
     document.querySelectorAll('.toggle-switch').forEach(toggle => {
         toggle.addEventListener('click', function() {
-            const toggleEl = this.querySelector('.toggle');
-            toggleEl.classList.toggle('active');
+            this.classList.toggle('active');
 
             // Could sync to backend here
-            const isActive = toggleEl.classList.contains('active');
-            console.log('Serendipity mode:', isActive);
+            const isActive = this.classList.contains('active');
+            const setting = this.dataset.setting;
+            console.log('Setting changed:', setting, isActive);
         });
     });
 

@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>circles.diy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --container-radius: 12px;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #fafafa;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border-primary: #000000;
+            --border-secondary: #cccccc;
+            --border-light: #eeeeee;
+            --accent-primary: #000000;
+            --accent-secondary: #ffffff;
+            --hover-bg: #f5f5f5;
+            --active-bg: #000000;
+            --active-text: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --warm-accent: rgba(232, 213, 196, 0.4);
+            --cool-accent: rgba(196, 220, 232, 0.4);
+            --earth-accent: rgba(212, 197, 176, 0.4);
+            --sage-accent: rgba(201, 213, 196, 0.4);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-svg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border-radius: calc(var(--container-radius) - 4px);
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+        }
+
+        .nav-item:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--active-bg);
+            color: var(--active-text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .global-search {
+            width: 240px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: calc(var(--container-radius) - 2px);
+            background: var(--bg-secondary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .global-search:focus {
+            outline: none;
+            border-color: var(--border-secondary);
+            background: var(--bg-primary);
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: calc(var(--container-radius) - 2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #e87d5f;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        /* Main Container */
+        .page-container {
+            display: none;
+        }
+
+        .page-container.active {
+            display: block;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Common Elements */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: var(--container-radius);
+            border: 1px solid var(--border-light);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #16a34a;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--container-radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: var(--accent-secondary);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-secondary);
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .section-action {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .section-action:hover {
+            color: var(--text-primary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* ===== DASHBOARD PAGE ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 16px var(--shadow-color);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .quick-circles {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .quick-circle {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-circle:hover {
+            box-shadow: 0 2px 12px var(--shadow-color);
+        }
+
+        .circle-icon-small {
+            width: 40px;
+            height: 40px;
+            border-radius: calc(var(--container-radius) - 4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .quick-circle-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.125rem;
+        }
+
+        .quick-circle-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .activity-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 0.75rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-icon {
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* ===== CIRCLES PAGE ===== */
+        .circles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .circle-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .circle-card:hover {
+            box-shadow: 0 4px 20px var(--shadow-color);
+            border-color: var(--border-secondary);
+        }
+
+        .circle-banner {
+            height: 140px;
+            background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
+            position: relative;
+        }
+
+        .circle-thumbnail-wrapper {
+            position: absolute;
+            bottom: -24px;
+            left: 1rem;
+        }
+
+        .circle-thumbnail {
+            width: 64px;
+            height: 64px;
+            border-radius: calc(var(--container-radius) + 2px);
+            border: 3px solid var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .circle-status-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border-light);
+            color: #16a34a;
+        }
+
+        .circle-card-content {
+            padding: 2rem 1.25rem 1.25rem;
+            flex: 1;
+        }
+
+        .circle-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .circle-meta {
+            display: flex;
+            gap: 0.75rem;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .circle-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .circle-stats {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value-small {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .stat-label-small {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .circle-card-actions {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .circle-action-btn {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            border-radius: calc(var(--container-radius) - 2px);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid;
+        }
+
+        .circle-action-btn.primary {
+            background: var(--accent-primary);
+            color: var(--accent-secondary);
+            border-color: var(--accent-primary);
+        }
+
+        .circle-action-btn.secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-light);
+            flex: 0;
+        }
+
+        /* ===== MESSAGES PAGE ===== */
+        .messages-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 300px;
+            gap: 0;
+            height: calc(100vh - 85px);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            overflow: hidden;
+        }
+
+        .conversations-sidebar {
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .conversation-item:hover,
+        .conversation-item.active {
+            background: var(--bg-secondary);
+        }
+
+        .conversation-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .conversation-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .conversation-preview {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-badges {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .circle-badge-small {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .message-group.sent {
+            align-items: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 65%;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.95rem;
+        }
+
+        .message-group.sent .message-bubble {
+            background: var(--accent-primary);
+            color: var(--accent-secondary);
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-group.received .message-bubble {
+            background: var(--bg-secondary);
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-input-area {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            resize: none;
+            min-height: 44px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--border-secondary);
+        }
+
+        .details-sidebar {
+            border-left: 1px solid var(--border-light);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .profile-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .profile-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .shared-circles-list {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .shared-circle-badge {
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* ===== GATHER PAGE ===== */
+        .circle-gathering {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .circle-gathering-header {
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .circle-gathering-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .circle-icon-medium {
+            width: 48px;
+            height: 48px;
+            border-radius: calc(var(--container-radius) - 2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .circle-gathering-info {
+            flex: 1;
+        }
+
+        .circle-gathering-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .circle-gathering-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .needs-attention {
+            padding: 0.375rem 0.75rem;
+            background: rgba(232, 213, 196, 0.3);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #8b7355;
+            font-weight: 500;
+        }
+
+        .circle-events {
+            border-top: 1px solid var(--border-light);
+            display: none;
+        }
+
+        .circle-gathering.expanded .circle-events {
+            display: block;
+        }
+
+        .event-item {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .event-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-time {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .event-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* ===== PROFILE PAGE ===== */
+        .profile-header {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .profile-avatar-xl {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--warm-accent), var(--earth-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-username {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-bio {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .profile-circles {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-circle-badge {
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--container-radius) - 2px);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .settings-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .setting-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--border-secondary);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-nav {
+                display: none;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .messages-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .conversations-sidebar,
+            .details-sidebar {
+                display: none;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-circles {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 1.5rem 1rem;
+            }
+
+            .header-content {
+                padding: 1rem;
+            }
+
+            .search-container {
+                display: none;
+            }
+
+            .circles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="brand" onclick="showPage('dashboard')">
+                <svg class="logo-svg" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="22" r="6" stroke="currentColor"></circle>
+                    <circle cx="11" cy="8" r="6" stroke="currentColor"></circle>
+                    <circle cx="19" cy="22" r="6" stroke="currentColor"></circle>
+                    <circle cx="15" cy="23" r="6" stroke="currentColor"></circle>
+                    <circle cx="22" cy="19" r="6" transform="rotate(-90 22 19)" stroke="currentColor"></circle>
+                    <ellipse cx="15" cy="15" rx="2" ry="2" transform="rotate(-90 15 15)" stroke="currentColor"></ellipse>
+                    <circle cx="22" cy="11" r="6" transform="rotate(-90 22 11)" stroke="currentColor"></circle>
+                    <circle cx="23" cy="15" r="6" transform="rotate(-90 23 15)" stroke="currentColor"></circle>
+                    <circle cx="8" cy="11" r="6" transform="rotate(90 8 11)" stroke="currentColor"></circle>
+                    <circle cx="8" cy="19" r="6" transform="rotate(90 8 19)" stroke="currentColor"></circle>
+                    <circle cx="7" cy="15" r="6" transform="rotate(90 7 15)" stroke="currentColor"></circle>
+                    <circle cx="15" cy="7" r="6" stroke="currentColor"></circle>
+                    <circle cx="19" cy="8" r="6" stroke="currentColor"></circle>
+                </svg>
+                <h1>circles.diy</h1>
+            </div>
+
+            <nav class="main-nav">
+                <button class="nav-item active" data-page="dashboard">Dashboard</button>
+                <button class="nav-item" data-page="circles">Circles</button>
+                <button class="nav-item" data-page="messages">Messages</button>
+                <button class="nav-item" data-page="gather">Gather</button>
+                <button class="nav-item" data-page="profile">Profile</button>
+            </nav>
+
+            <div class="header-actions">
+                <div class="search-container">
+                    <input type="search" placeholder="Search..." class="global-search">
+                </div>
+                <button class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06Z"></path></svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="icon-btn" onclick="showPage('profile')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page-container active" id="dashboard-page">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Good evening, Aaron</h1>
+                <p class="page-subtitle">Here's what's happening with your circles</p>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <!-- Priority 1: Happening Now (softened from "needs attention") -->
+                    <div class="section-header">
+                        <h2 class="section-title">Happening now</h2>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--warm-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">🚗</div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">Transport to D&B Workshop</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Sarah asked "Who's driving? I can take 3 people"</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <span style="font-size: 0.75rem; color: var(--text-tertiary);">Music crew • 2m ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--cool-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">💬</div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">New messages</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    <div style="margin-bottom: 0.25rem;">Sarah Chen (Music crew, Climbing)</div>
+                                    <div>Marcus Kim (Coffee nerds)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Priority 2: This Week -->
+                    <div class="section-header" style="margin-top: 2.5rem;">
+                        <h2 class="section-title">Coming up</h2>
+                        <span class="section-action" onclick="showPage('gather')">View calendar →</span>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); margin-bottom: 1rem;">
+                            <div style="text-align: center; flex-shrink: 0; width: 60px;">
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em;">Sat</div>
+                                <div style="font-size: 1.5rem; font-weight: 600;">14</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary);">2pm</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <span style="font-size: 1rem; font-weight: 500;">D&B Mixing Workshop</span>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <span style="width: 20px; height: 20px; background: var(--warm-accent); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">🎵</span>
+                                        Music crew
+                                    </span>
+                                    <span style="margin: 0 0.5rem; color: var(--border-secondary);">•</span>
+                                    <span>4 going</span>
+                                </div>
+                                <div style="padding: 0.5rem 0.75rem; background: var(--bg-secondary); border-radius: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                                    Sarah's coordinating transport
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); margin-bottom: 1rem;">
+                            <div style="text-align: center; flex-shrink: 0; width: 60px;">
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em;">Sat</div>
+                                <div style="font-size: 1.5rem; font-weight: 600;">14</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary);">10am</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <span style="font-size: 1rem; font-weight: 500;">Weekend Climb @ Hardrock</span>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <span style="width: 20px; height: 20px; background: var(--earth-accent); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">🧗</span>
+                                        Climbing
+                                    </span>
+                                    <span style="margin: 0 0.5rem; color: var(--border-secondary);">•</span>
+                                    <span>8 going</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                            <div style="text-align: center; flex-shrink: 0; width: 60px;">
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em;">Fri</div>
+                                <div style="font-size: 1.5rem; font-weight: 600;">20</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary);">6pm</div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <span style="font-size: 1rem; font-weight: 500;">Pitch Music Festival</span>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <span style="width: 20px; height: 20px; background: var(--warm-accent); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">🎵</span>
+                                        Music crew
+                                    </span>
+                                    <span style="margin: 0 0.5rem; color: var(--border-secondary);">•</span>
+                                    <span>7 going</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Priority 3: Circle Pulse -->
+                    <div class="section-header" style="margin-top: 2.5rem;">
+                        <h2 class="section-title">Your circles</h2>
+                        <span class="section-action" onclick="showPage('circles')">View all →</span>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="showPage('circles')">
+                                <div style="width: 40px; height: 40px; background: var(--warm-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🎵</div>
+                                <div>
+                                    <div style="font-weight: 500; font-size: 0.95rem; margin-bottom: 0.125rem;">Music crew</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">Active 2m ago • Next gathering Saturday</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="showPage('circles')">
+                                <div style="width: 40px; height: 40px; background: var(--earth-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🧗</div>
+                                <div>
+                                    <div style="font-weight: 500; font-size: 0.95rem; margin-bottom: 0.125rem;">Climbing</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">Active 1h ago • Next gathering Saturday</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="showPage('circles')">
+                                <div style="width: 40px; height: 40px; background: var(--cool-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🏠</div>
+                                <div>
+                                    <div style="font-weight: 500; font-size: 0.95rem; margin-bottom: 0.125rem;">Housemates</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">Active 3h ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Priority 4: Discovery (opt-in) -->
+                    <div class="section-header" style="margin-top: 2.5rem;">
+                        <h2 class="section-title">Discover</h2>
+                    </div>
+
+                    <div class="card" style="background: linear-gradient(135deg, rgba(232, 213, 196, 0.15), rgba(196, 220, 232, 0.15)); border: 1px solid var(--border-light);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">
+                            <span>✨</span>
+                            <span>3 compatible circles in Music & Events</span>
+                        </div>
+                        <div style="font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem;">Synth Building Workshop</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">Build your own analog synthesizer. Next Tuesday 6pm.</div>
+                        <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Learn more</button>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card">
+                        <h3>Quick Actions</h3>
+                        <button class="btn-primary" style="width: 100%; margin-bottom: 0.75rem;" onclick="showPage('gather')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Create Gathering
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 0.75rem;" onclick="showPage('messages')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            View Messages
+                        </button>
+                        <button class="btn-secondary" style="width: 100%;" onclick="showPage('circles')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Discover Circles
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Status</h3>
+                        <div class="status-indicator" style="margin-bottom: 0.75rem;">
+                            <span class="status-dot"></span>
+                            <span>Open to connections</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-tertiary); line-height: 1.5;">
+                            You're discoverable at events and in domains.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>This Week</h3>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                            3 gatherings with your circles
+                        </div>
+                        <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; font-size: 0.8rem; color: var(--text-tertiary);">
+                            Saturday: Workshop + Climbing<br>
+                            Friday: Music Festival
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- CIRCLES PAGE -->
+    <div class="page-container" id="circles-page">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">My Circles</h1>
+                <p class="page-subtitle">Stay connected with your communities</p>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="section-header">
+                        <h2 class="section-title">Your Circles</h2>
+                    </div>
+
+                    <div class="circles-grid">
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--warm-accent);">🎵</div>
+                                </div>
+                                <span class="circle-status-badge">8 online</span>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Music crew</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 6 months ago</span>
+                                    <span>•</span>
+                                    <span>Active daily</span>
+                                </div>
+                                <p class="circle-description">Electronic music lovers sharing tracks, organizing sessions, and attending shows together.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">8</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--cool-accent), var(--earth-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--cool-accent);">🏠</div>
+                                </div>
+                                <span class="circle-status-badge">3 online</span>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Housemates</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 1 year ago</span>
+                                    <span>•</span>
+                                    <span>Active daily</span>
+                                </div>
+                                <p class="circle-description">Share house coordination, social activities, and keeping our space running smoothly.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">5</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--earth-accent), var(--sage-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--earth-accent);">🧗</div>
+                                </div>
+                                <span class="circle-status-badge">12 online</span>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Climbing</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 8 months ago</span>
+                                    <span>•</span>
+                                    <span>Active weekly</span>
+                                </div>
+                                <p class="circle-description">Regular climbing sessions, technique sharing, and outdoor adventures.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">12</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--sage-accent), var(--warm-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--sage-accent);">☕</div>
+                                </div>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Coffee nerds</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 3 months ago</span>
+                                    <span>•</span>
+                                    <span>Quiet</span>
+                                </div>
+                                <p class="circle-description">Coffee enthusiasts exploring local roasters and brewing techniques.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">4</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: 2rem;">
+                        <h2 class="section-title">Discover New Circles</h2>
+                    </div>
+                    <div class="card">
+                        <p style="color: var(--text-secondary); text-align: center;">Explore circles in domains you're interested in...</p>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card">
+                        <h3>Create Circle</h3>
+                        <button class="btn-primary" style="width: 100%;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Circle
+                        </button>
+                        <p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.75rem;">Start a circle for your community, project, or interest group.</p>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- MESSAGES PAGE -->
+    <div class="page-container" id="messages-page">
+        <main style="padding: 2rem 2rem 0;">
+            <div class="messages-layout">
+                <aside class="conversations-sidebar">
+                    <div class="sidebar-header">
+                        <input type="search" placeholder="Search messages..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.9rem;">
+                    </div>
+                    <div class="conversations-list">
+                        <div class="conversation-item active">
+                            <div class="conversation-avatar" style="background: var(--warm-accent);">👤</div>
+                            <div class="conversation-content">
+                                <div class="conversation-name">Sarah Chen</div>
+                                <div class="conversation-preview">Perfect! See you at 3pm then</div>
+                                <div class="conversation-badges">
+                                    <div class="circle-badge-small" style="background: var(--warm-accent);">🎵</div>
+                                    <div class="circle-badge-small" style="background: var(--earth-accent);">🧗</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="conversation-item">
+                            <div class="conversation-avatar" style="background: var(--warm-accent);">🎵</div>
+                            <div class="conversation-content">
+                                <div class="conversation-name">Music crew</div>
+                                <div class="conversation-preview">Alex: Anyone need a ride to the festival?</div>
+                            </div>
+                        </div>
+                        <div class="conversation-item">
+                            <div class="conversation-avatar" style="background: var(--cool-accent);">👤</div>
+                            <div class="conversation-content">
+                                <div class="conversation-name">Marcus Kim</div>
+                                <div class="conversation-preview">Did you finish that book yet?</div>
+                                <div class="conversation-badges">
+                                    <div class="circle-badge-small" style="background: var(--sage-accent);">☕</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="chat-main">
+                    <div class="chat-header">
+                        <div class="chat-info">
+                            <div class="conversation-avatar" style="background: var(--warm-accent);">👤</div>
+                            <div>
+                                <div class="conversation-name">Sarah Chen</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    2 circles: 🎵 🧗
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="icon-btn">ℹ️</button>
+                        </div>
+                    </div>
+
+                    <div class="messages-area">
+                        <div class="message-group received">
+                            <div class="message-bubble">Hey! Are you still free this afternoon for climbing?</div>
+                        </div>
+                        <div class="message-group sent">
+                            <div class="message-bubble">Yes! What time works for you?</div>
+                        </div>
+                        <div class="message-group received">
+                            <div class="message-bubble">3pm at Hardrock?</div>
+                        </div>
+                        <div class="message-group sent">
+                            <div class="message-bubble">Perfect! See you at 3pm then</div>
+                        </div>
+                    </div>
+
+                    <div class="message-input-area">
+                        <textarea class="message-input" placeholder="Message Sarah..." rows="1"></textarea>
+                    </div>
+                </main>
+
+                <aside class="details-sidebar">
+                    <div class="profile-section">
+                        <div class="profile-avatar-large" style="background: var(--warm-accent);">👤</div>
+                        <div class="profile-name">Sarah Chen</div>
+                        <div class="shared-circles-list">
+                            <div class="shared-circle-badge" style="background: var(--warm-accent);">🎵 Music crew</div>
+                            <div class="shared-circle-badge" style="background: var(--earth-accent);">🧗 Climbing</div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Upcoming Together</h4>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.5rem;">
+                            D&B Workshop<br>
+                            <span style="font-size: 0.75rem; color: var(--text-tertiary);">Saturday 2pm</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- GATHER PAGE -->
+    <div class="page-container" id="gather-page">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">Gather</h1>
+                <p class="page-subtitle">Coordinate with your circles</p>
+                <div class="status-bar">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Open to connections at events</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="section-header">
+                        <h2 class="section-title">Your circles' gatherings</h2>
+                    </div>
+
+                    <div class="circle-gathering expanded">
+                        <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <div class="circle-icon-medium" style="background: var(--warm-accent);">🎵</div>
+                            <div class="circle-gathering-info">
+                                <div class="circle-gathering-name">Music crew</div>
+                                <div class="circle-gathering-meta">3 upcoming gatherings</div>
+                            </div>
+                            <span class="needs-attention">Needs coordination</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary);">
+                                <polyline points="9,18 15,12 9,6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="circle-events">
+                            <div class="event-item">
+                                <div class="event-header">
+                                    <div>
+                                        <div class="event-title">D&B Mixing Workshop</div>
+                                        <div class="event-time">In 2 days • Saturday 2pm-5pm</div>
+                                    </div>
+                                    <button class="btn-primary">Going</button>
+                                </div>
+                                <p class="event-description">Learn the fundamentals of crate digging and mixing D&B sets.</p>
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(232, 213, 196, 0.2); border-radius: 8px; border-left: 3px solid #8b7355;">
+                                    <div style="font-size: 0.875rem; font-weight: 600; color: #8b7355; margin-bottom: 0.25rem;">🚗 Transport needed</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Sarah: "Who's driving? I can take 3 people"</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-header">
+                                    <div>
+                                        <div class="event-title">Pitch Music Festival</div>
+                                        <div class="event-time">Next Friday • 6pm-late</div>
+                                    </div>
+                                    <button class="btn-primary">Going</button>
+                                </div>
+                                <p class="event-description">Three stages of electronic music across genres.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="circle-gathering">
+                        <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <div class="circle-icon-medium" style="background: var(--earth-accent);">🧗</div>
+                            <div class="circle-gathering-info">
+                                <div class="circle-gathering-name">Climbing</div>
+                                <div class="circle-gathering-meta">1 upcoming gathering</div>
+                            </div>
+                            <span style="font-size: 0.875rem; color: var(--text-tertiary);">✓ All set</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary);">
+                                <polyline points="9,18 15,12 9,6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="circle-events">
+                            <div class="event-item">
+                                <div class="event-header">
+                                    <div>
+                                        <div class="event-title">Weekend Climb @ Hardrock</div>
+                                        <div class="event-time">This Saturday • 10am-2pm</div>
+                                    </div>
+                                    <button class="btn-primary">Going</button>
+                                </div>
+                                <p class="event-description">Regular Saturday session. All levels welcome.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: 2rem;">
+                        <h2 class="section-title">Discover in the commons</h2>
+                    </div>
+                    <div class="card" style="background: linear-gradient(135deg, rgba(232, 213, 196, 0.15), rgba(196, 220, 232, 0.15));">
+                        <h3>🎸 Music & Events Domain</h3>
+                        <div style="padding: 0.5rem 1rem; background: rgba(232, 213, 196, 0.4); border-radius: 12px; font-size: 0.875rem; color: #8b7355; margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            ✨ 3 compatible circles in this domain
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Discover events and connect with other music lovers...</p>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card">
+                        <h3>Organize gathering</h3>
+                        <button class="btn-primary" style="width: 100%; margin-bottom: 0.75rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            For Music crew
+                        </button>
+                        <button class="btn-secondary" style="width: 100%;">Another circle...</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Active coordination</h3>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                            <span style="color: var(--text-secondary);">Transport to workshop</span>
+                            <span style="font-weight: 500;">2 needs</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="page-container" id="profile-page">
+        <main>
+            <div class="profile-header">
+                <div class="profile-avatar-xl">👤</div>
+                <div class="profile-info">
+                    <h1 class="profile-username">Aaron L</h1>
+                    <p class="profile-bio">Music lover, climber, coffee enthusiast. Always down for a good conversation and new experiences.</p>
+                    <div class="profile-circles">
+                        <div class="profile-circle-badge" style="background: var(--warm-accent);">🎵 Music crew</div>
+                        <div class="profile-circle-badge" style="background: var(--cool-accent);">🏠 Housemates</div>
+                        <div class="profile-circle-badge" style="background: var(--earth-accent);">🧗 Climbing</div>
+                        <div class="profile-circle-badge" style="background: var(--sage-accent);">☕ Coffee nerds</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="settings-section">
+                        <h3>Privacy & Connections</h3>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">Serendipity Mode</div>
+                                <div class="setting-description">Allow compatible circles to discover you at events</div>
+                            </div>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">Away Mode</div>
+                                <div class="setting-description">Auto-decline event invites when disconnected</div>
+                            </div>
+                            <div class="toggle-switch"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Notifications</h3>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">Batch Notifications</div>
+                                <div class="setting-description">Group updates instead of individual alerts</div>
+                            </div>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">Coordination Alerts</div>
+                                <div class="setting-description">Only notify for items that need action</div>
+                            </div>
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card">
+                        <h3>Account</h3>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">Edit Profile</button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">Privacy Settings</button>
+                        <button class="btn-secondary" style="width: 100%;">Sign Out</button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Navigation
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(pageName + '-page').classList.add('active');
+
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageName) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Nav item clicks
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                showPage(this.dataset.page);
+            });
+        });
+
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Circle gathering expansion
+        document.querySelectorAll('.circle-gathering-header').forEach(header => {
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.parentElement.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
+</html>

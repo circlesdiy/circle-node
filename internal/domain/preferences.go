@@ -25,8 +25,8 @@ type ProfilePreferences struct {
 // BaseThemeSettings represents user-level base theme preferences
 // These are accessibility and comfort settings that apply to all profiles
 type BaseThemeSettings struct {
-	Mode             string `json:"mode"`              // "light", "dark", "system"
-	Radius           string `json:"radius"`            // "0", "6", "12", "32" (border radius in px)
+	Mode             string `json:"mode"`                        // "light", "dark", "system"
+	Radius           string `json:"radius"`                      // "0", "6", "12", "32" (border radius in px)
 	FontSize         string `json:"font_size,omitempty"`         // "small", "medium", "large" (future)
 	Contrast         string `json:"contrast,omitempty"`          // "normal", "high" (future)
 	MotionPreference string `json:"motion_preference,omitempty"` // "full", "reduced" (future)
@@ -67,7 +67,7 @@ const (
 // Default theme values
 const (
 	DefaultThemeMode   = ThemeModeSystem
-	DefaultThemeRadius = ThemeRadiusNone
+	DefaultThemeRadius = ThemeRadiusMedium
 )
 
 // DefaultBaseTheme returns the default base theme settings

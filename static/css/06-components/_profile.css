@@ -48,6 +48,13 @@
     justify-content: center;
     font-size: 3rem;
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+.profile-avatar-xl img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .profile-info {

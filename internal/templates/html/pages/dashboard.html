@@ -5,83 +5,137 @@
 {{define "main"}}
 <div class="dashboard-container">
     <div class="page-header">
-        <h1 class="page-title">Good evening, {{if .User}}{{.User.Username}}{{else}}Aaron{{end}}</h1>
-        <p class="page-subtitle">Here's what's happening in your circles</p>
-    </div>
-
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-label">Active Circles</div>
-            <div class="stat-value">{{.Stats.ActiveCircles}}</div>
-            <div class="stat-change">{{.Stats.ActiveCirclesChange}}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Upcoming Gatherings</div>
-            <div class="stat-value">{{.Stats.UpcomingGatherings}}</div>
-            <div class="stat-change">{{.Stats.GatheringsNext}}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Unread Messages</div>
-            <div class="stat-value">{{.Stats.UnreadMessages}}</div>
-            <div class="stat-change">{{.Stats.MessagesFrom}}</div>
-        </div>
+        <h1 class="page-title">Good evening, {{if .ProfileName}}{{.ProfileName}}{{else}}there{{end}}</h1>
+        <p class="page-subtitle">Here's what's happening with your circles</p>
     </div>
 
     <div class="two-column">
         <div>
+            {{if .HappeningNow}}
             <div class="section-header">
-                <h2 class="section-title">Your Circles</h2>
-                <a href="/circles" class="section-action">View all →</a>
+                <h2 class="section-title">Catch up</h2>
             </div>
-            <div class="quick-circles">
-                {{range .QuickCircles}}
-                <a href="/circles/{{.ID}}" class="quick-circle">
-                    <div class="circle-icon-small" style="background: {{.IconBgColor}};">{{.Icon}}</div>
-                    <div class="quick-circle-info">
-                        <h4>{{.Name}}</h4>
-                        <div class="quick-circle-meta">{{.MemberCount}} members • {{.Status}}</div>
-                    </div>
-                </a>
-                {{end}}
-            </div>
-
-            <div class="section-header" style="margin-top: 2rem;">
-                <h2 class="section-title">Recent Activity</h2>
-            </div>
+            {{range .HappeningNow}}
             <div class="card">
-                <div class="activity-feed">
-                    {{range .ActivityFeed}}
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            {{.Icon | safeHTML}}
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-text">{{.Text | safeHTML}}</div>
-                            <div class="activity-meta">{{.Meta}}</div>
-                        </div>
+                <div class="happening-now-item">
+                    <div class="icon-container" style="background: {{.IconBgColor}};">{{.Icon}}</div>
+                    <div class="content">
+                        <div class="title">{{.Title}}</div>
+                        <div class="description">{{.Description}}</div>
+                        {{if .SourceCircle}}
+                        <div class="meta">{{.SourceCircle}}{{if .TimeAgo}} • {{.TimeAgo}}{{end}}</div>
+                        {{end}}
                     </div>
-                    {{end}}
                 </div>
             </div>
+            {{end}}
+            {{end}}
+
+            <div class="section-header" {{if .HappeningNow}}style="margin-top: 2.5rem;"{{end}}>
+                <h2 class="section-title">Upcoming Events</h2>
+                <a href="/gather" class="section-action">View calendar →</a>
+            </div>
+
+            {{if .UpcomingEvents}}
+            <div class="card">
+                {{range $index, $event := .UpcomingEvents}}
+                <div class="upcoming-event-item {{if ne $index 0}}bordered{{end}}">
+                    <div class="date-display">
+                        <div class="day-of-week">{{$event.DayOfWeek}}</div>
+                        <div class="day-of-month">{{$event.DayOfMonth}}</div>
+                        <div class="time">{{$event.Time}}</div>
+                    </div>
+                    <div class="event-content">
+                        <div class="event-title">{{$event.Title}}</div>
+                        <div class="event-meta">
+                            <span class="circle-badge">
+                                {{if $event.Circle.AvatarURL}}
+                                <img src="{{$event.Circle.AvatarURL}}" alt="{{$event.Circle.Name}}">
+                                {{else}}
+                                <span class="icon" style="background: {{$event.Circle.IconBgColor}};">{{$event.Circle.Icon}}</span>
+                                {{end}}
+                                {{$event.Circle.Name}}
+                            </span>
+                            <span class="separator">•</span>
+                            <span>{{$event.AttendeeCount}} going</span>
+                        </div>
+                        {{if $event.HasCoordination}}
+                        <div class="coordination-badge">{{$event.CoordinationText}}</div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="card empty-state">
+                <p>No upcoming events this week</p>
+                <a href="/gather" class="btn-secondary">Browse gatherings</a>
+            </div>
+            {{end}}
+
+            <div class="section-header" style="margin-top: 2.5rem;">
+                <h2 class="section-title">Your circles</h2>
+                <a href="/circles" class="section-action">View all →</a>
+            </div>
+
+            {{if .CirclesSummary}}
+            <div class="card">
+                {{range $index, $circle := .CirclesSummary}}
+                <div class="circle-summary-item {{if ne $index 0}}bordered{{end}}" onclick="window.location.href='/circles/{{$circle.ID}}'">
+                    <div class="circle-icon-wrapper">
+                        {{if $circle.AvatarURL}}
+                        <img src="{{$circle.AvatarURL}}" class="circle-avatar" alt="{{$circle.Name}}">
+                        {{else}}
+                        <div class="circle-icon" style="background: {{$circle.IconBgColor}};">{{$circle.Icon}}</div>
+                        {{end}}
+                    </div>
+                    <div class="circle-info">
+                        <div class="circle-name">{{$circle.Name}}</div>
+                        <div class="circle-activity">{{$circle.LastActivity}}{{if $circle.NextEvent}} • {{$circle.NextEvent}}{{end}}</div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="card empty-state">
+                <p>You haven't joined any circles yet</p>
+                <a href="/circles" class="btn-primary">Discover circles</a>
+            </div>
+            {{end}}
+
+            {{if .Discovery}}
+            <div class="section-header" style="margin-top: 2.5rem;">
+                <h2 class="section-title">Discover</h2>
+            </div>
+            <div class="card discovery-card">
+                <div class="serendipity-badge">
+                    <span>✨</span>
+                    <span>{{.Discovery.SerendipityCount}} compatible circles in {{.Discovery.Domain}}</span>
+                </div>
+                <div class="discovery-title">{{.Discovery.Title}}</div>
+                <div class="discovery-description">{{.Discovery.Description}}</div>
+                <button class="btn-secondary">Learn more</button>
+            </div>
+            {{end}}
         </div>
 
         <aside>
             <div class="card">
                 <h3>Quick Actions</h3>
-                <a href="/gather" class="btn-primary" style="width: 100%; margin-bottom: 0.75rem; text-decoration: none; justify-content: center;">
+                <a href="/gather" class="btn-primary quick-action-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Create Gathering
                 </a>
-                <a href="/chat" class="btn-secondary" style="width: 100%; margin-bottom: 0.75rem; text-decoration: none; justify-content: center;">
+                <a href="/messages" class="btn-secondary quick-action-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                     View Messages
                 </a>
-                <a href="/circles" class="btn-secondary" style="width: 100%; text-decoration: none; justify-content: center;">
+                <a href="/circles" class="btn-secondary quick-action-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="16"></line>
@@ -97,6 +151,7 @@
                     <span class="status-dot"></span>
                     <span>Open to connections</span>
                 </div>
+                <div class="status-description">You're discoverable at events and in domains.</div>
             </div>
         </aside>
     </div>
