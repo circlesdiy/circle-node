@@ -29,19 +29,8 @@
 }
 
 /* Navigation responsive styles */
-@media (max-width: var(--breakpoint-md)) {
+@media (max-width: var(--breakpoint-lg)) {
     .main-nav {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        border-top: 1px solid var(--border-secondary);
-        padding-top: 1rem;
-        overflow-x: auto;
-    }
-
-    .nav-item {
-        padding: 0.75rem 1rem;
-        font-size: 0.8rem;
-        white-space: nowrap;
+        display: none;
     }
 }

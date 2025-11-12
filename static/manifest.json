@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "short_name": "circles.diy",
   "description": "A social platform for communities, creators and collaborators. Built on principles of community stewardship, not capital extraction.",
-  "start_url": "/circles",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

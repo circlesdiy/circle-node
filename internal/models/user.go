@@ -52,10 +52,12 @@ type Profile struct {
 	SocialLinks json.RawMessage `json:"social_links,omitempty"` // JSONB map of platform->url
 
 	// Computed/UI fields
-	Stats       ProfileStats    `json:"stats"`
-	IsConnected bool            `json:"is_connected"`           // Whether viewer is connected to this profile
-	IsOwner     bool            `json:"is_owner"`               // Whether viewer owns this profile
-	IsVerified  bool            `json:"is_verified,omitempty"`  // Future: verification badge
+	Stats       ProfileStats     `json:"stats"`
+	IsConnected bool             `json:"is_connected"`           // Whether viewer is connected to this profile
+	IsOwner     bool             `json:"is_owner"`               // Whether viewer owns this profile
+	IsVerified  bool             `json:"is_verified,omitempty"`  // Future: verification badge
+	Circles     []ProfileCircle  `json:"circles,omitempty"`      // User's circles with display info
+	Settings    ProfileSettings2 `json:"settings,omitempty"`     // User settings for profile page
 }
 
 // GetAvatar returns the avatar URL or fallback if empty
@@ -66,4 +68,20 @@ func (p *Profile) GetAvatar() string {
 // GetBanner returns the banner URL or fallback if empty
 func (p *Profile) GetBanner() string {
 	return utils.GetBannerURL(p.BannerURL)
+}
+
+// ProfileCircle represents a circle badge on a user's profile
+type ProfileCircle struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Icon  string `json:"icon"`
+	Color string `json:"color"` // CSS color/variable for background
+}
+
+// ProfileSettings2 represents user settings displayed on profile page
+type ProfileSettings2 struct {
+	SerendipityMode     bool `json:"serendipity_mode"`
+	AwayMode            bool `json:"away_mode"`
+	BatchNotifications  bool `json:"batch_notifications"`
+	CoordinationAlerts  bool `json:"coordination_alerts"`
 }

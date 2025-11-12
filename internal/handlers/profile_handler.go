@@ -125,6 +125,18 @@ func (h *ProfileHandler) handleInternalProfile(
 		IsOwner:     true,
 		IsConnected: false,
 		IsVerified:  false, // TODO: Add verification system
+		Circles: []models.ProfileCircle{
+			{ID: "1", Name: "Music crew", Icon: "🎵", Color: "var(--warm-accent)"},
+			{ID: "2", Name: "Housemates", Icon: "🏠", Color: "var(--cool-accent)"},
+			{ID: "3", Name: "Climbing", Icon: "🧗", Color: "var(--earth-accent)"},
+			{ID: "4", Name: "Coffee nerds", Icon: "☕", Color: "var(--sage-accent)"},
+		}, // TODO: Fetch real circles from circle service
+		Settings: models.ProfileSettings2{
+			SerendipityMode:    true,
+			AwayMode:           false,
+			BatchNotifications: true,
+			CoordinationAlerts: true,
+		}, // TODO: Fetch real settings from preferences service
 	}
 
 	// Add settings if available

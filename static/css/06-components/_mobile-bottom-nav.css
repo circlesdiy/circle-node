@@ -1,0 +1,88 @@
+/* Mobile Bottom Navigation Component */
+.mobile-bottom-nav {
+    display: none; /* Hidden on desktop by default */
+    position: fixed;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    /* height: 64px; */
+    width: fit-content;
+    margin: 0 auto;
+    z-index: 1000;
+
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-secondary);
+    padding: 0.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-secondary);
+}
+
+/* Navigation items */
+.mobile-bottom-nav .nav-item {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s
+}
+
+.mobile-bottom-nav .nav-item:hover:not(.active) {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.mobile-bottom-nav .nav-item.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Show on mobile, hide on desktop */
+@media (min-width: var(--breakpoint-lg)) {
+    .mobile-bottom-nav {
+        display: none !important;
+    }
+}
+
+/* Show on mobile */
+@media (max-width: var(--breakpoint-lg)) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+
+    /* Add padding to main content to prevent overlap */
+    main {
+        padding-bottom: calc(64px + 1rem);
+    }
+}
+
+/* Adjust for very small screens */
+@media (max-width: var(--breakpoint-sm)) {
+    .mobile-bottom-nav {
+        height: 56px;
+    }
+
+    .mobile-bottom-nav .nav-item {
+        min-width: 48px;
+        padding: 6px 8px;
+        gap: 1px;
+    }
+
+    .mobile-bottom-nav .nav-item svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mobile-bottom-nav .nav-item span {
+        font-size: 0.55rem;
+    }
+
+    main {
+        padding-bottom: calc(56px + 1rem);
+    }
+}

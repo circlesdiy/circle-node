@@ -3,72 +3,58 @@
 {{end}}
 
 {{define "main"}}
-<div class="profile-page">
-    <div class="profile-banner">
-        <img src="{{.Profile.BannerURL}}" alt="Profile banner" />
-    </div>
-
-    <div class="profile-container">
-        <div class="profile-header">
-            <div class="profile-avatar-large">
-                <img src="{{.Profile.AvatarURL}}" alt="{{.Profile.Handle}}" />
-            </div>
-            <div class="profile-info">
-                <h1 class="profile-name">{{.Profile.Name}}</h1>
-                <p class="profile-handle">{{.Profile.Handle}}</p>
-                <p class="profile-bio">{{.Profile.Bio}}</p>
-            </div>
-            <div class="profile-actions">
-                {{if not .IsOwner}}
-                <button class="profile-action-btn"  >
-                    {{if .Profile.IsConnected}}Disconnect{{else}}Connect{{end}}
-                </button>
-                <button class="profile-action-btn secondary"  >Message</button>
-                {{else}}
-                <a href="/profile/edit" class="profile-action-btn">Edit Profile</a>
-                <button class="profile-action-btn secondary"  >Share Profile</button>
-                {{end}}
-            </div>
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar-xl">
+            {{if .Profile.AvatarURL}}
+            <img src="{{.Profile.AvatarURL}}" alt="{{.Profile.Name}}" />
+            {{else}}
+            👤
+            {{end}}
         </div>
-
-        <div class="profile-stats">
-            <div class="stat-item">
-                <span class="stat-number">{{.Profile.Stats.Posts}}</span>
-                <span class="stat-label">Posts</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">{{.Profile.Stats.Connections}}</span>
-                <span class="stat-label">Connections</span>
-            </div>
-        </div>
-
-        <div class="profile-content">
-            <div class="content-nav">
-                <button class="content-nav-item active"  >Posts</button>
-                <button class="content-nav-item"  >Workshop</button>
-                <button class="content-nav-item"  >Gallery</button>
-                <button class="content-nav-item"  >About</button>
-            </div>
-
-            <div class="posts-grid" id="profile-posts">
-                {{range .Posts}}
-                {{template "post" .}}
+        <div class="profile-info">
+            <h1 class="profile-username">{{.Profile.Name}}</h1>
+            <p class="profile-bio">{{.Profile.Bio}}</p>
+            {{if .Profile.Circles}}
+            <div class="profile-circles">
+                {{range .Profile.Circles}}
+                <div class="profile-circle-badge" style="background: {{.Color}};">{{.Icon}} {{.Name}}</div>
                 {{end}}
-            </div>
-
-            {{if .HasMorePosts}}
-            <div class="load-more-container" style="text-align: center; margin-top: 2rem;">
-                <button class="sidebar-action-btn"   >
-                    Load More Posts
-                </button>
             </div>
             {{end}}
         </div>
     </div>
-</div>
 
-<!-- Modal container -->
-<div id="modal" ></div>
+    {{if not .IsOwner}}
+    <div class="two-column">
+        <div>
+            <div class="card">
+                <h3>About {{.Profile.Name}}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Member of {{len .Profile.Circles}} circles</p>
+            </div>
+        </div>
+
+        <aside>
+            <div class="card">
+                <h3>Actions</h3>
+                <button class="btn-primary" style="width: 100%; margin-bottom: 0.5rem; justify-content: center;">
+                    {{if .Profile.IsConnected}}
+                    Disconnect
+                    {{else}}
+                    Connect
+                    {{end}}
+                </button>
+                <button class="btn-secondary" style="width: 100%; justify-content: center;">Message</button>
+            </div>
+        </aside>
+    </div>
+    {{else}}
+    <div style="text-align: center; padding: 2rem;">
+        <p style="color: var(--text-secondary);">This is how others see your profile.</p>
+        <a href="/profile" class="btn-secondary" style="margin-top: 1rem; text-decoration: none;">View Settings</a>
+    </div>
+    {{end}}
+</div>
 {{end}}
 
 {{define "scripts"}}

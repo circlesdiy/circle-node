@@ -45,10 +45,12 @@
 <body hx-boost="true">
     <div class="page-container">
         {{template "header" .}}
-        
+
         <main>
             {{block "main" .}}{{end}}
         </main>
+
+        {{template "mobile-bottom-nav" .}}
     </div>
 
     <!-- Toast container for notifications -->
@@ -542,4 +544,24 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </div>
 </div>
+{{end}}
+
+{{define "mobile-bottom-nav"}}
+<nav class="mobile-bottom-nav">
+    <a href="/dashboard" class="nav-item{{if eq .ActiveNav "dashboard"}} active{{end}}">
+        Dashboard
+    </a>
+    <a href="/circles" class="nav-item{{if eq .ActiveNav "circles"}} active{{end}}">
+        Circles
+    </a>
+    <a href="/chat" class="nav-item{{if eq .ActiveNav "chat"}} active{{end}}">
+        Chat
+    </a>
+    <a href="/gather" class="nav-item{{if eq .ActiveNav "gather"}} active{{end}}">
+        Gather
+    </a>
+    <a href="/profile" class="nav-item{{if eq .ActiveNav "profile"}} active{{end}}">
+        Profile
+    </a>
+</nav>
 {{end}}

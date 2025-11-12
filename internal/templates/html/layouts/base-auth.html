@@ -221,9 +221,11 @@ class ThemeManager {
     }
 }
 
+window.themeManager = window.themeManager || null;
+
 // Initialize theme manager when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ThemeManager();
+   if (!window.themeManager) window.themeManager = new ThemeManager();
 
     // Register service worker for PWA functionality
     if ('serviceWorker' in navigator) {

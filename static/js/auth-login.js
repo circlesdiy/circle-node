@@ -105,7 +105,7 @@ class AuthLogin {
             // Success! Redirect to circles
             this.showStatus('Success! Redirecting...');
             setTimeout(() => {
-                window.location.href = result.redirect || '/circles';
+                window.location.href = result.redirect || '/dashboard';
             }, 500);
 
         } catch (error) {
