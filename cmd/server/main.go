@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"circles.diy/internal/app"
@@ -139,6 +140,40 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/gather/", app.AuthHandler.RequireAuth(app.GatherHandler.Handle))
 	mux.HandleFunc("/marketplace", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 	mux.HandleFunc("/marketplace/", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
+
+	// API routes
+	mux.HandleFunc("/api/events", app.AuthHandler.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			app.GatherAPIHandler.HandleCreateEvent(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+	mux.HandleFunc("/api/events/", app.AuthHandler.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		// Parse URL to extract event ID
+		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(parts) < 3 {
+			http.Error(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+		eventID := parts[2]
+
+		if len(parts) == 4 && parts[3] == "rsvp" {
+			app.GatherAPIHandler.HandleRSVP(w, r)
+		} else if len(parts) == 3 {
+			// /api/events/{id}
+			switch r.Method {
+			case http.MethodPut, http.MethodPost:
+				app.GatherAPIHandler.HandleUpdateEvent(w, r, eventID)
+			case http.MethodDelete:
+				app.GatherAPIHandler.HandleDeleteEvent(w, r, eventID)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		} else {
+			http.Error(w, "Not found", http.StatusNotFound)
+		}
+	}))
 
 	// Static asset routes
 	mux.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {

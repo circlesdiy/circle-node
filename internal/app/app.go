@@ -12,6 +12,7 @@ import (
 	"circles.diy/internal/circle"
 	"circles.diy/internal/config"
 	"circles.diy/internal/dashboard"
+	"circles.diy/internal/events"
 	"circles.diy/internal/gather"
 	"circles.diy/internal/handlers"
 	"circles.diy/internal/preferences"
@@ -37,6 +38,7 @@ type App struct {
 	CircleService      *circle.Service
 	DashboardService   *dashboard.Service
 	GatherService      *gather.Service
+	EventService       *events.Service
 
 	// Authentication components
 	AuthService *auth.Service
@@ -46,9 +48,10 @@ type App struct {
 	ProfileHandler interface {
 		Handle(w http.ResponseWriter, r *http.Request)
 	}
-	CircleHandler    *handlers.CircleHandler
-	DashboardHandler *handlers.DashboardHandler
-	GatherHandler    *handlers.GatherHandler
+	CircleHandler     *handlers.CircleHandler
+	DashboardHandler  *handlers.DashboardHandler
+	GatherHandler     *handlers.GatherHandler
+	GatherAPIHandler  *handlers.GatherAPIHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -119,6 +122,10 @@ func New(ctx context.Context) (*App, error) {
 	gatherRepo := gather.NewPostgresRepository(postgres.Pool)
 	gatherService := gather.NewService(gatherRepo, logger)
 
+	// Events service
+	eventRepo := events.NewPostgresRepository(postgres.Pool)
+	eventService := events.NewService(eventRepo, circleService, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
@@ -132,7 +139,8 @@ func New(ctx context.Context) (*App, error) {
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
 	circleHandler := handlers.NewCircleHandler(circleService, prefsService, logger)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
-	gatherHandler := handlers.NewGatherHandler(gatherService, profileService)
+	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
+	gatherAPIHandler := handlers.NewGatherAPIHandler(gatherService, eventService, logger)
 
 	app := &App{
 		Config:             cfg,
@@ -145,12 +153,14 @@ func New(ctx context.Context) (*App, error) {
 		CircleService:      circleService,
 		DashboardService:   dashboardService,
 		GatherService:      gatherService,
+		EventService:       eventService,
 		AuthService:        authService,
 		AuthHandler:        authHandler,
 		ProfileHandler:     profileHandler,
 		CircleHandler:      circleHandler,
 		DashboardHandler:   dashboardHandler,
 		GatherHandler:      gatherHandler,
+		GatherAPIHandler:   gatherAPIHandler,
 	}
 
 	return app, nil

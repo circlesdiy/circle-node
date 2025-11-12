@@ -280,6 +280,26 @@ func (s *Service) getCoordinationTitle(coordType string) string {
 	}
 }
 
+// UpdateRSVP updates a user's RSVP status for an event
+func (s *Service) UpdateRSVP(ctx context.Context, eventID, profileID, status string) error {
+	// Validate status
+	if status != "attending" && status != "maybe" && status != "not_attending" {
+		return fmt.Errorf("invalid RSVP status: %s", status)
+	}
+
+	return s.repo.UpdateRSVP(ctx, eventID, profileID, status)
+}
+
+// GetEventAttendeeCount returns the count of attendees for an event
+func (s *Service) GetEventAttendeeCount(ctx context.Context, eventID string) (int, error) {
+	return s.repo.GetEventAttendeeCount(ctx, eventID)
+}
+
+// GetUserCircles returns circles for the user to display in dropdowns
+func (s *Service) GetUserCircles(ctx context.Context, profileID string) ([]models.CircleOption, error) {
+	return s.buildUserCircles(ctx, profileID)
+}
+
 func formatRelativeTime(t time.Time) string {
 	duration := time.Until(t)
 

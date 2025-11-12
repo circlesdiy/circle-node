@@ -168,7 +168,10 @@
             <div class="event-title">{{.Title}}</div>
             <div class="event-time">{{.TimeAgo}} • {{.TimeRange}}</div>
         </div>
-        <button class="event-action {{if eq .RSVPStatus "going"}}{{else}}secondary{{end}}" onclick="event.stopPropagation();">
+        <button class="event-action {{if eq .RSVPStatus "going"}}{{else}}secondary{{end}}"
+                data-event-id="{{.ID}}"
+                data-current-status="{{.RSVPStatus}}"
+                onclick="event.stopPropagation(); toggleRSVP(this);">
             {{if eq .RSVPStatus "going"}}Going
             {{else if eq .RSVPStatus "maybe"}}Maybe
             {{else}}RSVP{{end}}
@@ -263,15 +266,77 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Prevent event bubbling on action buttons
-    document.querySelectorAll('.event-action').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            // Handle RSVP action
-            console.log('RSVP action clicked');
-        });
-    });
 });
+
+// RSVP toggle function
+function toggleRSVP(button) {
+    const eventId = button.dataset.eventId;
+    const currentStatus = button.dataset.currentStatus;
+
+    // Cycle through statuses: rsvp -> attending -> maybe -> not_attending -> rsvp
+    let newStatus;
+    if (!currentStatus || currentStatus === 'rsvp') {
+        newStatus = 'attending';
+    } else if (currentStatus === 'going') {
+        newStatus = 'maybe';
+    } else if (currentStatus === 'maybe') {
+        newStatus = 'not_attending';
+    } else {
+        newStatus = 'attending';
+    }
+
+    // Update UI optimistically
+    button.disabled = true;
+    const originalText = button.textContent;
+
+    // Send RSVP update to server
+    fetch(`/api/events/${eventId}/rsvp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update button state
+            button.dataset.currentStatus = newStatus === 'attending' ? 'going' : newStatus;
+
+            // Update button text and style
+            if (newStatus === 'attending') {
+                button.textContent = 'Going';
+                button.classList.remove('secondary');
+            } else if (newStatus === 'maybe') {
+                button.textContent = 'Maybe';
+                button.classList.add('secondary');
+            } else {
+                button.textContent = 'RSVP';
+                button.classList.add('secondary');
+            }
+
+            // Update attendee count if present
+            const eventItem = button.closest('.event-item');
+            if (eventItem && data.attendeeCount !== undefined) {
+                const attendeeInfo = eventItem.querySelector('.attendee-info');
+                if (attendeeInfo) {
+                    attendeeInfo.textContent = `${data.attendeeCount} attending`;
+                }
+            }
+        } else {
+            button.textContent = originalText;
+            alert('Failed to update RSVP. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('RSVP error:', error);
+        button.textContent = originalText;
+        alert('Failed to update RSVP. Please try again.');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
 
 // HTMX event handling
 document.body.addEventListener('htmx:afterSwap', function(evt) {

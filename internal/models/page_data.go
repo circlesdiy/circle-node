@@ -213,7 +213,37 @@ type HostingEvent struct {
 	TimeAgo string `json:"time_ago"`
 }
 
-type MarketplacePageData struct {
+// Event Management Page Data
+type EventCreatePageData struct {
+	BaseData
+	UserCircles          []CircleOption `json:"user_circles"`
+	PreselectedCircleID  string         `json:"preselected_circle_id,omitempty"`
+}
+
+type EventDetailPageData struct {
+	BaseData
+	Event              domain.Event   `json:"event"`
+	CircleName         string         `json:"circle_name"`
+	OrganizerName      string         `json:"organizer_name"`
+	FormattedStartTime string         `json:"formatted_start_time"`
+	FormattedEndTime   string         `json:"formatted_end_time,omitempty"`
+	ViewerRSVPStatus   string         `json:"viewer_rsvp_status"`
+	IsOrganizer        bool           `json:"is_organizer"`
+	AttendeeCount      int            `json:"attendee_count"`
+	Attendees          []EventAttendee `json:"attendees"`
+	CoordinationNeeds  []EventCoordinationNeed `json:"coordination_needs"`
+}
+
+type EventCoordinationNeed struct {
+	ID         string  `json:"id"`
+	Type       string  `json:"type"`
+	Message    string  `json:"message"`
+	AuthorName string  `json:"author_name"`
+	CreatedAt  string  `json:"created_at"`
+	ResolvedAt *string `json:"resolved_at,omitempty"`
+}
+
+type MarketplacePageData struct{
 	BaseData
 	Items          []MarketplaceItem      `json:"items"`
 	FeaturedItems  []MarketplaceItem      `json:"featured_items"`

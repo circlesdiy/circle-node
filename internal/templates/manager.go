@@ -16,6 +16,8 @@ type Templates struct {
 	Circles         *template.Template
 	Chat            *template.Template
 	Gather          *template.Template
+	EventCreate     *template.Template
+	EventDetail     *template.Template
 	Marketplace     *template.Template
 
 	// Components
@@ -71,6 +73,16 @@ func InitTemplates() error {
 	}
 
 	templates.Gather, err = parseTemplateFromEmbedded("gather", "html/pages/gather.html")
+	if err != nil {
+		return err
+	}
+
+	templates.EventCreate, err = parseTemplateFromEmbedded("event-create", "html/pages/event-create.html")
+	if err != nil {
+		return err
+	}
+
+	templates.EventDetail, err = parseTemplateFromEmbedded("event-detail", "html/pages/event-detail.html")
 	if err != nil {
 		return err
 	}
