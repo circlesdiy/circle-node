@@ -22,14 +22,44 @@ type BaseData struct {
 
 type DashboardData struct {
 	BaseData
-	Feed             []FeedItem        `json:"feed"`
-	FeedOffset       int               `json:"feed_offset"`
-	Circles          []Circle          `json:"circles"`
-	Discussions      []Discussion      `json:"discussions"`
-	Events           []Event           `json:"events"`
-	Ripples          []Ripple          `json:"ripples"`
-	MarketplaceItems []MarketplaceItem `json:"marketplace_items"`
-	Impact           []ImpactItem      `json:"impact"`
+	Stats        DashboardStats    `json:"stats"`
+	QuickCircles []QuickCircle     `json:"quick_circles"`
+	ActivityFeed []ActivityItem    `json:"activity_feed"`
+	// Legacy fields - kept for backward compatibility
+	Feed             []FeedItem        `json:"feed,omitempty"`
+	FeedOffset       int               `json:"feed_offset,omitempty"`
+	Circles          []Circle          `json:"circles,omitempty"`
+	Discussions      []Discussion      `json:"discussions,omitempty"`
+	Events           []Event           `json:"events,omitempty"`
+	Ripples          []Ripple          `json:"ripples,omitempty"`
+	MarketplaceItems []MarketplaceItem `json:"marketplace_items,omitempty"`
+	Impact           []ImpactItem      `json:"impact,omitempty"`
+}
+
+type DashboardStats struct {
+	ActiveCircles       int    `json:"active_circles"`
+	ActiveCirclesChange string `json:"active_circles_change"`
+	UpcomingGatherings  int    `json:"upcoming_gatherings"`
+	GatheringsNext      string `json:"gatherings_next"`
+	UnreadMessages      int    `json:"unread_messages"`
+	MessagesFrom        string `json:"messages_from"`
+}
+
+type QuickCircle struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Icon        string `json:"icon"`
+	IconBgColor string `json:"icon_bg_color"`
+	MemberCount int    `json:"member_count"`
+	Status      string `json:"status"` // Active, Quiet, etc.
+}
+
+type ActivityItem struct {
+	ID       string `json:"id"`
+	Icon     string `json:"icon"` // SVG or emoji
+	Text     string `json:"text"` // HTML-safe activity text
+	Meta     string `json:"meta"`  // Circle name • time ago
+	ActionBy string `json:"action_by,omitempty"` // User who performed action
 }
 
 type ProfileData struct {

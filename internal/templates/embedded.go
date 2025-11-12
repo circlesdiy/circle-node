@@ -37,6 +37,9 @@ func parseTemplateFromEmbedded(name string, pagePath string) (*template.Template
 		"add": func(a, b int) int {
 			return a + b
 		},
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
 	}
 
 	tmpl := template.New(name).Funcs(funcMap)

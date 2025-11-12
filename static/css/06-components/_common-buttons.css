@@ -1,4 +1,39 @@
 /* Common Buttons */
+.btn-primary,
+.btn-secondary {
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--container-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: var(--accent-secondary);
+    border-color: var(--accent-primary);
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+}
+
+.btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--border-secondary);
+}
+
 .see-all-btn,
 .manage-plugins-btn {
     width: 100%;

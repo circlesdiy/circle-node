@@ -129,7 +129,7 @@
 
             {{if .UserHosting}}
             <div class="action-card">
-                <h3>Your hosting</h3>
+                <h3>You're hosting</h3>
                 {{range .UserHosting}}
                 <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">{{.Title}} • {{.TimeAgo}}</p>
                 <button class="action-btn secondary" onclick="window.location.href='/gather/{{.ID}}/manage'">Manage event</button>

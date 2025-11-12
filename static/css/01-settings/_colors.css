@@ -16,7 +16,16 @@
     --hover-bg: #f5f5f5;
     --active-bg: #000000;
     --active-text: #ffffff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+
+    /* Circle Accent Colors */
+    --warm-accent: rgba(232, 213, 196, 0.4);
+    --cool-accent: rgba(196, 220, 232, 0.4);
+    --earth-accent: rgba(212, 197, 176, 0.4);
+    --sage-accent: rgba(201, 213, 196, 0.4);
+
+    /* Layout */
+    --container-radius: 12px;
     
     /* Status Colors */
     --success: #10b981;
@@ -84,7 +93,13 @@
         --hover-bg: #1a1a1a;
         --active-bg: #ffffff;
         --active-text: #000000;
-        --shadow-color: rgba(255, 255, 255, 0.1);
+        --shadow-color: rgba(255, 255, 255, 0.08);
+
+        /* Circle Accent Colors - Dark Mode */
+        --warm-accent: rgba(232, 213, 196, 0.15);
+        --cool-accent: rgba(196, 220, 232, 0.15);
+        --earth-accent: rgba(212, 197, 176, 0.15);
+        --sage-accent: rgba(201, 213, 196, 0.15);
         
         /* Status Colors - Dark Mode */
         --success: #10b981;

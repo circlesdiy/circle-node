@@ -104,7 +104,6 @@
 .stat-label {
     font-size: 0.9rem;
     color: var(--text-secondary);
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 

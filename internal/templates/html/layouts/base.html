@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         <div class="header-actions">
             <div class="search-container">
-                <input type="search" placeholder="Search your circles..." class="global-search" aria-label="Global search">
+                <input type="search" placeholder="Search..." class="global-search" aria-label="Global search">
             </div>
             
             {{template "theme-menu" .}}
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
     <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
     <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>
-    <!-- <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a> -->
+    <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a>
 </nav>
 {{end}}
 

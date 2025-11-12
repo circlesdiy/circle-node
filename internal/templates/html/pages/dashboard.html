@@ -3,166 +3,105 @@
 {{end}}
 
 {{define "main"}}
-<div class="dashboard">
-    <aside class="left-sidebar">
-        <div class="quick-actions-vertical">
-            <button class="action-btn-vertical primary"  >New Post</button>
-            <button class="action-btn-vertical"  >Direct Message</button>
-            <button class="action-btn-vertical"  >Create Gathering</button>
-        </div>
-        
-        {{template "circles-sidebar" .}}
-        
-        <div class="sidebar-section">
-            <h3>Stewardship</h3>
-            <div class="impact-stats">
-                {{range .Impact}}
-                <div class="impact-item">
-                    <span class="impact-label">{{.Label}}</span>
-                    <span class="impact-value">{{.Value}}</span>
-                </div>
-                {{end}}
-            </div>
-            <button class="sidebar-action-btn"  >Manage Stewardship</button>
-        </div>
-    </aside>
-
-    <div class="main-content" id="main-content">
-        <!-- Mobile/Tablet Recent Ripples (compact horizontal) -->
-        <section class="recent-ripples-mobile">
-            <div class="recent-ripples-header">
-                <h3>
-                    {{template "ripples-icon" .}}
-                    Recent Ripples
-                </h3>
-                <button class="see-all-btn new-ripple-btn">New Ripple</button>
-            </div>
-            <div class="ripples-horizontal-scroll horitonzal-feed">
-                {{range .Ripples}}
-                <div class="ripple-card-compact">
-                    <div class="ripple-user-compact">
-                        <img class="ripple-avatar" src="{{.User.Avatar}}" alt="{{.User.Handle}}">
-                    </div>
-                    <div class="ripple-text-compact">
-                        <div class="ripple-meta-compact">
-                            <span>{{.User.Handle}}</span>
-                            <span class="ripple-expires-compact">{{.ExpiresIn}}</span>
-                        </div>
-                        {{if .Content}}
-                        <div class="ripple-content-compact">{{.Content}}</div>
-                        {{end}}
-                    </div>
-                </div>
-                {{end}}
-            </div>
-        </section>
-
-        <section class="feed-section">
-            <h2>Recent Activity</h2>
-            <div class="activity-feed" id="activity-feed">
-                {{range .Feed}}
-                {{template "post" .}}
-                {{end}}
-            </div>
-            <div class="feed-more-container">
-                <button class="feed-more-btn"   >
-                    Load More Posts
-                </button>
-            </div>
-        </section>
-
-        <section class="discussions-section">
-            <h2>Active Discussions</h2>
-            <div class="discussion-list">
-                {{range .Discussions}}
-                <div class="discussion-item"  >
-                    <div class="discussion-header">
-                        <h3 class="discussion-title">{{.Title}}</h3>
-                        <div class="discussion-meta">
-                            <span class="discussion-circle">{{.Circle}}</span>
-                            <span>{{.TimeAgo}}</span>
-                        </div>
-                    </div>
-                    <p class="discussion-preview">{{.Preview}}</p>
-                    <div class="discussion-actions">
-                        <button class="discussion-action"  >Join Discussion</button>
-                    </div>
-                </div>
-                {{end}}
-            </div>
-            <button class="see-all-btn"  >Browse All Discussions</button>
-        </section>
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1 class="page-title">Good evening, {{if .User}}{{.User.Username}}{{else}}Aaron{{end}}</h1>
+        <p class="page-subtitle">Here's what's happening in your circles</p>
     </div>
 
-    <div class="right-sidebar">        
-        <div class="sidebar-section recent-ripples-desktop">
-            <h3>
-                {{template "ripples-icon" .}}
-                Recent Ripples
-            </h3>
-            <div class="ripples-compact">
-                {{range .Ripples}}
-                <div class="ripple-compact ripple-{{.ContentType}}"  >
-                    <div class="ripple-user-compact">
-                        <img class="ripple-avatar-small" src="{{.User.Avatar}}" alt="{{.User.Handle}}">
-                        <span>{{.User.Handle}}</span>
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="stat-label">Active Circles</div>
+            <div class="stat-value">{{.Stats.ActiveCircles}}</div>
+            <div class="stat-change">{{.Stats.ActiveCirclesChange}}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Upcoming Gatherings</div>
+            <div class="stat-value">{{.Stats.UpcomingGatherings}}</div>
+            <div class="stat-change">{{.Stats.GatheringsNext}}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Unread Messages</div>
+            <div class="stat-value">{{.Stats.UnreadMessages}}</div>
+            <div class="stat-change">{{.Stats.MessagesFrom}}</div>
+        </div>
+    </div>
+
+    <div class="two-column">
+        <div>
+            <div class="section-header">
+                <h2 class="section-title">Your Circles</h2>
+                <a href="/circles" class="section-action">View all →</a>
+            </div>
+            <div class="quick-circles">
+                {{range .QuickCircles}}
+                <a href="/circles/{{.ID}}" class="quick-circle">
+                    <div class="circle-icon-small" style="background: {{.IconBgColor}};">{{.Icon}}</div>
+                    <div class="quick-circle-info">
+                        <h4>{{.Name}}</h4>
+                        <div class="quick-circle-meta">{{.MemberCount}} members • {{.Status}}</div>
                     </div>
-                    
-                    {{if eq .ContentType "image"}}
-                        <div class="ripple-media-sidebar">
-                            <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" loading="lazy" />
-                        </div>
-                    {{else if eq .ContentType "video"}}
-                        <div class="ripple-media-sidebar ripple-video">
-                            <video preload="none">
-                                <source src="{{.Video.URL}}" />
-                            </video>
-                            <div class="play-overlay-small">▶</div>
-                        </div>
-                    {{else if eq .ContentType "gallery"}}
-                        <div class="ripple-gallery-sidebar">
-                            {{range $index, $item := .Gallery}}
-                            {{if lt $index 3}}
-                            <img src="{{.URL}}" alt="{{.Alt}}" loading="lazy" />
-                            {{end}}
-                            {{end}}
-                            {{if gt (len .Gallery) 3}}<div class="gallery-more-small">+{{sub (len .Gallery) 3}}</div>{{end}}
-                        </div>
-                    {{else if eq .ContentType "link"}}
-                        <div class="ripple-link-sidebar">
-                            <div class="link-preview-small">
-                                {{if .Link.Image}}<img src="{{.Link.Image}}" alt="{{.Link.Title}}" />{{end}}
-                                <div class="link-info-small">
-                                    <div class="link-title-small">{{.Link.Title}}</div>
-                                    <div class="link-domain-small">{{.Link.Domain}}</div>
-                                </div>
-                            </div>
-                        </div>
-                    {{end}}
-                    
-                    {{if .Content}}
-                    <div class="ripple-content-compact">{{.Content}}</div>
-                    {{end}}
-                    
-                    <div class="ripple-meta-compact">
-                        <div class="ripple-expires-compact">{{.ExpiresIn}}</div>
-                    </div>
-                </div>
+                </a>
                 {{end}}
             </div>
-            <button class="sidebar-action-btn"  >New Ripple</button>
+
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Recent Activity</h2>
+            </div>
+            <div class="card">
+                <div class="activity-feed">
+                    {{range .ActivityFeed}}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            {{.Icon | safeHTML}}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">{{.Text | safeHTML}}</div>
+                            <div class="activity-meta">{{.Meta}}</div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
         </div>
 
-        {{template "events-sidebar" .}}
+        <aside>
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <a href="/gather" class="btn-primary" style="width: 100%; margin-bottom: 0.75rem; text-decoration: none; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Create Gathering
+                </a>
+                <a href="/chat" class="btn-secondary" style="width: 100%; margin-bottom: 0.75rem; text-decoration: none; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    View Messages
+                </a>
+                <a href="/circles" class="btn-secondary" style="width: 100%; text-decoration: none; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    Discover Circles
+                </a>
+            </div>
 
-        {{template "marketplace-sidebar" .}}
+            <div class="card">
+                <h3>Status</h3>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Open to connections</span>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
-
-<!-- Modal container for HTMX -->
-<!-- <div id="modal" ></div> -->
 {{end}}
 
 {{define "scripts"}}
-
 {{end}}
