@@ -93,11 +93,17 @@ type Contact struct {
 
 type GatherPageData struct {
 	BaseData
-	FeaturedEvents   []GatherEvent      `json:"featured_events"`
-	UpcomingEvents   []GatherEvent      `json:"upcoming_events"`
-	MyEvents         []GatherEvent      `json:"my_events"`
-	EventCategories  []EventCategory    `json:"event_categories"`
-	PopularLocations []EventLocation    `json:"popular_locations"`
+	CircleGatherings  []CircleGathering  `json:"circle_gatherings"`
+	DomainDiscovery   []DomainSection    `json:"domain_discovery"`
+	UserCircles       []CircleOption     `json:"user_circles"`
+	ActiveCoordination []CoordinationItem `json:"active_coordination,omitempty"`
+	UserHosting       []HostingEvent     `json:"user_hosting,omitempty"`
+	// Legacy fields - kept for backward compatibility
+	FeaturedEvents   []GatherEvent      `json:"featured_events,omitempty"`
+	UpcomingEvents   []GatherEvent      `json:"upcoming_events,omitempty"`
+	MyEvents         []GatherEvent      `json:"my_events,omitempty"`
+	EventCategories  []EventCategory    `json:"event_categories,omitempty"`
+	PopularLocations []EventLocation    `json:"popular_locations,omitempty"`
 }
 
 type GatherEvent struct {
@@ -153,6 +159,69 @@ type EventAttendee struct {
 	User
 	RSVPStatus string `json:"rsvp_status"`
 	JoinedAt   string `json:"joined_at"`
+}
+
+// New Gather Page Types
+type CircleGathering struct {
+	CircleID         string           `json:"circle_id"`
+	CircleName       string           `json:"circle_name"`
+	Icon             string           `json:"icon"`
+	IconBgColor      string           `json:"icon_bg_color"`
+	GatheringCount   int              `json:"gathering_count"`
+	NeedsCoordination bool            `json:"needs_coordination"`
+	Gatherings       []GatheringItem  `json:"gatherings"`
+}
+
+type GatheringItem struct {
+	ID                 string              `json:"id"`
+	Title              string              `json:"title"`
+	TimeAgo            string              `json:"time_ago"`
+	TimeRange          string              `json:"time_range"`
+	RSVPStatus         string              `json:"rsvp_status"`
+	Description        string              `json:"description,omitempty"`
+	Location           string              `json:"location,omitempty"`
+	AttendeeCount      int                 `json:"attendee_count,omitempty"`
+	CoordinationNeeded *CoordinationNeed   `json:"coordination_needed,omitempty"`
+}
+
+type CoordinationNeed struct {
+	Icon  string `json:"icon"`
+	Title string `json:"title"`
+	Text  string `json:"text"`
+}
+
+type DomainSection struct {
+	Name             string           `json:"name"`
+	Icon             string           `json:"icon"`
+	SerendipityCount int              `json:"serendipity_count,omitempty"`
+	Gatherings       []DomainGathering `json:"gatherings"`
+}
+
+type DomainGathering struct {
+	ID                 string `json:"id"`
+	Title              string `json:"title"`
+	TimeAgo            string `json:"time_ago"`
+	TimeRange          string `json:"time_range"`
+	Description        string `json:"description,omitempty"`
+	Location           string `json:"location,omitempty"`
+	SerendipityCircles int    `json:"serendipity_circles,omitempty"`
+}
+
+type CircleOption struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CoordinationItem struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	GatheringID string `json:"gathering_id"`
+}
+
+type HostingEvent struct {
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	TimeAgo string `json:"time_ago"`
 }
 
 type MarketplacePageData struct {

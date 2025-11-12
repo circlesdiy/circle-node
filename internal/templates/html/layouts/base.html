@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {{define "nav"}}
 <nav class="main-nav">
-    <!-- <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a> -->
+    <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
     <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
     <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
     <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>

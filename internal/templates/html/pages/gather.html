@@ -4,222 +4,216 @@
 
 {{define "main"}}
 <div class="gather-page">
-    <div class="gather-header">
-        <div class="gather-header-content">
-            <div class="gather-title">
-                <h1>Gather</h1>
-                <p>Discover and create meaningful connections through local events and gatherings.</p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Gather</h1>
+        <p class="page-subtitle">Coordinate with your circles</p>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>Open to connections at events</span>
             </div>
-            <div class="gather-actions">
-                <button class="btn-primary"  >Create Event</button>
-                <button class="btn-secondary"  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>
-                    Search Events
-                </button>
-            </div>
-        </div>
-        
-        <div class="gather-filters">
-            <div class="filter-categories">
-                {{range .EventCategories}}
-                <button class="category-filter" data-category="{{.ID}}">
-                    <span class="category-icon">{{.Icon}}</span>
-                    <span class="category-name">{{.Name}}</span>
-                    <span class="category-count">{{.Count}}</span>
-                </button>
-                {{end}}
-            </div>
+            <label class="toggle-switch">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                <span>Enable serendipity mode</span>
+            </label>
         </div>
     </div>
 
     <div class="gather-content">
-        {{if .FeaturedEvents}}
-        <section class="featured-events">
-            <div class="section-header">
-                <h2>Featured Events</h2>
-                <button class="see-all-btn"  >See All</button>
-            </div>
-            <div class="featured-events-grid">
-                {{range .FeaturedEvents}}
-                {{template "event-card-featured" .}}
-                {{end}}
-            </div>
-        </section>
-        {{end}}
-
         <div class="gather-main">
-            <div class="events-list">
-                <section class="upcoming-events">
-                    <div class="section-header">
-                        <h2>Upcoming Events</h2>
-                        <div class="view-controls">
-                            <button class="view-btn active" data-view="list">List</button>
-                            <button class="view-btn" data-view="grid">Grid</button>
-                        </div>
-                    </div>
-                    <div class="events-container" data-view="list">
-                        {{range .UpcomingEvents}}
-                        {{template "event-card-list" .}}
-                        {{end}}
-                    </div>
-                    <div class="load-more-container">
-                        <button class="btn-secondary"   >
-                            Load More Events
-                        </button>
-                    </div>
-                </section>
+            <!-- Your Circles' Gatherings -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Your circles' gatherings</h2>
+                    <a href="#" class="section-action">View calendar →</a>
+                </div>
 
-                {{if .MyEvents}}
-                <section class="my-events">
-                    <div class="section-header">
-                        <h2>My Events</h2>
-                        <button class="see-all-btn"  >Manage</button>
-                    </div>
-                    <div class="my-events-list">
-                        {{range .MyEvents}}
-                        {{template "event-card-compact" .}}
-                        {{end}}
-                    </div>
-                </section>
-                {{end}}
-            </div>
-
-            <div class="gather-sidebar">
-                <div class="sidebar-section">
-                    <h3>Popular Locations</h3>
-                    <div class="location-list">
-                        {{range .PopularLocations}}
-                        <button class="location-item"  >
-                            <div class="location-info">
-                                <span class="location-name">{{.Name}}</span>
-                                {{if .City}}<span class="location-city">{{.City}}</span>{{end}}
+                {{range .CircleGatherings}}
+                <div class="circle-gathering" data-circle-id="{{.CircleID}}">
+                    <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <div class="circle-icon" style="background: {{.IconBgColor}};">{{.Icon}}</div>
+                        <div class="circle-gathering-info">
+                            <div class="circle-gathering-name">{{.CircleName}}</div>
+                            <div class="circle-gathering-meta">
+                                {{if eq .GatheringCount 0}}Nothing upcoming
+                                {{else if eq .GatheringCount 1}}1 upcoming gathering
+                                {{else}}{{.GatheringCount}} upcoming gatherings{{end}}
                             </div>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9,18 15,12 9,6"/>
-                            </svg>
-                        </button>
+                        </div>
+                        {{if .NeedsCoordination}}
+                        <span class="needs-attention">Needs coordination</span>
+                        {{else if gt .GatheringCount 0}}
+                        <span class="all-set">✓ All set</span>
+                        {{end}}
+                        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9,18 15,12 9,6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="circle-events">
+                        {{if .Gatherings}}
+                        {{range .Gatherings}}
+                        {{template "gathering-item" .}}
+                        {{end}}
+                        {{else}}
+                        <div class="empty-state">
+                            <div class="empty-icon">{{.Icon}}</div>
+                            <p>No gatherings planned yet.<br>Want to organize something?</p>
+                        </div>
                         {{end}}
                     </div>
                 </div>
-            </div>
+                {{end}}
+            </section>
+
+            <!-- Discover in Domains -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Discover in the commons</h2>
+                    <a href="#" class="section-action">Browse domains →</a>
+                </div>
+
+                {{range .DomainDiscovery}}
+                <div class="domain-section">
+                    <div class="domain-header">
+                        <span class="domain-icon">{{.Icon}}</span>
+                        <h3 class="domain-title">{{.Name}}</h3>
+                    </div>
+                    {{if .SerendipityCount}}
+                    <div class="serendipity-indicator">
+                        <span>✨</span>
+                        <span>{{.SerendipityCount}} compatible circles attending gatherings in this domain</span>
+                    </div>
+                    {{end}}
+                    <div class="domain-events">
+                        {{range .Gatherings}}
+                        {{template "domain-gathering" .}}
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </section>
         </div>
+
+        <!-- Sidebar -->
+        <aside class="quick-actions">
+            <div class="action-card">
+                <h3>Organize a gathering</h3>
+                {{range .UserCircles}}
+                <button class="action-btn" onclick="window.location.href='/gather/create?circle={{.ID}}'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    For {{.Name}}
+                </button>
+                {{end}}
+                <button class="action-btn secondary" onclick="window.location.href='/gather/create'">Another circle...</button>
+                <p class="help-text">Circle gatherings help coordinate logistics and reduce planning overhead.</p>
+            </div>
+
+            {{if .ActiveCoordination}}
+            <div class="coordination-card">
+                <h3>Active coordination</h3>
+                <div class="coordination-list">
+                    {{range .ActiveCoordination}}
+                    <div class="coordination-item" onclick="window.location.href='/gather/{{.GatheringID}}'">
+                        <span class="coordination-label">{{.Label}}</span>
+                        <span class="coordination-value">{{.Value}}</span>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
+            {{if .UserHosting}}
+            <div class="action-card">
+                <h3>Your hosting</h3>
+                {{range .UserHosting}}
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">{{.Title}} • {{.TimeAgo}}</p>
+                <button class="action-btn secondary" onclick="window.location.href='/gather/{{.ID}}/manage'">Manage event</button>
+                {{end}}
+            </div>
+            {{end}}
+        </aside>
     </div>
 </div>
-
-<div id="modal" ></div>
 {{end}}
 
-{{define "event-card-featured"}}
-<div class="event-card featured"  >
-    {{if .Image}}
-    <div class="event-image">
-        <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" loading="lazy">
-        <div class="event-type-badge {{.Type}}">{{.Type}}</div>
-        {{if .IsTicketed}}
-        <div class="ticket-badge">{{.Currency}} {{.Price}}</div>
+{{define "gathering-item"}}
+<div class="event-item" onclick="window.location.href='/gather/{{.ID}}'">
+    <div class="event-header">
+        <div>
+            <div class="event-title">{{.Title}}</div>
+            <div class="event-time">{{.TimeAgo}} • {{.TimeRange}}</div>
+        </div>
+        <button class="event-action {{if eq .RSVPStatus "going"}}{{else}}secondary{{end}}" onclick="event.stopPropagation();">
+            {{if eq .RSVPStatus "going"}}Going
+            {{else if eq .RSVPStatus "maybe"}}Maybe
+            {{else}}RSVP{{end}}
+        </button>
+    </div>
+    {{if .Description}}
+    <p class="event-description">{{.Description}}</p>
+    {{end}}
+    <div class="event-logistics">
+        {{if .Location}}
+        <span class="logistics-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            {{.Location}}
+        </span>
         {{end}}
+        {{if .AttendeeCount}}
+        <span class="logistics-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            {{.AttendeeCount}} from your circle going
+        </span>
+        {{end}}
+    </div>
+    {{if .CoordinationNeeded}}
+    <div class="coordination-needed">
+        <div class="coordination-title">{{.CoordinationNeeded.Icon}} {{.CoordinationNeeded.Title}}</div>
+        <div class="coordination-text">{{.CoordinationNeeded.Text}}</div>
     </div>
     {{end}}
-    <div class="event-content">
-        <div class="event-meta">
-            <span class="event-category">{{.Category}}</span>
-            {{if .Circle}}<span class="event-circle">{{.Circle}}</span>{{end}}
-            <span class="event-time">{{.TimeAgo}}</span>
-        </div>
-        <h3 class="event-title">{{.Title}}</h3>
-        <p class="event-description">{{.Description}}</p>
-        <div class="event-details">
-            <div class="event-host">
-                <img src="{{.Host.Avatar}}" alt="{{.Host.Name}}" class="host-avatar">
-                <span class="host-name">{{.Host.Name}}</span>
-            </div>
-            <div class="event-location">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                </svg>
-                <span>{{.Location.Name}}</span>
-            </div>
-        </div>
-        <div class="event-stats">
-            <span class="attendee-count">{{.AttendeeCount}}/{{.Capacity}} attending</span>
-            <div class="event-tags">
-                {{range .Tags}}
-                <span class="tag">{{.}}</span>
-                {{end}}
-            </div>
-        </div>
-    </div>
 </div>
 {{end}}
 
-{{define "event-card-list"}}
-<div class="event-card list {{.RSVPStatus}}"  >
-    <div class="event-card-content">
-        {{if .Image}}
-        <div class="event-thumbnail">
-            <img src="{{.Image.URL}}" alt="{{.Image.Alt}}" loading="lazy">
-            <div class="event-type-indicator {{.Type}}"></div>
+{{define "domain-gathering"}}
+<div class="domain-event" onclick="window.location.href='/gather/{{.ID}}'">
+    <div class="event-header">
+        <div>
+            <div class="event-title">{{.Title}}</div>
+            <div class="event-time">{{.TimeAgo}} • {{.TimeRange}}</div>
         </div>
-        {{end}}
-        <div class="event-info">
-            <div class="event-header">
-                <h3 class="event-title">{{.Title}}</h3>
-                <div class="event-meta">
-                    <span class="event-category">{{.Category}}</span>
-                    {{if .Circle}}<span class="event-circle">{{.Circle}}</span>{{end}}
-                </div>
-            </div>
-            <p class="event-description">{{.Description}}</p>
-            <div class="event-details">
-                <div class="detail-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                    </svg>
-                    <span>{{.TimeAgo}} • {{.Duration}}</span>
-                </div>
-                <div class="detail-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                        <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    <span>{{.Location.Name}}{{if .Location.City}}, {{.Location.City}}{{end}}</span>
-                </div>
-            </div>
-        </div>
+        <button class="event-action secondary" onclick="event.stopPropagation();">Details</button>
     </div>
-    <div class="event-actions">
-        <div class="rsvp-status {{.RSVPStatus}}">
-            {{if eq .RSVPStatus "going"}}✓ Going{{else if eq .RSVPStatus "maybe"}}? Maybe{{else if eq .RSVPStatus "not_going"}}✗ Not Going{{else}}RSVP{{end}}
-        </div>
-        {{if .IsTicketed}}
-        <div class="ticket-price">{{.Currency}} {{.Price}}</div>
-        {{end}}
-        <div class="attendee-info">{{.AttendeeCount}}/{{.Capacity}}</div>
-    </div>
-</div>
-{{end}}
-
-{{define "event-card-compact"}}
-<div class="event-card compact {{.RSVPStatus}}"  >
-    <div class="event-basic-info">
-        <h4 class="event-title">{{.Title}}</h4>
-        <div class="event-meta">
-            <span class="event-time">{{.TimeAgo}}</span>
-            {{if .IsHost}}<span class="host-badge">Host</span>{{end}}
-        </div>
-    </div>
-    <div class="event-quick-stats">
-        <span class="attendee-count">{{.AttendeeCount}} attending</span>
-        {{if .Announcements}}
-        <div class="announcement-indicator" title="{{len .Announcements}} new announcements">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    {{if .Description}}
+    <p class="event-description">{{.Description}}</p>
+    {{end}}
+    <div class="event-logistics">
+        {{if .Location}}
+        <span class="logistics-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
             </svg>
-            <span>{{len .Announcements}}</span>
-        </div>
+            {{.Location}}
+        </span>
+        {{end}}
+        {{if .SerendipityCircles}}
+        <span class="logistics-item" style="color: #8b7355;">
+            ✨ {{.SerendipityCircles}} circles you might vibe with
+        </span>
         {{end}}
     </div>
 </div>
@@ -229,44 +223,32 @@
 <script>
 // Gather page functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Category filter functionality
-    const categoryFilters = document.querySelectorAll('.category-filter');
-    categoryFilters.forEach(filter => {
-        filter.addEventListener('click', function() {
-            const category = this.dataset.category;
-            const activeCategory = document.querySelector('.category-filter.active');
-            
-            if (activeCategory && activeCategory.dataset.category === category) {
-                activeCategory.classList.remove('active')
-                console.log('Removing filter:', category);
-                return;
-            }
-            
-            // Update active state
-            categoryFilters.forEach(f => f.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Filter events (could be enhanced with HTMX)
-            console.log('Filtering by category:', category);
+    // Toggle switches
+    document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const toggleEl = this.querySelector('.toggle');
+            toggleEl.classList.toggle('active');
+
+            // Could sync to backend here
+            const isActive = toggleEl.classList.contains('active');
+            console.log('Serendipity mode:', isActive);
         });
     });
-    
-    // View toggle functionality
-    const viewButtons = document.querySelectorAll('.view-btn');
-    const eventsContainer = document.querySelector('.events-container');
-    
-    viewButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const view = this.dataset.view;
-            
-            // Update active state
-            viewButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update container view
-            if (eventsContainer) {
-                eventsContainer.setAttribute('data-view', view);
-            }
+
+    // Circle gathering expand/collapse
+    document.querySelectorAll('.circle-gathering-header').forEach(header => {
+        header.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.parentElement.classList.toggle('expanded');
+        });
+    });
+
+    // Prevent event bubbling on action buttons
+    document.querySelectorAll('.event-action').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Handle RSVP action
+            console.log('RSVP action clicked');
         });
     });
 });
@@ -274,8 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // HTMX event handling
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     if (evt.detail.target.id === 'modal') {
-        // Modal opened - could add modal-specific initialization
-        console.log('Event modal opened');
+        console.log('Gathering modal opened');
     }
 });
 </script>
