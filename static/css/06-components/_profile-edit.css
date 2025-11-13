@@ -196,6 +196,7 @@
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+    padding: 1rem;
 }
 
 .profile-circle-badge {

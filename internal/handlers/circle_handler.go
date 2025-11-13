@@ -2,37 +2,47 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"circles.diy/internal/auth"
 	"circles.diy/internal/circle"
+	"circles.diy/internal/content"
 	"circles.diy/internal/domain"
 	"circles.diy/internal/middleware"
 	"circles.diy/internal/models"
 	"circles.diy/internal/preferences"
+	"circles.diy/internal/profile"
 	"circles.diy/internal/templates"
 	"go.uber.org/zap"
 )
 
 // CircleHandler handles circle-related HTTP requests
 type CircleHandler struct {
-	circleService *circle.Service
-	prefsService  *preferences.Service
-	logger        *zap.Logger
+	circleService  *circle.Service
+	contentService *content.Service
+	prefsService   *preferences.Service
+	profileService *profile.Service
+	logger         *zap.Logger
 }
 
 // NewCircleHandler creates a new circle handler
 func NewCircleHandler(
 	circleService *circle.Service,
+	contentService *content.Service,
 	prefsService *preferences.Service,
+	profileService *profile.Service,
 	logger *zap.Logger,
 ) *CircleHandler {
 	return &CircleHandler{
-		circleService: circleService,
-		prefsService:  prefsService,
-		logger:        logger,
+		circleService:  circleService,
+		contentService: contentService,
+		prefsService:   prefsService,
+		profileService: profileService,
+		logger:         logger,
 	}
 }
 
@@ -303,7 +313,7 @@ func (h *CircleHandler) handleViewCircle(w http.ResponseWriter, r *http.Request,
 			zap.String("circle_id", circleID),
 			zap.Error(err),
 		)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		// Note: Cannot send error response here as headers are already sent
 	}
 }
 
@@ -344,11 +354,91 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		})
 	}
 
+	// Fetch recent posts
+	posts, _ := h.contentService.GetPostsByCircle(ctx, circle.ID, 20, 0)
+
+	// Collect unique profile IDs for batch fetching
+	profileIDSet := make(map[string]bool)
+	for _, post := range posts {
+		profileIDSet[post.AuthorProfileID] = true
+	}
+
+	// Batch fetch profiles
+	profileMap := make(map[string]*domain.Profile)
+	for authorProfileID := range profileIDSet {
+		profile, err := h.profileService.GetByID(ctx, authorProfileID)
+		if err == nil && profile != nil {
+			profileMap[authorProfileID] = profile
+		}
+	}
+
+	recentPosts := make([]models.CirclePost, 0, len(posts))
+	for _, post := range posts {
+		// Get reaction counts
+		reactionCounts, _ := h.contentService.GetReactionCounts(ctx, "post", post.ID)
+		likeCount := reactionCounts["like"]
+
+		// Check if user has liked
+		userHasLiked := false
+		if profileID != "" {
+			userReaction, _ := h.contentService.GetUserReaction(ctx, "post", post.ID, profileID)
+			userHasLiked = userReaction != nil && userReaction.Key == "like"
+		}
+
+		// Check if user can edit
+		canEdit := post.AuthorProfileID == profileID
+
+		// Format time
+		formattedTime := formatTimeAgo(post.CreatedAt)
+
+		// Check if edited
+		isEdited := post.EditedAt != nil
+		var editedAtStr *string
+		if isEdited {
+			editedStr := formatTimeAgo(*post.EditedAt)
+			editedAtStr = &editedStr
+		}
+
+		// Get author profile information
+		authorName := "Circle Member"
+		authorAvatar := ""
+		if authorProfile, ok := profileMap[post.AuthorProfileID]; ok {
+			if authorProfile.DisplayName != "" {
+				authorName = authorProfile.DisplayName
+			} else if authorProfile.Name != "" {
+				authorName = authorProfile.Name
+			} else if authorProfile.Handle != "" {
+				authorName = authorProfile.Handle
+			}
+			authorAvatar = authorProfile.AvatarURL
+		}
+
+		recentPosts = append(recentPosts, models.CirclePost{
+			ID:              post.ID,
+			AuthorProfileID: post.AuthorProfileID,
+			AuthorName:      authorName,
+			AuthorAvatar:    authorAvatar,
+			Body:            post.Body,
+			BodyFormat:      post.BodyFormat,
+			ContentWarning:  post.ContentWarning,
+			Visibility:      post.Visibility,
+			CreatedAt:       post.CreatedAt.Format(time.RFC3339),
+			EditedAt:        editedAtStr,
+			FormattedTime:   formattedTime,
+			IsEdited:        isEdited,
+			ReplyCount:      post.ReplyCount,
+			LikeCount:       likeCount,
+			UserHasLiked:    userHasLiked,
+			CanEdit:         canEdit,
+			ShowComments:    false,
+		})
+	}
+
 	// Build stats
 	stats := models.CircleDetailStats{
-		TotalPosts:      0, // TODO: Implement post counting
-		TotalFiles:      0, // TODO: Implement file counting
-		TotalGatherings: 0, // TODO: Implement gathering counting
+		TotalPosts:      len(posts),                        // Count of fetched posts
+		TotalFiles:      0,                                 // TODO: Implement file counting
+		TotalGatherings: 0,                                 // TODO: Implement gathering counting
 		CreatedAt:       circle.CreatedAt.Format("Jan 2, 2006"),
 		LastActivity:    "Recently", // TODO: Implement last activity tracking
 	}
@@ -366,9 +456,9 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		Circle:              *circle,
 		Members:             members,
 		MemberCount:         memberCount,
-		RecentPosts:         []models.CirclePost{},         // TODO: Implement post fetching
-		UpcomingGatherings:  []models.GatheringItem{},      // TODO: Implement gathering fetching
-		SharedFiles:         []models.CircleFile{},         // TODO: Implement file fetching
+		RecentPosts:         recentPosts,
+		UpcomingGatherings:  []models.GatheringItem{}, // TODO: Implement gathering fetching
+		SharedFiles:         []models.CircleFile{},    // TODO: Implement file fetching
 		IsOwner:             isOwner,
 		IsAdmin:             isAdmin,
 		IsMember:            isMember,
@@ -379,6 +469,52 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		UserRole:            userRole,
 		CircleStats:         stats,
 		ActiveTab:           "chat", // Default to chat tab
+	}
+}
+
+// formatTimeAgo formats a time as a relative string
+func formatTimeAgo(t time.Time) string {
+	now := time.Now()
+	diff := now.Sub(t)
+
+	if diff < time.Minute {
+		return "just now"
+	} else if diff < time.Hour {
+		minutes := int(diff.Minutes())
+		if minutes == 1 {
+			return "1 minute ago"
+		}
+		return fmt.Sprintf("%d minutes ago", minutes)
+	} else if diff < 24*time.Hour {
+		hours := int(diff.Hours())
+		if hours == 1 {
+			return "1 hour ago"
+		}
+		return fmt.Sprintf("%d hours ago", hours)
+	} else if diff < 7*24*time.Hour {
+		days := int(diff.Hours() / 24)
+		if days == 1 {
+			return "1 day ago"
+		}
+		return fmt.Sprintf("%d days ago", days)
+	} else if diff < 30*24*time.Hour {
+		weeks := int(diff.Hours() / (24 * 7))
+		if weeks == 1 {
+			return "1 week ago"
+		}
+		return fmt.Sprintf("%d weeks ago", weeks)
+	} else if diff < 365*24*time.Hour {
+		months := int(diff.Hours() / (24 * 30))
+		if months == 1 {
+			return "1 month ago"
+		}
+		return fmt.Sprintf("%d months ago", months)
+	} else {
+		years := int(diff.Hours() / (24 * 365))
+		if years == 1 {
+			return "1 year ago"
+		}
+		return fmt.Sprintf("%d years ago", years)
 	}
 }
 

@@ -1,0 +1,251 @@
+{{define "post-composer"}}
+<div class="composer" data-circle-id="{{.CircleID}}">
+    <form class="composer-form" id="post-composer-form">
+        <textarea
+            name="body"
+            id="post-body"
+            class="composer-input"
+            placeholder="Share something with the circle..."
+            required
+        ></textarea>
+
+        <!-- Hidden fields with defaults -->
+        <input type="hidden" name="body_format" id="post-format" value="markdown" />
+        <input type="hidden" name="visibility" id="post-visibility" value="members_only" />
+        <input type="hidden" name="content_warning" id="post-content-warning" value="" />
+
+        <div class="composer-actions">
+            <div class="composer-tools">
+                <button type="button" class="composer-tool-btn" title="Attach image">📷</button>
+                <button type="button" class="composer-tool-btn" title="Attach file">📎</button>
+                <button type="button" class="composer-tool-btn" title="Add emoji">😊</button>
+            </div>
+            <button type="submit" class="btn-primary" id="composer-submit">
+                <span class="btn-text">Post</span>
+                <span class="btn-loading" hidden>
+                    <svg class="spinner" viewBox="0 0 24 24">
+                        <circle class="spinner-track" cx="12" cy="12" r="10"></circle>
+                        <circle class="spinner-head" cx="12" cy="12" r="10"></circle>
+                    </svg>
+                    Posting...
+                </span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.composer {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--container-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.composer-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.composer-input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.composer-input:focus {
+    outline: none;
+    border-color: var(--border-secondary);
+}
+
+.composer-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.composer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.composer-tools {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.composer-tool-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.125rem;
+    padding: 0;
+}
+
+.composer-tool-btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--border-secondary);
+}
+
+.composer .btn-primary {
+    padding: 0.625rem 1.5rem;
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--container-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--accent-primary);
+    color: var(--accent-secondary);
+}
+
+.composer .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.composer .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-track {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    opacity: 0.2;
+}
+
+.spinner-head {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 45;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+    .composer {
+        padding: 1rem;
+    }
+
+    .composer-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .composer-tools {
+        justify-content: center;
+    }
+
+    .composer .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+(function() {
+    const form = document.getElementById('post-composer-form');
+    const submitBtn = document.getElementById('composer-submit');
+    const composer = document.querySelector('.composer');
+    const circleID = composer.dataset.circleId;
+
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const body = document.getElementById('post-body').value.trim();
+        const bodyFormat = document.getElementById('post-format').value;
+        const visibility = document.getElementById('post-visibility').value;
+        const contentWarning = document.getElementById('post-content-warning').value.trim();
+
+        if (!body) {
+            alert('Post body cannot be empty');
+            return;
+        }
+
+        // Disable submit button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.querySelector('.btn-text').hidden = true;
+        submitBtn.querySelector('.btn-loading').hidden = false;
+
+        try {
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    circle_id: circleID,
+                    body: body,
+                    body_format: bodyFormat,
+                    visibility: visibility,
+                    content_warning: contentWarning || '',
+                }),
+            });
+
+            if (response.ok) {
+                // Clear form
+                form.reset();
+
+                // Reload page to show new post
+                window.location.reload();
+            } else {
+                const error = await response.text();
+                alert('Failed to create post: ' + error);
+            }
+        } catch (error) {
+            console.error('Error creating post:', error);
+            alert('Failed to create post. Please try again.');
+        } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.querySelector('.btn-text').hidden = false;
+            submitBtn.querySelector('.btn-loading').hidden = true;
+        }
+    });
+
+    // Placeholder functionality for tool buttons (to be implemented)
+    const toolBtns = document.querySelectorAll('.composer-tool-btn');
+    toolBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const title = btn.getAttribute('title');
+            // TODO: Implement actual functionality
+            console.log(`${title} clicked - functionality to be implemented`);
+        });
+    });
+})();
+</script>
+{{end}}

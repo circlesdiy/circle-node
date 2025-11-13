@@ -1,6 +1,14 @@
 package models
 
-import "circles.diy/internal/domain"
+import (
+	"circles.diy/internal/domain"
+)
+
+// ReactionResponse represents the response for reaction endpoints
+type ReactionResponse struct {
+	Counts       map[string]int     `json:"counts"`
+	UserReaction *domain.Reaction   `json:"user_reaction,omitempty"`
+}
 
 type PageData struct {
 	Success   bool
@@ -82,16 +90,24 @@ type CircleMember struct {
 }
 
 type CirclePost struct {
-	ID            string      `json:"id"`
-	AuthorID      string      `json:"author_id"`
-	AuthorName    string      `json:"author_name"`
-	AuthorAvatar  string      `json:"author_avatar"`
-	Content       string      `json:"content"`
-	CreatedAt     string      `json:"created_at"`
-	TimeAgo       string      `json:"time_ago"`
-	ReplyCount    int         `json:"reply_count"`
-	ReactionCount int         `json:"reaction_count"`
-	Attachments   []Attachment `json:"attachments,omitempty"`
+	ID                string       `json:"id"`
+	AuthorProfileID   string       `json:"author_profile_id"`
+	AuthorName        string       `json:"author_name"`
+	AuthorAvatar      string       `json:"author_avatar"`
+	Body              string       `json:"body"`
+	BodyFormat        string       `json:"body_format"`
+	ContentWarning    string       `json:"content_warning"`
+	Visibility        string       `json:"visibility"`
+	CreatedAt         string       `json:"created_at"`
+	EditedAt          *string      `json:"edited_at,omitempty"`
+	FormattedTime     string       `json:"formatted_time"`
+	IsEdited          bool         `json:"is_edited"`
+	ReplyCount        int          `json:"reply_count"`
+	LikeCount         int          `json:"like_count"`
+	UserHasLiked      bool         `json:"user_has_liked"`
+	CanEdit           bool         `json:"can_edit"`
+	ShowComments      bool         `json:"show_comments"`
+	Attachments       []Attachment `json:"attachments,omitempty"`
 }
 
 type CircleFile struct {

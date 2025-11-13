@@ -47,41 +47,25 @@
         <div class="circle-main">
             <!-- Chat Tab -->
             <div class="circle-tab active" id="chat-tab">
-                <div class="composer">
-                    <textarea class="composer-input" placeholder="Share something with the circle..."></textarea>
-                    <div class="composer-actions">
-                        <div class="composer-tools">
-                            <button class="composer-tool-btn" title="Attach image">📷</button>
-                            <button class="composer-tool-btn" title="Attach file">📎</button>
-                            <button class="composer-tool-btn" title="Add emoji">😊</button>
-                        </div>
-                        <button class="btn btn-primary">Post</button>
-                    </div>
-                </div>
+                {{if .IsMember}}
+                {{template "post-composer" (dict "CircleID" .Circle.ID)}}
+                {{end}}
 
-                {{if .RecentPosts}}
-                    {{range .RecentPosts}}
-                    <div class="post">
-                        <div class="post-header">
-                            <div class="post-avatar">👤</div>
-                            <div class="post-author-info">
-                                <div class="post-author-name">{{.AuthorName}}</div>
-                                <div class="post-timestamp">{{.TimeAgo}}</div>
-                            </div>
-                        </div>
-                        <div class="post-content">
-                            <div class="post-text">{{.Content}}</div>
-                        </div>
-                        <div class="post-actions">
-                            <button class="post-action-btn">💬 Reply</button>
-                        </div>
+                <div class="posts-feed">
+                    {{if .RecentPosts}}
+                        {{range .RecentPosts}}
+                        {{template "post-card" .}}
+                        {{end}}
+                    {{else}}
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z"></path>
+                        </svg>
+                        <h3>No posts yet</h3>
+                        <p>Be the first to share something with the circle!</p>
                     </div>
                     {{end}}
-                {{else}}
-                <div class="empty-state">
-                    <p>No posts yet. Be the first to share something!</p>
                 </div>
-                {{end}}
             </div>
 
             <!-- Gatherings Tab -->

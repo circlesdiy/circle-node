@@ -141,6 +141,12 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/marketplace", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 	mux.HandleFunc("/marketplace/", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 
+	// Register post API routes (requires authentication)
+	mux.HandleFunc("/api/posts", app.AuthHandler.RequireAuth(app.PostHandler.HandlePosts))
+	mux.HandleFunc("/api/posts/", app.AuthHandler.RequireAuth(app.PostHandler.HandlePost))
+	// Comment routes - TODO: Enable when comment handlers are implemented
+	// mux.HandleFunc("/api/comments/", app.AuthHandler.RequireAuth(app.PostHandler.HandleComment))
+
 	// API routes
 	mux.HandleFunc("/api/events", app.AuthHandler.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {

@@ -1,6 +1,5 @@
 /* Base Form Element Styles - bare HTML elements only */
 button:focus,
 input:focus {
-    outline: 2px solid var(--border-primary);
-    outline-offset: 2px;
+    outline: none;
 }

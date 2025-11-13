@@ -1,0 +1,636 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"circles.diy/internal/auth"
+	"circles.diy/internal/content"
+	"circles.diy/internal/domain"
+	"circles.diy/internal/models"
+)
+
+type PostHandler struct {
+	contentService *content.Service
+}
+
+func NewPostHandler(contentService *content.Service) *PostHandler {
+	return &PostHandler{
+		contentService: contentService,
+	}
+}
+
+// getProfileID extracts the profile ID from the request context
+func getProfileID(r *http.Request) string {
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		return ""
+	}
+	return *session.ActiveProfileID
+}
+
+// HandlePosts handles listing and creating posts
+func (h *PostHandler) HandlePosts(w http.ResponseWriter, r *http.Request) {
+	h.handlePosts(w, r)
+}
+
+// HandlePost handles single post operations (get, update, delete)
+func (h *PostHandler) HandlePost(w http.ResponseWriter, r *http.Request) {
+	h.handlePost(w, r)
+}
+
+/* Comment handlers are disabled until comment service methods are ready
+// HandleComment handles single comment operations
+func (h *PostHandler) HandleComment(w http.ResponseWriter, r *http.Request) {
+	h.handleComment(w, r)
+}
+*/
+
+// handlePosts handles listing and creating posts
+func (h *PostHandler) handlePosts(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		h.handleListPosts(w, r)
+	case http.MethodPost:
+		h.handleCreatePost(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handlePost handles single post operations (get, update, delete)
+func (h *PostHandler) handlePost(w http.ResponseWriter, r *http.Request) {
+	// Extract post ID from path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+	postID := pathParts[2]
+
+	switch r.Method {
+	case http.MethodGet:
+		h.handleGetPost(w, r, postID)
+	case http.MethodPut, http.MethodPatch:
+		h.handleUpdatePost(w, r, postID)
+	case http.MethodDelete:
+		h.handleDeletePost(w, r, postID)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleListPosts lists posts with optional filters
+func (h *PostHandler) handleListPosts(w http.ResponseWriter, r *http.Request) {
+	// Get query parameters
+	circleID := r.URL.Query().Get("circle_id")
+	authorID := r.URL.Query().Get("author_id")
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 20
+	offset := 0
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			limit = l
+		}
+	}
+
+	if offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			offset = o
+		}
+	}
+
+	var posts []*domain.Post
+	var err error
+
+	if circleID != "" {
+		posts, err = h.contentService.GetPostsByCircle(r.Context(), circleID, limit, offset)
+	} else if authorID != "" {
+		posts, err = h.contentService.GetPostsByAuthor(r.Context(), authorID, limit, offset)
+	} else {
+		http.Error(w, "circle_id or author_id is required", http.StatusBadRequest)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(posts)
+}
+
+// handleCreatePost creates a new post
+func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		CircleID       string `json:"circle_id"`
+		Body           string `json:"body"`
+		BodyFormat     string `json:"body_format"`
+		ContentWarning string `json:"content_warning"`
+		Visibility     string `json:"visibility"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize input
+	req.Body = content.SanitizeInput(req.Body, req.BodyFormat)
+
+	// Validate not empty after sanitization
+	if content.IsEmptyContent(req.Body) {
+		http.Error(w, "Post body cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Create post
+	post, err := h.contentService.CreatePost(
+		r.Context(),
+		req.CircleID,
+		getProfileID(r),
+		req.Body,
+		req.BodyFormat,
+		req.ContentWarning,
+		req.Visibility,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(post)
+}
+
+// handleGetPost retrieves a single post
+func (h *PostHandler) handleGetPost(w http.ResponseWriter, r *http.Request, postID string) {
+	post, err := h.contentService.GetPost(r.Context(), postID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+// handleUpdatePost updates a post
+func (h *PostHandler) handleUpdatePost(w http.ResponseWriter, r *http.Request, postID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if user can edit this post
+	canEdit, err := h.contentService.CanEditPost(r.Context(), postID, getProfileID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !canEdit {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Body           string `json:"body"`
+		BodyFormat     string `json:"body_format"`
+		ContentWarning string `json:"content_warning"`
+		Visibility     string `json:"visibility"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize input
+	if req.Body != "" {
+		req.Body = content.SanitizeInput(req.Body, req.BodyFormat)
+
+		// Validate not empty after sanitization
+		if content.IsEmptyContent(req.Body) {
+			http.Error(w, "Post body cannot be empty", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Update post
+	post, err := h.contentService.UpdatePost(
+		r.Context(),
+		postID,
+		req.Body,
+		req.BodyFormat,
+		req.ContentWarning,
+		req.Visibility,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+// handleDeletePost deletes a post
+func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request, postID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if user can delete this post
+	canDelete, err := h.contentService.CanDeletePost(r.Context(), postID, getProfileID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !canDelete {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Delete post
+	err = h.contentService.DeletePost(r.Context(), postID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Comment handlers - TODO: Implement when comment service methods are ready
+/*
+// handleComments handles listing and creating comments
+func (h *PostHandler) handleComments(w http.ResponseWriter, r *http.Request) {
+	// Extract post ID from path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+	postID := pathParts[2]
+
+	switch r.Method {
+	case http.MethodGet:
+		h.handleListComments(w, r, postID)
+	case http.MethodPost:
+		h.handleCreateComment(w, r, postID)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleListComments lists comments for a post
+func (h *PostHandler) handleListComments(w http.ResponseWriter, r *http.Request, postID string) {
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 50
+	offset := 0
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			limit = l
+		}
+	}
+
+	if offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			offset = o
+		}
+	}
+
+	comments, err := h.contentService.GetCommentsByPost(r.Context(), postID, limit, offset)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comments)
+}
+
+// handleCreateComment creates a new comment
+func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request, postID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Body       string `json:"body"`
+		BodyFormat string `json:"body_format"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize input
+	req.Body = content.SanitizeInput(req.Body, req.BodyFormat)
+
+	// Validate not empty after sanitization
+	if content.IsEmptyContent(req.Body) {
+		http.Error(w, "Comment body cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Create comment
+	comment, err := h.contentService.CreateComment(
+		r.Context(),
+		postID,
+		getProfileID(r),
+		req.Body,
+		req.BodyFormat,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(comment)
+}
+
+// handleComment handles single comment operations
+func (h *PostHandler) handleComment(w http.ResponseWriter, r *http.Request) {
+	// Extract comment ID from path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+		return
+	}
+	commentID := pathParts[2]
+
+	switch r.Method {
+	case http.MethodGet:
+		h.handleGetComment(w, r, commentID)
+	case http.MethodPut, http.MethodPatch:
+		h.handleUpdateComment(w, r, commentID)
+	case http.MethodDelete:
+		h.handleDeleteComment(w, r, commentID)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleGetComment retrieves a single comment
+func (h *PostHandler) handleGetComment(w http.ResponseWriter, r *http.Request, commentID string) {
+	comment, err := h.contentService.GetComment(r.Context(), commentID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comment)
+}
+
+// handleUpdateComment updates a comment
+func (h *PostHandler) handleUpdateComment(w http.ResponseWriter, r *http.Request, commentID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if user can edit this comment
+	canEdit, err := h.contentService.CanEditComment(r.Context(), commentID, getProfileID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !canEdit {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Body       string `json:"body"`
+		BodyFormat string `json:"body_format"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize input
+	if req.Body != "" {
+		req.Body = content.SanitizeInput(req.Body, req.BodyFormat)
+
+		// Validate not empty after sanitization
+		if content.IsEmptyContent(req.Body) {
+			http.Error(w, "Comment body cannot be empty", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Update comment
+	comment, err := h.contentService.UpdateComment(
+		r.Context(),
+		commentID,
+		req.Body,
+		req.BodyFormat,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comment)
+}
+
+// handleDeleteComment deletes a comment
+func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request, commentID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if user can delete this comment
+	canDelete, err := h.contentService.CanDeleteComment(r.Context(), commentID, getProfileID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !canDelete {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Delete comment
+	err = h.contentService.DeleteComment(r.Context(), commentID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+*/
+
+// handlePostReactions handles reactions on posts
+func (h *PostHandler) handlePostReactions(w http.ResponseWriter, r *http.Request) {
+	// Extract post ID from path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+	postID := pathParts[2]
+
+	h.handleReactions(w, r, "post", postID)
+}
+
+// handleCommentReactions handles reactions on comments
+func (h *PostHandler) handleCommentReactions(w http.ResponseWriter, r *http.Request) {
+	// Extract comment ID from path
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 3 {
+		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+		return
+	}
+	commentID := pathParts[2]
+
+	h.handleReactions(w, r, "comment", commentID)
+}
+
+// handleReactions handles reactions on any target type
+func (h *PostHandler) handleReactions(w http.ResponseWriter, r *http.Request, targetType, targetID string) {
+	switch r.Method {
+	case http.MethodGet:
+		h.handleGetReactions(w, r, targetType, targetID)
+	case http.MethodPost:
+		h.handleAddReaction(w, r, targetType, targetID)
+	case http.MethodDelete:
+		h.handleRemoveReaction(w, r, targetType, targetID)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleGetReactions retrieves reactions for a target
+func (h *PostHandler) handleGetReactions(w http.ResponseWriter, r *http.Request, targetType, targetID string) {
+	// Get counts grouped by key
+	counts, err := h.contentService.GetReactionCounts(r.Context(), targetType, targetID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get user's reaction if authenticated
+	var userReaction *domain.Reaction
+	user := auth.GetUser(r.Context())
+	if user != nil {
+		userReaction, _ = h.contentService.GetUserReaction(r.Context(), targetType, targetID, getProfileID(r))
+	}
+
+	response := models.ReactionResponse{
+		Counts:       counts,
+		UserReaction: userReaction,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleAddReaction adds a reaction to a target
+func (h *PostHandler) handleAddReaction(w http.ResponseWriter, r *http.Request, targetType, targetID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Key string `json:"key"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Add reaction
+	reaction, err := h.contentService.AddReaction(
+		r.Context(),
+		targetType,
+		targetID,
+		getProfileID(r),
+		req.Key,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(reaction)
+}
+
+// handleRemoveReaction removes a reaction from a target
+func (h *PostHandler) handleRemoveReaction(w http.ResponseWriter, r *http.Request, targetType, targetID string) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Remove reaction
+	err := h.contentService.RemoveReaction(r.Context(), targetType, targetID, getProfileID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

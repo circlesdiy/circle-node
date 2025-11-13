@@ -1,0 +1,477 @@
+{{define "post-card"}}
+<article class="post-card" data-post-id="{{.ID}}">
+    <div class="post-header">
+        <div class="post-author">
+            <div class="author-avatar">
+                {{if .AuthorAvatar}}
+                <img src="{{.AuthorAvatar}}" alt="{{.AuthorName}}" />
+                {{else}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-120H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Z"></path>
+                </svg>
+                {{end}}
+            </div>
+            <div class="author-info">
+                <a href="/profile/{{.AuthorProfileID}}" class="author-name">{{.AuthorName}}</a>
+                <div class="post-meta">
+                    <time datetime="{{.CreatedAt}}" class="post-time">{{.FormattedTime}}</time>
+                    {{if .IsEdited}}
+                    <span class="post-edited" title="Edited {{.EditedAt}}">• edited</span>
+                    {{end}}
+                    {{if eq .Visibility "public"}}
+                    <span class="post-visibility" title="Public post">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"></path>
+                        </svg>
+                        Public
+                    </span>
+                    {{else if eq .Visibility "private"}}
+                    <span class="post-visibility" title="Private post">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256">
+                            <path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80Z"></path>
+                        </svg>
+                        Private
+                    </span>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        {{if .CanEdit}}
+        <div class="post-actions-menu">
+            <button class="post-action-btn" aria-label="More actions" title="More actions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                    <circle cx="128" cy="64" r="16"></circle>
+                    <circle cx="128" cy="128" r="16"></circle>
+                    <circle cx="128" cy="192" r="16"></circle>
+                </svg>
+            </button>
+            <div class="action-dropdown" hidden>
+                <button class="dropdown-action" data-action="edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63Z"></path>
+                    </svg>
+                    Edit Post
+                </button>
+                <hr class="dropdown-separator">
+                <button class="dropdown-action danger" data-action="delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16Z"></path>
+                    </svg>
+                    Delete Post
+                </button>
+            </div>
+        </div>
+        {{end}}
+    </div>
+
+    {{if .ContentWarning}}
+    <div class="post-content-warning">
+        <div class="content-warning-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09Z"></path>
+            </svg>
+            <span>Content Warning: {{.ContentWarning}}</span>
+        </div>
+        <button class="content-warning-toggle" data-cw-toggle>
+            Show Content
+        </button>
+    </div>
+    <div class="post-body content-hidden" data-cw-content>
+    {{else}}
+    <div class="post-body">
+    {{end}}
+        {{if eq .BodyFormat "markdown"}}
+        <div class="post-markdown">{{.Body}}</div>
+        {{else if eq .BodyFormat "html"}}
+        <div class="post-html">{{.Body | safeHTML}}</div>
+        {{else}}
+        <div class="post-plaintext">{{.Body}}</div>
+        {{end}}
+    </div>
+
+    <div class="post-footer">
+        <div class="post-reactions">
+            <button class="reaction-btn" data-action="like" {{if .UserHasLiked}}data-active="true"{{end}}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234,80.12A24,24,0,0,0,216,72H160V56a40,40,0,0,0-40-40,8,8,0,0,0-7.16,4.42L75.06,96H32a16,16,0,0,0-16,16v88a16,16,0,0,0,16,16H204a24,24,0,0,0,23.82-21l12-96A24,24,0,0,0,234,80.12Z"></path>
+                </svg>
+                <span class="reaction-count">{{.LikeCount}}</span>
+            </button>
+        </div>
+
+        <div class="post-engagement">
+            <button class="engagement-btn" data-action="comment">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z"></path>
+                </svg>
+                <span>{{.ReplyCount}} {{if eq .ReplyCount 1}}comment{{else}}comments{{end}}</span>
+            </button>
+        </div>
+    </div>
+
+    {{if .ShowComments}}
+    <div class="post-comments" id="comments-{{.ID}}">
+        <!-- Comments will be loaded here -->
+    </div>
+    {{end}}
+</article>
+
+<style>
+.post-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--container-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.post-card:hover {
+    box-shadow: 0 2px 12px var(--shadow-color);
+}
+
+.post-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.post-author {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+}
+
+.author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--warm-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    flex-shrink: 0;
+    font-size: 1.5rem;
+}
+
+.author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.author-info {
+    flex: 1;
+}
+
+.author-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.author-name:hover {
+    text-decoration: underline;
+}
+
+.post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.post-visibility {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.post-actions-menu {
+    position: relative;
+}
+
+.post-action-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.post-action-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.action-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.25rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--container-radius);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    min-width: 160px;
+    z-index: 10;
+}
+
+.dropdown-action {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+}
+
+.dropdown-action:hover {
+    background: var(--hover-bg);
+}
+
+.dropdown-action.danger {
+    color: var(--error);
+}
+
+.dropdown-separator {
+    margin: 0;
+    border: none;
+    border-top: 1px solid var(--border-light);
+}
+
+.post-content-warning {
+    background: var(--warning-light);
+    border: 1px solid var(--warning);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.content-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--warning-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.content-warning-toggle {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--warning);
+    background: var(--bg-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.content-hidden {
+    display: none;
+}
+
+.post-body {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.post-markdown,
+.post-plaintext,
+.post-html {
+    word-wrap: break-word;
+}
+
+.post-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.post-reactions,
+.post-engagement {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.reaction-btn,
+.engagement-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reaction-btn:hover,
+.engagement-btn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+.reaction-btn[data-active="true"] {
+    background: var(--hover-bg);
+    color: var(--accent-primary);
+    border-color: var(--border-secondary);
+}
+
+.post-comments {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+@media (max-width: 640px) {
+    .post-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<script>
+(function() {
+    document.querySelectorAll('.post-card').forEach(card => {
+        const postID = card.dataset.postId;
+
+        // Handle content warning toggle
+        const cwToggle = card.querySelector('[data-cw-toggle]');
+        if (cwToggle) {
+            const cwContent = card.querySelector('[data-cw-content]');
+            cwToggle.addEventListener('click', () => {
+                cwContent.classList.toggle('content-hidden');
+                cwToggle.textContent = cwContent.classList.contains('content-hidden')
+                    ? 'Show Content'
+                    : 'Hide Content';
+            });
+        }
+
+        // Handle dropdown menu
+        const actionBtn = card.querySelector('.post-action-btn');
+        const dropdown = card.querySelector('.action-dropdown');
+        if (actionBtn && dropdown) {
+            actionBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.hidden = !dropdown.hidden;
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                dropdown.hidden = true;
+            });
+
+            // Handle dropdown actions
+            dropdown.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+
+                    if (action === 'delete') {
+                        if (confirm('Are you sure you want to delete this post?')) {
+                            try {
+                                const response = await fetch(`/api/posts/${postID}`, {
+                                    method: 'DELETE',
+                                });
+
+                                if (response.ok) {
+                                    card.remove();
+                                } else {
+                                    alert('Failed to delete post');
+                                }
+                            } catch (error) {
+                                console.error('Error deleting post:', error);
+                                alert('Failed to delete post');
+                            }
+                        }
+                    } else if (action === 'edit') {
+                        // TODO: Implement edit functionality
+                        alert('Edit functionality coming soon');
+                    }
+
+                    dropdown.hidden = true;
+                });
+            });
+        }
+
+        // Handle reactions
+        const reactionBtn = card.querySelector('[data-action="like"]');
+        if (reactionBtn) {
+            reactionBtn.addEventListener('click', async () => {
+                const isActive = reactionBtn.dataset.active === 'true';
+                const countSpan = reactionBtn.querySelector('.reaction-count');
+                let count = parseInt(countSpan.textContent) || 0;
+
+                try {
+                    if (isActive) {
+                        // Remove reaction
+                        const response = await fetch(`/api/posts/${postID}/reactions`, {
+                            method: 'DELETE',
+                        });
+
+                        if (response.ok) {
+                            reactionBtn.dataset.active = 'false';
+                            countSpan.textContent = Math.max(0, count - 1);
+                        }
+                    } else {
+                        // Add reaction
+                        const response = await fetch(`/api/posts/${postID}/reactions`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ key: 'like' }),
+                        });
+
+                        if (response.ok) {
+                            reactionBtn.dataset.active = 'true';
+                            countSpan.textContent = count + 1;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error toggling reaction:', error);
+                }
+            });
+        }
+
+        // Handle comment button
+        const commentBtn = card.querySelector('[data-action="comment"]');
+        if (commentBtn) {
+            commentBtn.addEventListener('click', () => {
+                // TODO: Implement comment functionality
+                alert('Comment functionality coming soon');
+            });
+        }
+    });
+})();
+</script>
+{{end}}
