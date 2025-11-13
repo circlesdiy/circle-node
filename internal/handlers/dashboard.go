@@ -47,7 +47,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		log.Printf("failed to get profile: %v", err)
 		profileName = user.Username
 	} else if profile != nil && profile.Name != "" {
-		profileName = profile.DisplayName
+		profileName = profile.Name
 	} else {
 		profileName = user.Username
 	}

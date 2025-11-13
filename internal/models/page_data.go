@@ -21,12 +21,13 @@ type ThemeSettings struct {
 }
 
 type BaseData struct {
-	Title       string
-	ActiveNav   string
-	Theme       ThemeSettings
-	CSRFToken   string
-	User        *domain.User `json:"user,omitempty"`
-	ProfileName string       `json:"profile_name,omitempty"`
+	Title        string
+	ActiveNav    string
+	Theme        ThemeSettings
+	CSRFToken    string
+	User         *domain.User `json:"user,omitempty"`
+	ProfileName  string       `json:"profile_name,omitempty"`
+	AssetVersion string       `json:"asset_version"` // For cache busting static assets
 }
 
 type ProfileData struct {
@@ -246,6 +247,7 @@ type CircleGathering struct {
 	CircleName       string           `json:"circle_name"`
 	Icon             string           `json:"icon"`
 	IconBgColor      string           `json:"icon_bg_color"`
+	AvatarURL        string           `json:"avatar_url,omitempty"`
 	GatheringCount   int              `json:"gathering_count"`
 	NeedsCoordination bool            `json:"needs_coordination"`
 	Gatherings       []GatheringItem  `json:"gatherings"`

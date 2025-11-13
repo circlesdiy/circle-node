@@ -10,6 +10,10 @@ type Circle struct {
 	Description     string     `json:"description"`
 	Visibility      string     `json:"visibility"` // public, private, unlisted
 	AutoModEnabled  bool       `json:"auto_mod_enabled"`
+	Icon            string     `json:"icon,omitempty"`
+	IconBgColor     string     `json:"icon_bg_color,omitempty"`
+	AvatarURL       string     `json:"avatar_url,omitempty"`
+	BannerURL       string     `json:"banner_url,omitempty"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`
 	DeletedAt       *time.Time `json:"deleted_at,omitempty"`

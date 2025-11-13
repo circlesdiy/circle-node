@@ -224,8 +224,9 @@ func (h *GatherHandler) buildEventDetailPageData(details *events.EventDetails, p
 	for _, a := range details.Attendees {
 		attendees = append(attendees, models.EventAttendee{
 			User: models.User{
-				ID:   a.ProfileID,
-				Name: a.Name,
+				ID:     a.ProfileID,
+				Name:   a.Name,
+				Avatar: a.AvatarURL,
 			},
 			RSVPStatus: a.RSVPStatus,
 		})

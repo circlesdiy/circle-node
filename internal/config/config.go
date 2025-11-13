@@ -10,14 +10,15 @@ import (
 )
 
 type Config struct {
-	Server    ServerConfig    `yaml:"server"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Redis     RedisConfig     `yaml:"redis"`
-	Auth      AuthConfig      `yaml:"auth"`
-	Security  SecurityConfig  `yaml:"security"`
-	Logging   LoggingConfig   `yaml:"logging"`
-	Templates TemplatesConfig `yaml:"templates"`
-	Static    StaticConfig    `yaml:"static"`
+	Server       ServerConfig    `yaml:"server"`
+	Database     DatabaseConfig  `yaml:"database"`
+	Redis        RedisConfig     `yaml:"redis"`
+	Auth         AuthConfig      `yaml:"auth"`
+	Security     SecurityConfig  `yaml:"security"`
+	Logging      LoggingConfig   `yaml:"logging"`
+	Templates    TemplatesConfig `yaml:"templates"`
+	Static       StaticConfig    `yaml:"static"`
+	AssetVersion string          // Generated at build time for cache busting
 }
 
 type ServerConfig struct {
@@ -158,12 +159,25 @@ func Load(path string) (*Config, error) {
 	// Apply environment variable overrides
 	cfg.applyEnvOverrides()
 
+	// Generate asset version for cache busting
+	cfg.AssetVersion = generateAssetVersion()
+
 	// Validate configuration
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return cfg, nil
+}
+
+// generateAssetVersion generates a version string for asset cache busting
+// Uses BUILD_VERSION env var if set, otherwise uses current timestamp
+func generateAssetVersion() string {
+	if v := os.Getenv("BUILD_VERSION"); v != "" {
+		return v
+	}
+	// Use Unix timestamp in base36 for short, unique version strings
+	return strconv.FormatInt(time.Now().Unix(), 36)
 }
 
 // applyEnvOverrides applies environment variable overrides to config

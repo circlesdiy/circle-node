@@ -38,6 +38,7 @@ type CircleWithEvents struct {
 	CircleName    string
 	Icon          string
 	IconBgColor   string
+	AvatarURL     string
 	Events        []EventItem
 	HasUnresolved bool // true if any events have unresolved coordination needs
 }

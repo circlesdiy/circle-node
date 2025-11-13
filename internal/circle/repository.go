@@ -47,13 +47,15 @@ func (r *Repository) CreateCircle(ctx context.Context, circle *domain.Circle) er
 func (r *Repository) GetCircleByID(ctx context.Context, id string) (*domain.Circle, error) {
 	query := `
 		SELECT id, owner_profile_id, name, description,
-			   visibility, auto_mod_enabled, created_at, updated_at, deleted_at
+			   visibility, auto_mod_enabled, icon, icon_bg_color,
+			   avatar_url, banner_url, created_at, updated_at, deleted_at
 		FROM circles
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 
 	var circle domain.Circle
 	var deletedAt sql.NullTime
+	var icon, iconBgColor, avatarURL, bannerURL sql.NullString
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&circle.ID,
@@ -62,6 +64,10 @@ func (r *Repository) GetCircleByID(ctx context.Context, id string) (*domain.Circ
 		&circle.Description,
 		&circle.Visibility,
 		&circle.AutoModEnabled,
+		&icon,
+		&iconBgColor,
+		&avatarURL,
+		&bannerURL,
 		&circle.CreatedAt,
 		&circle.UpdatedAt,
 		&deletedAt,
@@ -76,6 +82,18 @@ func (r *Repository) GetCircleByID(ctx context.Context, id string) (*domain.Circ
 
 	if deletedAt.Valid {
 		circle.DeletedAt = &deletedAt.Time
+	}
+	if icon.Valid {
+		circle.Icon = icon.String
+	}
+	if iconBgColor.Valid {
+		circle.IconBgColor = iconBgColor.String
+	}
+	if avatarURL.Valid {
+		circle.AvatarURL = avatarURL.String
+	}
+	if bannerURL.Valid {
+		circle.BannerURL = bannerURL.String
 	}
 
 	return &circle, nil
@@ -136,7 +154,8 @@ func (r *Repository) DeleteCircle(ctx context.Context, id string) error {
 func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID string) ([]domain.Circle, error) {
 	query := `
 		SELECT id, owner_profile_id, name, description,
-			   visibility, auto_mod_enabled, created_at, updated_at, deleted_at
+			   visibility, auto_mod_enabled, icon, icon_bg_color,
+			   avatar_url, banner_url, created_at, updated_at, deleted_at
 		FROM circles
 		WHERE owner_profile_id = $1 AND deleted_at IS NULL
 		ORDER BY created_at DESC
@@ -152,6 +171,7 @@ func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID str
 	for rows.Next() {
 		var circle domain.Circle
 		var deletedAt sql.NullTime
+		var icon, iconBgColor, avatarURL, bannerURL sql.NullString
 
 		err := rows.Scan(
 			&circle.ID,
@@ -160,6 +180,10 @@ func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID str
 			&circle.Description,
 			&circle.Visibility,
 			&circle.AutoModEnabled,
+			&icon,
+			&iconBgColor,
+			&avatarURL,
+			&bannerURL,
 			&circle.CreatedAt,
 			&circle.UpdatedAt,
 			&deletedAt,
@@ -170,6 +194,18 @@ func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID str
 
 		if deletedAt.Valid {
 			circle.DeletedAt = &deletedAt.Time
+		}
+		if icon.Valid {
+			circle.Icon = icon.String
+		}
+		if iconBgColor.Valid {
+			circle.IconBgColor = iconBgColor.String
+		}
+		if avatarURL.Valid {
+			circle.AvatarURL = avatarURL.String
+		}
+		if bannerURL.Valid {
+			circle.BannerURL = bannerURL.String
 		}
 
 		circles = append(circles, circle)
@@ -182,7 +218,8 @@ func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID str
 func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID string) ([]domain.Circle, error) {
 	query := `
 		SELECT c.id, c.owner_profile_id, c.name, c.description,
-			   c.visibility, c.auto_mod_enabled, c.created_at, c.updated_at, c.deleted_at
+			   c.visibility, c.auto_mod_enabled, c.icon, c.icon_bg_color,
+			   c.avatar_url, c.banner_url, c.created_at, c.updated_at, c.deleted_at
 		FROM circles c
 		INNER JOIN circle_memberships cm ON c.id = cm.circle_id
 		WHERE cm.profile_id = $1
@@ -201,6 +238,7 @@ func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID s
 	for rows.Next() {
 		var circle domain.Circle
 		var deletedAt sql.NullTime
+		var icon, iconBgColor, avatarURL, bannerURL sql.NullString
 
 		err := rows.Scan(
 			&circle.ID,
@@ -209,6 +247,10 @@ func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID s
 			&circle.Description,
 			&circle.Visibility,
 			&circle.AutoModEnabled,
+			&icon,
+			&iconBgColor,
+			&avatarURL,
+			&bannerURL,
 			&circle.CreatedAt,
 			&circle.UpdatedAt,
 			&deletedAt,
@@ -219,6 +261,18 @@ func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID s
 
 		if deletedAt.Valid {
 			circle.DeletedAt = &deletedAt.Time
+		}
+		if icon.Valid {
+			circle.Icon = icon.String
+		}
+		if iconBgColor.Valid {
+			circle.IconBgColor = iconBgColor.String
+		}
+		if avatarURL.Valid {
+			circle.AvatarURL = avatarURL.String
+		}
+		if bannerURL.Valid {
+			circle.BannerURL = bannerURL.String
 		}
 
 		circles = append(circles, circle)
@@ -231,7 +285,8 @@ func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID s
 func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([]domain.Circle, error) {
 	query := `
 		SELECT id, owner_profile_id, name, description,
-			   visibility, auto_mod_enabled, created_at, updated_at, deleted_at
+			   visibility, auto_mod_enabled, icon, icon_bg_color,
+			   avatar_url, banner_url, created_at, updated_at, deleted_at
 		FROM circles
 		WHERE visibility = 'public' AND deleted_at IS NULL
 		ORDER BY created_at DESC
@@ -248,6 +303,7 @@ func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([
 	for rows.Next() {
 		var circle domain.Circle
 		var deletedAt sql.NullTime
+		var icon, iconBgColor, avatarURL, bannerURL sql.NullString
 
 		err := rows.Scan(
 			&circle.ID,
@@ -256,6 +312,10 @@ func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([
 			&circle.Description,
 			&circle.Visibility,
 			&circle.AutoModEnabled,
+			&icon,
+			&iconBgColor,
+			&avatarURL,
+			&bannerURL,
 			&circle.CreatedAt,
 			&circle.UpdatedAt,
 			&deletedAt,
@@ -266,6 +326,18 @@ func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([
 
 		if deletedAt.Valid {
 			circle.DeletedAt = &deletedAt.Time
+		}
+		if icon.Valid {
+			circle.Icon = icon.String
+		}
+		if iconBgColor.Valid {
+			circle.IconBgColor = iconBgColor.String
+		}
+		if avatarURL.Valid {
+			circle.AvatarURL = avatarURL.String
+		}
+		if bannerURL.Valid {
+			circle.BannerURL = bannerURL.String
 		}
 
 		circles = append(circles, circle)

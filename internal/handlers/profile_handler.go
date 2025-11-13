@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"circles.diy/internal/auth"
+	"circles.diy/internal/circle"
 	"circles.diy/internal/domain"
 	"circles.diy/internal/middleware"
 	"circles.diy/internal/models"
@@ -19,6 +20,7 @@ import (
 type ProfileHandler struct {
 	profileService *profile.Service
 	prefsService   *preferences.Service
+	circleService  *circle.Service
 	logger         *zap.Logger
 }
 
@@ -26,13 +28,47 @@ type ProfileHandler struct {
 func NewProfileHandler(
 	profileService *profile.Service,
 	prefsService *preferences.Service,
+	circleService *circle.Service,
 	logger *zap.Logger,
 ) *ProfileHandler {
 	return &ProfileHandler{
 		profileService: profileService,
 		prefsService:   prefsService,
+		circleService:  circleService,
 		logger:         logger,
 	}
+}
+
+// mapCirclesToProfileCircles converts domain circles to template model circles
+func mapCirclesToProfileCircles(circles []domain.Circle) []models.ProfileCircle {
+	profileCircles := make([]models.ProfileCircle, 0, len(circles))
+	circleColorPalette := []string{
+		"var(--warm-accent)",
+		"var(--cool-accent)",
+		"var(--earth-accent)",
+		"var(--sage-accent)",
+	}
+
+	for i, circle := range circles {
+		color := circleColorPalette[i%len(circleColorPalette)]
+		if circle.IconBgColor != "" {
+			color = circle.IconBgColor
+		}
+
+		icon := "⭕" // Default icon
+		if circle.Icon != "" {
+			icon = circle.Icon
+		}
+
+		profileCircles = append(profileCircles, models.ProfileCircle{
+			ID:    circle.ID,
+			Name:  circle.Name,
+			Icon:  icon,
+			Color: color,
+		})
+	}
+
+	return profileCircles
 }
 
 // Handle processes profile page requests
@@ -109,6 +145,16 @@ func (h *ProfileHandler) handleInternalProfile(
 		// Continue with nil settings - template should handle this
 	}
 
+	// Fetch user's circles
+	userCircles, err := h.circleService.GetUserCircles(r.Context(), activeProfileID)
+	if err != nil {
+		h.logger.Warn("failed to fetch user circles", zap.Error(err))
+		userCircles = []domain.Circle{} // Continue with empty circles
+	}
+
+	// Map circles to profile circles
+	profileCircles := mapCirclesToProfileCircles(userCircles)
+
 	// Map domain profile to template model
 	templateProfile := models.Profile{
 		ID:          profile.ID,
@@ -125,18 +171,13 @@ func (h *ProfileHandler) handleInternalProfile(
 		IsOwner:     true,
 		IsConnected: false,
 		IsVerified:  false, // TODO: Add verification system
-		Circles: []models.ProfileCircle{
-			{ID: "1", Name: "Music crew", Icon: "🎵", Color: "var(--warm-accent)"},
-			{ID: "2", Name: "Housemates", Icon: "🏠", Color: "var(--cool-accent)"},
-			{ID: "3", Name: "Climbing", Icon: "🧗", Color: "var(--earth-accent)"},
-			{ID: "4", Name: "Coffee nerds", Icon: "☕", Color: "var(--sage-accent)"},
-		}, // TODO: Fetch real circles from circle service
+		Circles:     profileCircles,
 		Settings: models.ProfileSettings2{
-			SerendipityMode:    true,
-			AwayMode:           false,
-			BatchNotifications: true,
-			CoordinationAlerts: true,
-		}, // TODO: Fetch real settings from preferences service
+			SerendipityMode:    true,  // TODO: Implement serendipity mode in preferences
+			AwayMode:           false, // TODO: Implement away mode in preferences
+			BatchNotifications: true,  // TODO: Implement notification preferences
+			CoordinationAlerts: true,  // TODO: Implement coordination alert preferences
+		},
 	}
 
 	// Add settings if available
@@ -213,6 +254,26 @@ func (h *ProfileHandler) handleExternalProfile(
 		session.ActiveProfileID != nil &&
 		*session.ActiveProfileID == profile.ID
 
+	// Fetch user's circles
+	userCircles, err := h.circleService.GetUserCircles(r.Context(), profile.ID)
+	if err != nil {
+		h.logger.Warn("failed to fetch user circles",
+			zap.String("profile_id", profile.ID),
+			zap.Error(err))
+		userCircles = []domain.Circle{} // Continue with empty circles
+	}
+
+	// Filter circles based on visibility (show only public circles unless viewer is owner)
+	visibleCircles := make([]domain.Circle, 0)
+	for _, circle := range userCircles {
+		if isOwner || circle.IsPublic() {
+			visibleCircles = append(visibleCircles, circle)
+		}
+	}
+
+	// Map circles to profile circles
+	profileCircles := mapCirclesToProfileCircles(visibleCircles)
+
 	// Map domain profile to template model
 	templateProfile := models.Profile{
 		ID:          profile.ID,
@@ -227,6 +288,7 @@ func (h *ProfileHandler) handleExternalProfile(
 		IsOwner:     isOwner,
 		IsConnected: false, // TODO: Check connection status between profiles
 		IsVerified:  false, // TODO: Add verification system
+		Circles:     profileCircles,
 	}
 
 	// Add settings if available (and if public or owner)

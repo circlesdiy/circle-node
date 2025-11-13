@@ -26,6 +26,7 @@ type CircleHandler struct {
 	contentService *content.Service
 	prefsService   *preferences.Service
 	profileService *profile.Service
+	assetVersion   string
 	logger         *zap.Logger
 }
 
@@ -35,6 +36,7 @@ func NewCircleHandler(
 	contentService *content.Service,
 	prefsService *preferences.Service,
 	profileService *profile.Service,
+	assetVersion string,
 	logger *zap.Logger,
 ) *CircleHandler {
 	return &CircleHandler{
@@ -42,6 +44,7 @@ func NewCircleHandler(
 		contentService: contentService,
 		prefsService:   prefsService,
 		profileService: profileService,
+		assetVersion:   assetVersion,
 		logger:         logger,
 	}
 }
@@ -221,8 +224,9 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 				Mode:   effectiveTheme.Mode,
 				Radius: effectiveTheme.Radius,
 			},
-			User:      user,
-			CSRFToken: middleware.GetCSRFToken(r),
+			User:         user,
+			CSRFToken:    middleware.GetCSRFToken(r),
+			AssetVersion: h.assetVersion,
 		},
 		Circles:         templateCircles,
 		FeaturedCircles: featuredCircles,
@@ -451,7 +455,8 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 				Mode:   effectiveTheme.Mode,
 				Radius: effectiveTheme.Radius,
 			},
-			User: user,
+			User:         user,
+			AssetVersion: h.assetVersion,
 		},
 		Circle:              *circle,
 		Members:             members,

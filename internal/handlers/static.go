@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentType string) {
+func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentType string, isDevelopment bool) {
 	// Security: prevent path traversal
 	if strings.Contains(filePath, "..") {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
@@ -33,7 +33,7 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 		return
 	}
 
-	// Set cache headers for production performance
+	// Set cache headers based on environment
 	lastModified := fileInfo.ModTime().UTC().Format(http.TimeFormat)
 	ifModifiedSince := r.Header.Get("If-Modified-Since")
 
@@ -50,7 +50,15 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 	// This ensures it's not overridden and respects X-Content-Type-Options: nosniff
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Last-Modified", lastModified)
-	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache for 1 hour
+
+	// Smart caching: Short cache in development, long cache with immutable in production
+	if isDevelopment {
+		// Development: 10 second cache for quick iteration
+		w.Header().Set("Cache-Control", "public, max-age=10")
+	} else {
+		// Production: 1 year cache with immutable (safe with versioned URLs)
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	}
 
 	// For CSS files, set additional headers
 	if strings.HasSuffix(filePath, ".css") {
@@ -61,23 +69,23 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 	w.Write(content)
 }
 
-func ServeStaticImage(w http.ResponseWriter, r *http.Request) {
+func ServeStaticImage(w http.ResponseWriter, r *http.Request, isDevelopment bool) {
 	// Extract the image path from URL
 	imagePath := strings.TrimPrefix(r.URL.Path, "/static/img/")
-	
+
 	// Security: prevent path traversal
 	if strings.Contains(imagePath, "..") || imagePath == "" {
 		http.Error(w, "Invalid file path", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Construct full file path
 	fullPath := filepath.Join("static", "img", imagePath)
-	
+
 	// Determine content type based on file extension
 	ext := strings.ToLower(filepath.Ext(imagePath))
 	var contentType string
-	
+
 	switch ext {
 	case ".jpg", ".jpeg":
 		contentType = "image/jpeg"
@@ -95,7 +103,7 @@ func ServeStaticImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unsupported image format", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Use the existing ServeStaticFile function
-	ServeStaticFile(w, r, fullPath, contentType)
+	ServeStaticFile(w, r, fullPath, contentType, isDevelopment)
 }

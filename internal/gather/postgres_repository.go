@@ -18,7 +18,7 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 func (r *PostgresRepository) GetUserCircleEvents(ctx context.Context, profileID string) ([]CircleWithEvents, error) {
 	// First, get all circles for the user
 	circlesQuery := `
-		SELECT c.id, c.name, c.icon, c.icon_bg_color
+		SELECT c.id, c.name, c.icon, c.icon_bg_color, c.avatar_url
 		FROM circles c
 		JOIN circle_memberships cm ON cm.circle_id = c.id
 		WHERE cm.profile_id = $1
@@ -35,8 +35,8 @@ func (r *PostgresRepository) GetUserCircleEvents(ctx context.Context, profileID 
 	var circles []CircleWithEvents
 	for circleRows.Next() {
 		var circle CircleWithEvents
-		var icon, iconBgColor *string
-		if err := circleRows.Scan(&circle.CircleID, &circle.CircleName, &icon, &iconBgColor); err != nil {
+		var icon, iconBgColor, avatarURL *string
+		if err := circleRows.Scan(&circle.CircleID, &circle.CircleName, &icon, &iconBgColor, &avatarURL); err != nil {
 			return nil, err
 		}
 		if icon != nil {
@@ -44,6 +44,9 @@ func (r *PostgresRepository) GetUserCircleEvents(ctx context.Context, profileID 
 		}
 		if iconBgColor != nil {
 			circle.IconBgColor = *iconBgColor
+		}
+		if avatarURL != nil {
+			circle.AvatarURL = *avatarURL
 		}
 		circles = append(circles, circle)
 	}

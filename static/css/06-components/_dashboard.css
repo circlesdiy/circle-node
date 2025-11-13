@@ -14,7 +14,7 @@
 .page-title {
     font-size: 2rem;
     font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 1rem 0;
     color: var(--text-primary);
 }
 
@@ -280,49 +280,54 @@
 /* Upcoming Events Section */
 .upcoming-event-item {
     display: flex;
-    gap: 1.5rem;
-    padding: 1.5rem 0;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.upcoming-event-item:last-of-type {
+    margin-bottom: 0;
 }
 
 .upcoming-event-item.bordered {
     border-top: 1px solid var(--border-light);
+    padding-top: 1rem;
 }
 
 .date-display {
     flex-shrink: 0;
     text-align: center;
-    min-width: 80px;
+    width: 60px;
 }
 
 .date-display .day-of-week {
     font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
     color: var(--text-tertiary);
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 .date-display .day-of-month {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
     line-height: 1;
-    margin: 0.25rem 0;
 }
 
 .date-display .time {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
 }
 
-.event-content {
+.dashboard-container .event-content {
     flex: 1;
     min-width: 0;
+    padding: 0
 }
 
 .event-title {
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
 }
@@ -330,48 +335,46 @@
 .event-meta {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
 }
 
 .circle-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .circle-badge img {
     width: 20px;
     height: 20px;
-    border-radius: var(--radius-sm);
+    border-radius: 6px;
     object-fit: cover;
 }
 
 .circle-badge .icon {
     width: 20px;
     height: 20px;
-    border-radius: var(--radius-sm);
-    display: flex;
+    border-radius: 6px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
 }
 
 .separator {
-    color: var(--text-tertiary);
+    margin: 0 0.5rem;
+    color: var(--border-secondary);
 }
 
 .coordination-badge {
     display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0.25rem 0.75rem;
-    background: var(--warning-bg);
-    color: var(--warning-text);
-    border-radius: var(--radius-md);
-    font-size: 0.75rem;
-    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 /* Circle Summary Section */
@@ -628,19 +631,20 @@ aside h3 {
     }
 
     .upcoming-event-item {
-        gap: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
     }
 
     .date-display {
-        min-width: 60px;
+        width: 50px;
     }
 
     .date-display .day-of-month {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 
     .event-title {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 }
 

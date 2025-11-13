@@ -145,6 +145,7 @@ func (s *Service) buildCircleGatherings(ctx context.Context, profileID string) (
 			CircleName:        cwe.CircleName,
 			Icon:              cwe.Icon,
 			IconBgColor:       cwe.IconBgColor,
+			AvatarURL:         cwe.AvatarURL,
 			GatheringCount:    len(gatheringItems),
 			NeedsCoordination: cwe.HasUnresolved,
 			Gatherings:        gatheringItems,

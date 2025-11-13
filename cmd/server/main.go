@@ -182,29 +182,32 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	}))
 
 	// Static asset routes
+	isDev := app.Config.IsDevelopment()
 	mux.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/css/style.css", "text/css; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/css/style.css", "text/css; charset=utf-8", isDev)
 	})
 	mux.HandleFunc("/static/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/js/htmx.min.js", "application/javascript; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/js/htmx.min.js", "application/javascript; charset=utf-8", isDev)
 	})
 	mux.HandleFunc("/static/js/htmx-helpers.js", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/js/htmx-helpers.js", "application/javascript; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/js/htmx-helpers.js", "application/javascript; charset=utf-8", isDev)
 	})
 	mux.HandleFunc("/static/js/auth-login.js", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/js/auth-login.js", "application/javascript; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/js/auth-login.js", "application/javascript; charset=utf-8", isDev)
 	})
 	mux.HandleFunc("/static/js/auth-register.js", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/js/auth-register.js", "application/javascript; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/js/auth-register.js", "application/javascript; charset=utf-8", isDev)
 	})
-	mux.HandleFunc("/static/img/", handlers.ServeStaticImage)
+	mux.HandleFunc("/static/img/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.ServeStaticImage(w, r, isDev)
+	})
 
 	// PWA routes
 	mux.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/manifest.json", "application/manifest+json")
+		handlers.ServeStaticFile(w, r, "static/manifest.json", "application/manifest+json", isDev)
 	})
 	mux.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ServeStaticFile(w, r, "static/js/sw.js", "application/javascript; charset=utf-8")
+		handlers.ServeStaticFile(w, r, "static/js/sw.js", "application/javascript; charset=utf-8", isDev)
 	})
 
 	// Health check endpoint

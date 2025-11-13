@@ -39,7 +39,7 @@
     <link rel="apple-touch-icon" href="/static/img/icon-192.png">
 
     <title>{{.Title}} - circles.diy</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v={{.AssetVersion}}">
     {{block "head" .}}{{end}}
 </head>
 <body hx-boost="true">
@@ -63,8 +63,8 @@
             </div>
     </div>
 
-    <script src="/static/js/htmx.min.js"></script>
-    <!-- <script src="/static/js/htmx-helpers.js"></script> -->
+    <script src="/static/js/htmx.min.js?v={{.AssetVersion}}"></script>
+    <!-- <script src="/static/js/htmx-helpers.js?v={{.AssetVersion}}"></script> -->
     <script>
         function closeModal(){
             const element = document.getElementById('modal-content');
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <nav class="main-nav">
     <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
     <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
-    <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
+    <!-- <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a> -->
     <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>
     <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a>
 </nav>
@@ -554,9 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <a href="/circles" class="nav-item{{if eq .ActiveNav "circles"}} active{{end}}">
         Circles
     </a>
-    <a href="/chat" class="nav-item{{if eq .ActiveNav "chat"}} active{{end}}">
+    <!-- <a href="/chat" class="nav-item{{if eq .ActiveNav "chat"}} active{{end}}">
         Chat
-    </a>
+    </a> -->
     <a href="/gather" class="nav-item{{if eq .ActiveNav "gather"}} active{{end}}">
         Gather
     </a>

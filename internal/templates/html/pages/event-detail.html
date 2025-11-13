@@ -65,8 +65,8 @@
                         {{range .Attendees}}
                         <div class="attendee-item">
                             <div class="attendee-avatar">
-                                {{if .AvatarURL}}
-                                <img src="{{.AvatarURL}}" alt="{{.Name}}">
+                                {{if .Avatar}}
+                                <img src="{{.Avatar}}" alt="{{.Name}}">
                                 {{else}}
                                 <div class="avatar-placeholder">{{index .Name 0}}</div>
                                 {{end}}

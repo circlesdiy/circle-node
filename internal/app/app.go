@@ -144,8 +144,8 @@ func New(ctx context.Context) (*App, error) {
 
 	// Initialize feature handlers
 	logger.Debug("initializing feature handlers...")
-	profileHandler := handlers.NewProfileHandler(profileService, prefsService, logger)
-	circleHandler := handlers.NewCircleHandler(circleService, contentService, prefsService, profileService, logger)
+	profileHandler := handlers.NewProfileHandler(profileService, prefsService, circleService, logger)
+	circleHandler := handlers.NewCircleHandler(circleService, contentService, prefsService, profileService, cfg.AssetVersion, logger)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
 	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
 	gatherAPIHandler := handlers.NewGatherAPIHandler(gatherService, eventService, logger)

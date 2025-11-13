@@ -176,7 +176,7 @@ func (r *PostgresRepository) GetEventDetails(ctx context.Context, eventID, viewe
 
 func (r *PostgresRepository) getEventAttendees(ctx context.Context, eventID string) ([]Attendee, error) {
 	query := `
-		SELECT p.id, p.handle, er.status
+		SELECT p.id, p.handle, er.status, p.avatar_url
 		FROM event_rsvps er
 		JOIN profiles p ON p.id = er.profile_id
 		WHERE er.event_id = $1
@@ -192,7 +192,7 @@ func (r *PostgresRepository) getEventAttendees(ctx context.Context, eventID stri
 	var attendees []Attendee
 	for rows.Next() {
 		var a Attendee
-		if err := rows.Scan(&a.ProfileID, &a.Name, &a.RSVPStatus); err != nil {
+		if err := rows.Scan(&a.ProfileID, &a.Name, &a.RSVPStatus, &a.AvatarURL); err != nil {
 			return nil, err
 		}
 		attendees = append(attendees, a)
