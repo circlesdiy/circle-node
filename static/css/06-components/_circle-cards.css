@@ -201,6 +201,7 @@
     transition: all 0.2s ease;
     font-size: 0.875rem;
     font-weight: 500;
+    text-decoration: none;
 }
 
 .circle-action-btn.primary {

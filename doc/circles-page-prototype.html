@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>circles.diy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --container-radius: 12px;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #fafafa;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border-primary: #000000;
+            --border-secondary: #cccccc;
+            --border-light: #eeeeee;
+            --accent-primary: #000000;
+            --accent-secondary: #ffffff;
+            --hover-bg: #f5f5f5;
+            --active-bg: #000000;
+            --active-text: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --warm-accent: rgba(232, 213, 196, 0.4);
+            --cool-accent: rgba(196, 220, 232, 0.4);
+            --earth-accent: rgba(212, 197, 176, 0.4);
+            --sage-accent: rgba(201, 213, 196, 0.4);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-svg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border-radius: calc(var(--container-radius) - 4px);
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+        }
+
+        .nav-item:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--active-bg);
+            color: var(--active-text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .global-search {
+            width: 240px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: calc(var(--container-radius) - 2px);
+            background: var(--bg-secondary);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .global-search:focus {
+            outline: none;
+            border-color: var(--border-secondary);
+            background: var(--bg-primary);
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: calc(var(--container-radius) - 2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #e87d5f;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        /* Main Container */
+        .page-container {
+            display: none;
+        }
+
+        .page-container.active {
+            display: block;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Common Elements */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--container-radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: var(--accent-secondary);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-secondary);
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        /* ===== CIRCLES PAGE ===== */
+        .circles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .circle-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .circle-card:hover {
+            box-shadow: 0 4px 20px var(--shadow-color);
+            border-color: var(--border-secondary);
+        }
+
+        .circle-banner {
+            height: 140px;
+            background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
+            position: relative;
+        }
+
+        .circle-thumbnail-wrapper {
+            position: absolute;
+            bottom: -24px;
+            left: 1rem;
+        }
+
+        .circle-thumbnail {
+            width: 64px;
+            height: 64px;
+            border-radius: calc(var(--container-radius) + 2px);
+            border: 3px solid var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .circle-status-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border-light);
+            color: #16a34a;
+        }
+
+        .circle-card-content {
+            padding: 2rem 1.25rem 1.25rem;
+            flex: 1;
+        }
+
+        .circle-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .circle-meta {
+            display: flex;
+            gap: 0.75rem;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .circle-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .circle-stats {
+            display: flex;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value-small {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .stat-label-small {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .circle-card-actions {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .circle-action-btn {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            border-radius: calc(var(--container-radius) - 2px);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid;
+        }
+
+        .circle-action-btn.primary {
+            background: var(--accent-primary);
+            color: var(--accent-secondary);
+            border-color: var(--accent-primary);
+        }
+
+        .circle-action-btn.secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-light);
+            flex: 0;
+        }
+
+        /* ===== INDIVIDUAL CIRCLE PAGE ===== */
+        .circle-detail-header {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .circle-detail-banner {
+            height: 200px;
+            background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 2rem;
+        }
+
+        .circle-detail-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: var(--warm-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            border: 4px solid var(--bg-primary);
+            box-shadow: 0 4px 16px var(--shadow-color);
+        }
+
+        .circle-detail-info {
+            padding: 1.5rem 2rem 1rem;
+        }
+
+        .circle-detail-title-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .circle-detail-title {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .circle-detail-badge {
+            padding: 0.375rem 0.875rem;
+            background: rgba(22, 163, 74, 0.1);
+            color: #16a34a;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .circle-detail-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .circle-detail-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .circle-detail-nav {
+            border-top: 1px solid var(--border-light);
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .nav-pill {
+            padding: 0.875rem 1.25rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-pill:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .nav-pill.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .circle-tab-content {
+            display: none;
+        }
+
+        .circle-tab-content.active {
+            display: block;
+        }
+
+        /* Post Styles */
+        .post {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .post:hover {
+            box-shadow: 0 2px 12px var(--shadow-color);
+        }
+
+        .post-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .post-author-info {
+            flex: 1;
+        }
+
+        .post-author-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .post-timestamp {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .post-content {
+            margin-bottom: 1rem;
+        }
+
+        .post-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .post-attachment {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .attachment-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+
+        .attachment-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .attachment-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .attachment-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .attachment-meta {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .attachment-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .attachment-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .attachment-btn:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-secondary);
+        }
+
+        .post-image {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 1rem;
+            background: var(--bg-secondary);
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .post-action-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .post-action-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-secondary);
+        }
+
+        /* Composer */
+        .composer {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .composer-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 1rem;
+        }
+
+        .composer-input:focus {
+            outline: none;
+            border-color: var(--border-secondary);
+        }
+
+        .composer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .composer-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .composer-tool-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.125rem;
+        }
+
+        .composer-tool-btn:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-secondary);
+        }
+
+        /* Event Card */
+        .event-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .event-card:hover {
+            box-shadow: 0 2px 12px var(--shadow-color);
+        }
+
+        .event-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .event-card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-card-status {
+            padding: 0.25rem 0.625rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .event-card-status.upcoming {
+            background: rgba(22, 163, 74, 0.1);
+            color: #16a34a;
+        }
+
+        .event-card-status.past {
+            background: var(--bg-secondary);
+            color: var(--text-tertiary);
+        }
+
+        .event-card-datetime {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .event-card-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .event-card-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .event-card-notice {
+            padding: 0.875rem;
+            background: rgba(232, 213, 196, 0.2);
+            border-radius: 10px;
+            border-left: 3px solid #8b7355;
+            margin-bottom: 1rem;
+        }
+
+        .event-card-notice-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #8b7355;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-card-notice-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Members Grid */
+        .members-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .member-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            transition: all 0.2s ease;
+        }
+
+        .member-card:hover {
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .member-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .member-role {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        /* File Grid */
+        .files-grid {
+            display: grid;
+            gap: 0.875rem;
+        }
+
+        .file-card {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-card:hover {
+            background: var(--hover-bg);
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .file-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .file-action:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Settings */
+        .settings-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--container-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .setting-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--border-secondary);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-nav {
+                display: none;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 1.5rem 1rem;
+            }
+
+            .header-content {
+                padding: 1rem;
+            }
+
+            .search-container {
+                display: none;
+            }
+
+            .circles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .circle-detail-banner {
+                height: 150px;
+                padding: 1.5rem;
+            }
+
+            .circle-detail-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+
+            .circle-detail-info {
+                padding: 1rem 1.5rem;
+            }
+
+            .circle-detail-nav {
+                padding: 0 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="brand" onclick="showPage('circles')">
+                <svg class="logo-svg" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="22" r="6" stroke="currentColor"></circle>
+                    <circle cx="11" cy="8" r="6" stroke="currentColor"></circle>
+                    <circle cx="19" cy="22" r="6" stroke="currentColor"></circle>
+                    <circle cx="15" cy="23" r="6" stroke="currentColor"></circle>
+                    <circle cx="22" cy="19" r="6" transform="rotate(-90 22 19)" stroke="currentColor"></circle>
+                    <ellipse cx="15" cy="15" rx="2" ry="2" transform="rotate(-90 15 15)" stroke="currentColor"></ellipse>
+                    <circle cx="22" cy="11" r="6" transform="rotate(-90 22 11)" stroke="currentColor"></circle>
+                    <circle cx="23" cy="15" r="6" transform="rotate(-90 23 15)" stroke="currentColor"></circle>
+                    <circle cx="8" cy="11" r="6" transform="rotate(90 8 11)" stroke="currentColor"></circle>
+                    <circle cx="8" cy="19" r="6" transform="rotate(90 8 19)" stroke="currentColor"></circle>
+                    <circle cx="7" cy="15" r="6" transform="rotate(90 7 15)" stroke="currentColor"></circle>
+                    <circle cx="15" cy="7" r="6" stroke="currentColor"></circle>
+                    <circle cx="19" cy="8" r="6" stroke="currentColor"></circle>
+                </svg>
+                <h1>circles.diy</h1>
+            </div>
+
+            <nav class="main-nav">
+                <button class="nav-item" data-page="circles">Circles</button>
+                <button class="nav-item active" data-page="circle-detail">Music crew</button>
+            </nav>
+
+            <div class="header-actions">
+                <div class="search-container">
+                    <input type="search" placeholder="Search..." class="global-search">
+                </div>
+                <button class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06Z"></path></svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CIRCLES PAGE -->
+    <div class="page-container" id="circles-page">
+        <main>
+            <div class="page-header">
+                <h1 class="page-title">My Circles</h1>
+                <p class="page-subtitle">Stay connected with your communities</p>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="section-header">
+                        <h2 class="section-title">Your Circles</h2>
+                    </div>
+
+                    <div class="circles-grid">
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--warm-accent);">🎵</div>
+                                </div>
+                                <span class="circle-status-badge">8 online</span>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Music crew</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 6 months ago</span>
+                                    <span>•</span>
+                                    <span>Active daily</span>
+                                </div>
+                                <p class="circle-description">Electronic music lovers sharing tracks, organizing sessions, and attending shows together.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">8</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary" onclick="showPage('circle-detail')">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+
+                        <div class="circle-card">
+                            <div class="circle-banner" style="background: linear-gradient(135deg, var(--cool-accent), var(--earth-accent));">
+                                <div class="circle-thumbnail-wrapper">
+                                    <div class="circle-thumbnail" style="background: var(--cool-accent);">🏠</div>
+                                </div>
+                                <span class="circle-status-badge">3 online</span>
+                            </div>
+                            <div class="circle-card-content">
+                                <h3 class="circle-name">Housemates</h3>
+                                <div class="circle-meta">
+                                    <span>Joined 1 year ago</span>
+                                    <span>•</span>
+                                    <span>Active daily</span>
+                                </div>
+                                <p class="circle-description">Share house coordination, social activities, and keeping our space running smoothly.</p>
+                                <div class="circle-stats">
+                                    <div class="stat">
+                                        <span class="stat-value-small">5</span>
+                                        <span class="stat-label-small">members</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="circle-card-actions">
+                                <button class="circle-action-btn primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                    Enter Circle
+                                </button>
+                                <button class="circle-action-btn secondary">⋯</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card">
+                        <h3>Create Circle</h3>
+                        <button class="btn-primary" style="width: 100%;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Circle
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- INDIVIDUAL CIRCLE PAGE -->
+    <div class="page-container active" id="circle-detail-page">
+        <main>
+            <!-- Circle Header -->
+            <div class="circle-detail-header">
+                <div class="circle-detail-banner" style="background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
+                    <div class="circle-detail-avatar">🎵</div>
+                </div>
+                
+                <div class="circle-detail-info">
+                    <div class="circle-detail-title-row">
+                        <h1 class="circle-detail-title">Music crew</h1>
+                        <div class="circle-detail-badge">
+                            <span style="width: 8px; height: 8px; background: #16a34a; border-radius: 50%; display: inline-block;"></span>
+                            8 members
+                        </div>
+                    </div>
+                    
+                    <p class="circle-detail-description">Electronic music lovers sharing tracks, organizing sessions, and attending shows together. From techno to jungle, we're all about the bass.</p>
+                    
+                    <div class="circle-detail-meta">
+                        <span>Created 6 months ago</span>
+                        <span>•</span>
+                        <span>Last active 2m ago</span>
+                        <span>•</span>
+                        <span>Visible in Music & Events domain</span>
+                    </div>
+                </div>
+
+                <div class="circle-detail-nav">
+                    <button class="nav-pill active" data-tab="chat">Chat</button>
+                    <button class="nav-pill" data-tab="gatherings">Gatherings</button>
+                    <button class="nav-pill" data-tab="files">Files</button>
+                    <button class="nav-pill" data-tab="members">Members</button>
+                    <button class="nav-pill" data-tab="settings">Settings</button>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <!-- Chat Tab -->
+                    <div class="circle-tab-content active" id="chat-tab">
+                        <!-- Composer -->
+                        <div class="composer">
+                            <textarea class="composer-input" placeholder="Share something with the circle..."></textarea>
+                            <div class="composer-actions">
+                                <div class="composer-tools">
+                                    <button class="composer-tool-btn" title="Attach image">📷</button>
+                                    <button class="composer-tool-btn" title="Attach file">📎</button>
+                                    <button class="composer-tool-btn" title="Add emoji">😊</button>
+                                </div>
+                                <button class="btn-primary">Post</button>
+                            </div>
+                        </div>
+
+                        <!-- Posts -->
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar" style="background: var(--warm-accent);">👤</div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">Sarah</div>
+                                    <div class="post-timestamp">2 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">Who's driving to the D&B workshop on Saturday? I can take 3 people from the inner west. Planning to leave around 1:30pm to get there by 2pm.</div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-btn">
+                                    💬 Reply
+                                </button>
+                                <button class="post-action-btn">
+                                    🚗 I can drive
+                                </button>
+                                <button class="post-action-btn">
+                                    🙋 I need a ride
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar" style="background: var(--cool-accent);">👤</div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">Alex</div>
+                                    <div class="post-timestamp">1 hour ago</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">Check out this new track I've been working on! Would love to get some feedback before the workshop on Saturday 🔥</div>
+                                <div class="post-attachment">
+                                    <div class="attachment-preview">
+                                        <div class="attachment-icon" style="background: var(--warm-accent);">🎵</div>
+                                        <div class="attachment-info">
+                                            <div class="attachment-title">midnight_groove_v3.mp3</div>
+                                            <div class="attachment-meta">4:32 • 8.2 MB • Uploaded 1 hour ago</div>
+                                        </div>
+                                        <div class="attachment-actions">
+                                            <button class="attachment-btn">▶</button>
+                                            <button class="attachment-btn">↓</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-btn">
+                                    💬 2 replies
+                                </button>
+                                <button class="post-action-btn">
+                                    🔥 5
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar" style="background: var(--earth-accent);">👤</div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">Jamie</div>
+                                    <div class="post-timestamp">3 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">Anyone want to hit up the record store this weekend? Thinking Saturday morning before the climbing session. There's a new shipment of jungle classics I've been eyeing 👀</div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-btn">
+                                    💬 3 replies
+                                </button>
+                                <button class="post-action-btn">
+                                    ✋ 4 interested
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar" style="background: var(--sage-accent);">📅</div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">System</div>
+                                    <div class="post-timestamp">Yesterday</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">Pitch Music Festival tickets are now available! 7 members have expressed interest. Would you like to organize a group booking?</div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-btn">
+                                    🎫 View event
+                                </button>
+                                <button class="post-action-btn">
+                                    ✋ I'm interested
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar" style="background: var(--cool-accent);">👤</div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">Marcus</div>
+                                    <div class="post-timestamp">2 days ago</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">Found this absolute gem at the warehouse party last night. The energy was unreal! 🔊</div>
+                                <div class="post-image">
+                                    <span>📸 Image: Warehouse party crowd</span>
+                                </div>
+                            </div>
+                            <div class="post-actions">
+                                <button class="post-action-btn">
+                                    💬 8 replies
+                                </button>
+                                <button class="post-action-btn">
+                                    🔥 12
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gatherings Tab -->
+                    <div class="circle-tab-content" id="gatherings-tab">
+                        <div class="section-header">
+                            <h2 class="section-title">Upcoming gatherings</h2>
+                            <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Organize Gathering
+                            </button>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <div class="event-card-title">D&B Mixing Workshop</div>
+                                    <div class="event-card-datetime">📅 Saturday, Dec 14 • 2pm-5pm</div>
+                                </div>
+                                <div class="event-card-status upcoming">Upcoming</div>
+                            </div>
+                            <p class="event-card-description">Learn the fundamentals of crate digging and mixing D&B sets with industry pros. We'll cover track selection, beatmatching, and building energy throughout a set.</p>
+                            <div class="event-card-meta">
+                                <span>📍 Studio Complex, Redfern</span>
+                                <span>•</span>
+                                <span>👥 4 going, 2 maybe</span>
+                            </div>
+                            <div class="event-card-notice">
+                                <div class="event-card-notice-title">🚗 Transport coordination needed</div>
+                                <div class="event-card-notice-text">Sarah offered rides from inner west. 2 people still need transport.</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">I'm going</button>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View details</button>
+                            </div>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <div class="event-card-title">Pitch Music Festival</div>
+                                    <div class="event-card-datetime">📅 Friday, Dec 20 • 6pm-late</div>
+                                </div>
+                                <div class="event-card-status upcoming">Upcoming</div>
+                            </div>
+                            <p class="event-card-description">Three stages of electronic music across genres. Lineup includes some serious heavy hitters from the international scene.</p>
+                            <div class="event-card-meta">
+                                <span>📍 Carriageworks</span>
+                                <span>•</span>
+                                <span>👥 7 going</span>
+                                <span>•</span>
+                                <span>🎫 Group tickets available</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">I'm going</button>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View details</button>
+                            </div>
+                        </div>
+
+                        <div class="section-header" style="margin-top: 2rem;">
+                            <h2 class="section-title">Past gatherings</h2>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <div class="event-card-title">Studio Listening Session</div>
+                                    <div class="event-card-datetime">📅 Nov 30 • 6pm-9pm</div>
+                                </div>
+                                <div class="event-card-status past">Past</div>
+                            </div>
+                            <p class="event-card-description">Shared our recent productions and gave feedback. Great vibes and solid constructive criticism all around.</p>
+                            <div class="event-card-meta">
+                                <span>📍 Alex's studio</span>
+                                <span>•</span>
+                                <span>👥 6 attended</span>
+                            </div>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <div class="event-card-title">Warehouse Rave</div>
+                                    <div class="event-card-datetime">📅 Nov 23 • 10pm-4am</div>
+                                </div>
+                                <div class="event-card-status past">Past</div>
+                            </div>
+                            <p class="event-card-description">Underground techno and jungle vibes. The sound system was incredible.</p>
+                            <div class="event-card-meta">
+                                <span>📍 Secret location</span>
+                                <span>•</span>
+                                <span>👥 8 attended</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Files Tab -->
+                    <div class="circle-tab-content" id="files-tab">
+                        <div class="section-header">
+                            <h2 class="section-title">Shared files</h2>
+                            <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Upload
+                            </button>
+                        </div>
+
+                        <div class="card" style="padding: 1rem;">
+                            <div class="files-grid">
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--warm-accent);">🎵</div>
+                                    <div class="file-info">
+                                        <div class="file-name">midnight_groove_v3.mp3</div>
+                                        <div class="file-meta">Alex • 1 hour ago • 8.2 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--cool-accent);">📄</div>
+                                    <div class="file-info">
+                                        <div class="file-name">pitch_festival_lineup.pdf</div>
+                                        <div class="file-meta">Sarah • Yesterday • 2.4 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--earth-accent);">🖼️</div>
+                                    <div class="file-info">
+                                        <div class="file-name">warehouse_party_photos.zip</div>
+                                        <div class="file-meta">Marcus • 3 days ago • 45.8 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--sage-accent);">🎵</div>
+                                    <div class="file-info">
+                                        <div class="file-name">sarah_mix_november.mp3</div>
+                                        <div class="file-meta">Sarah • 5 days ago • 124.5 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--warm-accent);">📄</div>
+                                    <div class="file-info">
+                                        <div class="file-name">mixing_workshop_notes.pdf</div>
+                                        <div class="file-meta">Jamie • 1 week ago • 1.2 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+
+                                <div class="file-card">
+                                    <div class="file-icon" style="background: var(--cool-accent);">🖼️</div>
+                                    <div class="file-info">
+                                        <div class="file-name">studio_setup_inspo.jpg</div>
+                                        <div class="file-meta">Alex • 2 weeks ago • 3.8 MB</div>
+                                    </div>
+                                    <button class="file-action">↓</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Members Tab -->
+                    <div class="circle-tab-content" id="members-tab">
+                        <div class="section-header">
+                            <h2 class="section-title">Members</h2>
+                            <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                                Invite
+                            </button>
+                        </div>
+
+                        <div class="members-grid">
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--warm-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Jamie K</div>
+                                    <div class="member-role">Admin • You</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Profile</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--cool-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Sarah Chen</div>
+                                    <div class="member-role">Member • Active 2m ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--earth-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Alex Park</div>
+                                    <div class="member-role">Member • Active 1h ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--sage-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Marcus Kim</div>
+                                    <div class="member-role">Member • Active 3h ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--warm-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Emma Lee</div>
+                                    <div class="member-role">Member • Active yesterday</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--cool-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Ryan Torres</div>
+                                    <div class="member-role">Member • Active 2 days ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--earth-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Zoe Mitchell</div>
+                                    <div class="member-role">Member • Active 3 days ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+
+                            <div class="member-card">
+                                <div class="member-avatar" style="background: var(--sage-accent);">👤</div>
+                                <div class="member-info">
+                                    <div class="member-name">Chris Anderson</div>
+                                    <div class="member-role">Member • Active 5 days ago</div>
+                                </div>
+                                <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Message</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="circle-tab-content" id="settings-tab">
+                        <div class="settings-section">
+                            <h3>Circle Information</h3>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Circle name</label>
+                                <input type="text" value="Music crew" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem; font-family: inherit;">
+                            </div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Description</label>
+                                <textarea style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem; resize: vertical; min-height: 100px; font-family: inherit;">Electronic music lovers sharing tracks, organizing sessions, and attending shows together. From techno to jungle, we're all about the bass.</textarea>
+                            </div>
+                            <button class="btn-primary" style="padding: 0.625rem 1.25rem; font-size: 0.875rem;">Save changes</button>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Visibility</h3>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Visible in domains</div>
+                                    <div class="setting-description">Allow this circle to be discovered in public domains</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Show at events</div>
+                                    <div class="setting-description">Display circle name when members attend domain events</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Notifications</h3>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Activity notifications</div>
+                                    <div class="setting-description">Get notified of new posts and activity</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Gathering alerts</div>
+                                    <div class="setting-description">Notify about new gatherings and coordination</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Batch notifications</div>
+                                    <div class="setting-description">Group multiple notifications together</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Permissions</h3>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Members can invite others</div>
+                                    <div class="setting-description">Allow all members to send invitations</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Members can create gatherings</div>
+                                    <div class="setting-description">Allow all members to organize events</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Members can upload files</div>
+                                    <div class="setting-description">Allow all members to share files</div>
+                                </div>
+                                <div class="toggle-switch active"></div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Danger Zone</h3>
+                            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                                <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #dc2626;">Leave circle</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">You won't be able to access this circle anymore. This action cannot be undone.</div>
+                                <button style="padding: 0.5rem 1rem; border: 1px solid #dc2626; background: transparent; color: #dc2626; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer;">Leave circle</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <aside>
+                    <div class="card">
+                        <h3>Quick actions</h3>
+                        <button class="btn-primary" style="width: 100%; margin-bottom: 0.75rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Organize Gathering
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 0.75rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            Invite Member
+                        </button>
+                        <button class="btn-secondary" style="width: 100%;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Upload File
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Upcoming gatherings</h3>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="padding: 0.875rem; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='var(--bg-secondary)'">
+                                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">D&B Workshop</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">Sat Dec 14 • 2pm</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">4 going • Transport needed</div>
+                            </div>
+                            <div style="padding: 0.875rem; background: var(--bg-secondary); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='var(--bg-secondary)'">
+                                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">Pitch Festival</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">Fri Dec 20 • 6pm</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">7 going</div>
+                            </div>
+                        </div>
+                        <button class="btn-secondary" style="width: 100%; margin-top: 1rem; padding: 0.625rem; font-size: 0.875rem;">View all gatherings</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Circle info</h3>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.8;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Members</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">8</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Created</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">6 months ago</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Total posts</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">247</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span>Shared files</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">42</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Domain</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">Music & Events</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Active members</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="width: 36px; height: 36px; background: var(--warm-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;" title="Sarah">👤</div>
+                            <div style="width: 36px; height: 36px; background: var(--cool-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;" title="Alex">👤</div>
+                            <div style="width: 36px; height: 36px; background: var(--earth-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;" title="Marcus">👤</div>
+                            <div style="width: 36px; height: 36px; background: var(--sage-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;" title="Emma">👤</div>
+                            <div style="width: 36px; height: 36px; background: var(--warm-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;" title="Jamie">👤</div>
+                            <div style="width: 36px; height: 36px; background: var(--cool-accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-tertiary); cursor: pointer;" title="View all">+3</div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Navigation between pages
+        function showPage(pageName) {
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageName + '-page').classList.add('active');
+
+            document.querySelectorAll('.main-nav .nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageName) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        document.querySelectorAll('.main-nav .nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                showPage(this.dataset.page);
+            });
+        });
+
+        // Circle detail tabs
+        document.querySelectorAll('.nav-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                // Update pills
+                document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.circle-tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName + '-tab').classList.add('active');
+            });
+        });
+
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Auto-expanding textarea
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+    </script>
+</body>
+</html>

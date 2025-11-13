@@ -300,13 +300,17 @@ func (s *Service) InviteMember(ctx context.Context, circleID, profileID, inviter
 		return fmt.Errorf("circle not found")
 	}
 
-	// Check if inviter is owner
-	if circle.OwnerProfileID != inviterProfileID {
+	// Check if inviter can invite (owner or admin)
+	canInvite, err := s.CanInvite(ctx, circleID, inviterProfileID)
+	if err != nil {
+		return fmt.Errorf("failed to check invite permission: %w", err)
+	}
+	if !canInvite {
 		s.logger.Warn("unauthorized invitation attempt",
 			zap.String("circle_id", circleID),
 			zap.String("inviter_profile_id", inviterProfileID),
 		)
-		return fmt.Errorf("only the owner can invite members")
+		return fmt.Errorf("only owners and admins can invite members")
 	}
 
 	// Check if membership already exists
@@ -688,6 +692,69 @@ func (s *Service) CountMembers(ctx context.Context, circleID string) (int, error
 		return 0, fmt.Errorf("failed to count members: %w", err)
 	}
 	return count, nil
+}
+
+// IsAdmin checks if a profile is an admin of a circle
+// Note: Currently we don't have a roles table implemented yet, so this returns false
+// In the future, this will check the profile_roles table
+func (s *Service) IsAdmin(ctx context.Context, circleID, profileID string) (bool, error) {
+	// TODO: Implement admin role checking once roles are fully implemented
+	// For now, check if they're a member but not owner
+	return false, nil
+}
+
+// CanInvite checks if a profile can invite members (owners and admins)
+func (s *Service) CanInvite(ctx context.Context, circleID, profileID string) (bool, error) {
+	// Check if owner
+	isOwner, err := s.IsOwner(ctx, circleID, profileID)
+	if err != nil {
+		return false, err
+	}
+	if isOwner {
+		return true, nil
+	}
+
+	// Check if admin
+	isAdmin, err := s.IsAdmin(ctx, circleID, profileID)
+	if err != nil {
+		return false, err
+	}
+
+	return isAdmin, nil
+}
+
+// CanEditSettings checks if a profile can edit circle settings (owner only)
+func (s *Service) CanEditSettings(ctx context.Context, circleID, profileID string) (bool, error) {
+	return s.IsOwner(ctx, circleID, profileID)
+}
+
+// GetMemberRole returns the role of a member in a circle (owner, admin, member)
+func (s *Service) GetMemberRole(ctx context.Context, circleID, profileID string) (string, error) {
+	isOwner, err := s.IsOwner(ctx, circleID, profileID)
+	if err != nil {
+		return "", err
+	}
+	if isOwner {
+		return "owner", nil
+	}
+
+	isAdmin, err := s.IsAdmin(ctx, circleID, profileID)
+	if err != nil {
+		return "", err
+	}
+	if isAdmin {
+		return "admin", nil
+	}
+
+	isMember, err := s.IsMember(ctx, circleID, profileID)
+	if err != nil {
+		return "", err
+	}
+	if isMember {
+		return "member", nil
+	}
+
+	return "", nil
 }
 
 // Helper functions

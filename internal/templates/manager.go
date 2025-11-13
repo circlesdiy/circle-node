@@ -14,6 +14,7 @@ type Templates struct {
 	ProfilePublic   *template.Template
 	ProfileInternal *template.Template
 	Circles         *template.Template
+	CircleDetail    *template.Template
 	Chat            *template.Template
 	Gather          *template.Template
 	EventCreate     *template.Template
@@ -63,6 +64,11 @@ func InitTemplates() error {
 	}
 
 	templates.Circles, err = parseTemplateFromEmbedded("circles", "html/pages/circles.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleDetail, err = parseTemplateFromEmbedded("circle-detail", "html/pages/circle-detail.html")
 	if err != nil {
 		return err
 	}

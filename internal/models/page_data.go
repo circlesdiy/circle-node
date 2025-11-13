@@ -42,6 +42,80 @@ type CirclesPageData struct {
 	FeaturedCircles []Circle         `json:"featured_circles"`
 }
 
+type CircleDetailPageData struct {
+	BaseData
+	Circle              domain.Circle       `json:"circle"`
+	Members             []CircleMember      `json:"members"`
+	MemberCount         int                 `json:"member_count"`
+	RecentPosts         []CirclePost        `json:"recent_posts"`
+	UpcomingGatherings  []GatheringItem     `json:"upcoming_gatherings"`
+	SharedFiles         []CircleFile        `json:"shared_files"`
+	IsOwner             bool                `json:"is_owner"`
+	IsAdmin             bool                `json:"is_admin"`
+	IsMember            bool                `json:"is_member"`
+	CanInvite           bool                `json:"can_invite"`
+	CanEditInfo         bool                `json:"can_edit_info"`
+	CanEditVisibility   bool                `json:"can_edit_visibility"`
+	CanEditPermissions  bool                `json:"can_edit_permissions"`
+	UserRole            string              `json:"user_role"` // owner, admin, member, or empty
+	CircleStats         CircleDetailStats   `json:"circle_stats"`
+	ActiveTab           string              `json:"active_tab"` // chat, gatherings, files, members, settings
+}
+
+type CircleDetailStats struct {
+	TotalPosts      int    `json:"total_posts"`
+	TotalFiles      int    `json:"total_files"`
+	TotalGatherings int    `json:"total_gatherings"`
+	CreatedAt       string `json:"created_at"`
+	LastActivity    string `json:"last_activity"`
+}
+
+type CircleMember struct {
+	ProfileID string `json:"profile_id"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	Avatar    string `json:"avatar"`
+	Role      string `json:"role"`       // owner, admin, member
+	State     string `json:"state"`      // active, invited, banned, left
+	JoinedAt  string `json:"joined_at"`
+	LastActive string `json:"last_active,omitempty"`
+}
+
+type CirclePost struct {
+	ID            string      `json:"id"`
+	AuthorID      string      `json:"author_id"`
+	AuthorName    string      `json:"author_name"`
+	AuthorAvatar  string      `json:"author_avatar"`
+	Content       string      `json:"content"`
+	CreatedAt     string      `json:"created_at"`
+	TimeAgo       string      `json:"time_ago"`
+	ReplyCount    int         `json:"reply_count"`
+	ReactionCount int         `json:"reaction_count"`
+	Attachments   []Attachment `json:"attachments,omitempty"`
+}
+
+type CircleFile struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Size        int64  `json:"size"`
+	SizeDisplay string `json:"size_display"`
+	Type        string `json:"type"`
+	Icon        string `json:"icon"`
+	UploaderID  string `json:"uploader_id"`
+	Uploader    string `json:"uploader"`
+	UploadedAt  string `json:"uploaded_at"`
+	TimeAgo     string `json:"time_ago"`
+	DownloadURL string `json:"download_url"`
+}
+
+type Attachment struct {
+	ID   string `json:"id"`
+	Type string `json:"type"` // image, file, audio, video
+	Name string `json:"name"`
+	URL  string `json:"url"`
+	Size int64  `json:"size,omitempty"`
+}
+
 type ChatPageData struct {
 	BaseData
 	Conversations []Conversation `json:"conversations"`

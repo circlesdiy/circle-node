@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -282,21 +283,103 @@ func (h *CircleHandler) handleViewCircle(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// For now, just return a simple response
-	// TODO: Implement full circle detail page with posts, members, etc.
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(`
-		<!DOCTYPE html>
-		<html>
-		<head><title>` + circle.Name + `</title></head>
-		<body>
-			<h1>` + circle.Name + `</h1>
-			<p>` + circle.Description + `</p>
-			<p>Visibility: ` + circle.Visibility + `</p>
-			<p><a href="/circles">Back to Circles</a></p>
-		</body>
-		</html>
-	`))
+	// Get user preferences for theme
+	effectiveTheme, err := h.prefsService.GetEffectiveTheme(r.Context(), user.ID, &profileID)
+	if err != nil {
+		h.logger.Warn("failed to get user preferences",
+			zap.String("user_id", user.ID),
+			zap.Error(err),
+		)
+		effectiveTheme = domain.DefaultEffectiveTheme()
+	}
+
+	// Build page data
+	data := h.buildCircleDetailPageData(r.Context(), circle, profileID, user, effectiveTheme)
+	data.CSRFToken = middleware.GetCSRFToken(r)
+
+	// Render template
+	if err := templates.GetTemplates().CircleDetail.ExecuteTemplate(w, "circle-detail", data); err != nil {
+		h.logger.Error("template error",
+			zap.String("circle_id", circleID),
+			zap.Error(err),
+		)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// buildCircleDetailPageData builds the circle detail page data
+func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *domain.Circle, profileID string, user *domain.User, effectiveTheme *domain.EffectiveTheme) *models.CircleDetailPageData {
+	// Determine user role and permissions
+	isOwner, _ := h.circleService.IsOwner(ctx, circle.ID, profileID)
+	isAdmin, _ := h.circleService.IsAdmin(ctx, circle.ID, profileID)
+	isMember, _ := h.circleService.IsMember(ctx, circle.ID, profileID)
+	canInvite, _ := h.circleService.CanInvite(ctx, circle.ID, profileID)
+	canEditSettings, _ := h.circleService.CanEditSettings(ctx, circle.ID, profileID)
+
+	// Get user role
+	userRole, _ := h.circleService.GetMemberRole(ctx, circle.ID, profileID)
+
+	// Get member count
+	memberCount, _ := h.circleService.CountMembers(ctx, circle.ID)
+
+	// Get members
+	memberships, _ := h.circleService.GetCircleMembers(ctx, circle.ID, 100, 0)
+	members := make([]models.CircleMember, 0, len(memberships))
+	for _, m := range memberships {
+		// Determine role for this member
+		role := "member"
+		if m.ProfileID == circle.OwnerProfileID {
+			role = "owner"
+		}
+		// TODO: Check if member is admin once roles are implemented
+
+		members = append(members, models.CircleMember{
+			ProfileID: m.ProfileID,
+			Name:      "Member", // TODO: Fetch actual profile name
+			Username:  "",       // TODO: Fetch actual username
+			Avatar:    "",       // TODO: Fetch actual avatar
+			Role:      role,
+			State:     m.State,
+			JoinedAt:  m.JoinedAt.Format("Jan 2, 2006"),
+		})
+	}
+
+	// Build stats
+	stats := models.CircleDetailStats{
+		TotalPosts:      0, // TODO: Implement post counting
+		TotalFiles:      0, // TODO: Implement file counting
+		TotalGatherings: 0, // TODO: Implement gathering counting
+		CreatedAt:       circle.CreatedAt.Format("Jan 2, 2006"),
+		LastActivity:    "Recently", // TODO: Implement last activity tracking
+	}
+
+	return &models.CircleDetailPageData{
+		BaseData: models.BaseData{
+			Title:     circle.Name,
+			ActiveNav: "circles",
+			Theme: models.ThemeSettings{
+				Mode:   effectiveTheme.Mode,
+				Radius: effectiveTheme.Radius,
+			},
+			User: user,
+		},
+		Circle:              *circle,
+		Members:             members,
+		MemberCount:         memberCount,
+		RecentPosts:         []models.CirclePost{},         // TODO: Implement post fetching
+		UpcomingGatherings:  []models.GatheringItem{},      // TODO: Implement gathering fetching
+		SharedFiles:         []models.CircleFile{},         // TODO: Implement file fetching
+		IsOwner:             isOwner,
+		IsAdmin:             isAdmin,
+		IsMember:            isMember,
+		CanInvite:           canInvite,
+		CanEditInfo:         canEditSettings,
+		CanEditVisibility:   canEditSettings,
+		CanEditPermissions:  canEditSettings,
+		UserRole:            userRole,
+		CircleStats:         stats,
+		ActiveTab:           "chat", // Default to chat tab
+	}
 }
 
 // handleNewCircle shows the create circle form or handles creation
