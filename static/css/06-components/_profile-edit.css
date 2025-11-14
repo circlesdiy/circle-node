@@ -189,6 +189,7 @@
 
 .toggle-switch.active::after {
     left: 22px;
+    background: var(--accent-secondary);
 }
 
 /* Profile Circles */

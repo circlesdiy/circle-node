@@ -43,9 +43,7 @@
             <button class="nav-pill" data-tab="gatherings">Gatherings</button>
             <button class="nav-pill" data-tab="files">Files</button>
             <button class="nav-pill" data-tab="members">Members</button>
-            {{if .IsOwner}}
             <button class="nav-pill" data-tab="settings">Settings</button>
-            {{end}}
         </div>
     </div>
 
@@ -79,7 +77,7 @@
                 <div class="tab-header">
                     <h2>Upcoming Gatherings</h2>
                     {{if .IsMember}}
-                    <button class="btn btn-primary btn-sm">+ Organize Gathering</button>
+                    <button class="btn btn-primary btn-sm" onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize Gathering</button>
                     {{end}}
                 </div>
 
@@ -152,39 +150,43 @@
                 </div>
             </div>
 
-            <!-- Settings Tab (Owner Only) -->
-            {{if .IsOwner}}
+            <!-- Settings Tab -->
             <div class="circle-tab" id="settings-tab">
-                <div class="settings-section">
-                    <h3>Circle Information</h3>
-                    {{if .CanEditInfo}}
-                    <div class="form-group">
-                        <label>Circle name</label>
-                        <input type="text" value="{{.Circle.Name}}" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-textarea">{{.Circle.Description}}</textarea>
-                    </div>
-                    <button class="btn btn-primary">Save changes</button>
-                    {{else}}
-                    <p class="text-secondary">Only the owner can edit circle information.</p>
-                    {{end}}
-                </div>
+                {{if .IsOwner}}
 
-                <div class="settings-section">
-                    <h3>Visibility</h3>
-                    {{if .CanEditVisibility}}
-                    <div class="setting-item">
-                        <div>
-                            <div class="setting-label">Circle visibility</div>
-                            <div class="setting-description">Current: {{.Circle.Visibility}}</div>
+                    <div class="settings-section">
+                        <h3>Circle Information</h3>
+                        {{if .CanEditInfo}}
+                        <div class="form-group">
+                            <label>Circle name</label>
+                            <input type="text" value="{{.Circle.Name}}" class="form-input">
                         </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-textarea">{{.Circle.Description}}</textarea>
+                        </div>
+                        <button class="btn btn-primary">Save changes</button>
+                        {{else}}
+                        <p class="text-secondary">Only the owner can edit circle information.</p>
+                        {{end}}
                     </div>
-                    {{else}}
-                    <p class="text-secondary">Only the owner can change visibility settings.</p>
-                    {{end}}
-                </div>
+                {{end}}
+
+                {{if .IsOwner}}
+                    <div class="settings-section">
+                        <h3>Visibility</h3>
+                        {{if .CanEditVisibility}}
+                        <div class="setting-item">
+                            <div>
+                                <div class="setting-label">Circle visibility</div>
+                                <div class="setting-description">Current: {{.Circle.Visibility}}</div>
+                            </div>
+                        </div>
+                        {{else}}
+                        <p class="text-secondary">Only the owner can change visibility settings.</p>
+                        {{end}}
+                    </div>
+                {{end}}
 
                 <div class="settings-section">
                     <h3>Notifications</h3>
@@ -220,7 +222,6 @@
                 </div>
                 {{end}}
             </div>
-            {{end}}
         </div>
 
         <!-- Sidebar -->
@@ -228,13 +229,16 @@
             <div class="sidebar-card">
                 <h3>Quick actions</h3>
                 {{if .IsMember}}
-                <button class="btn btn-primary sidebar-btn">+ Organize Gathering</button>
+                <button class="btn btn-primary sidebar-btn" onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize Gathering</button>
                 {{if .CanInvite}}
                 <button class="btn btn-secondary sidebar-btn">+ Invite Member</button>
                 {{end}}
                 <button class="btn btn-secondary sidebar-btn">↑ Upload File</button>
                 {{else}}
-                <button class="btn btn-primary sidebar-btn">Join Circle</button>
+                <button class="btn btn-primary sidebar-btn"
+                    hx-post="/api/circles/{{.Circle.ID}}/join"
+                    hx-swap="outerHTML"
+                    hx-target="this">Join Circle</button>
                 {{end}}
             </div>
 
@@ -952,4 +956,6 @@ document.querySelectorAll('textarea').forEach(textarea => {
     });
 });
 </script>
+
+<script src="/static/js/post-cards.js"></script>
 {{end}}

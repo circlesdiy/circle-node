@@ -446,9 +446,9 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 
 	// Build stats
 	stats := models.CircleDetailStats{
-		TotalPosts:      len(posts),                        // Count of fetched posts
-		TotalFiles:      0,                                 // TODO: Implement file counting
-		TotalGatherings: 0,                                 // TODO: Implement gathering counting
+		TotalPosts:      len(posts), // Count of fetched posts
+		TotalFiles:      0,          // TODO: Implement file counting
+		TotalGatherings: 0,          // TODO: Implement gathering counting
 		CreatedAt:       circle.CreatedAt.Format("Jan 2, 2006"),
 		LastActivity:    "Recently", // TODO: Implement last activity tracking
 	}
@@ -464,29 +464,29 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 			User:         user,
 			AssetVersion: h.assetVersion,
 		},
-		Circle:              *circle,
-		Members:             members,
-		MemberCount:         memberCount,
-		RecentPosts:         recentPosts,
-		UpcomingGatherings:  []models.GatheringItem{}, // TODO: Implement gathering fetching
-		SharedFiles:         []models.CircleFile{},    // TODO: Implement file fetching
-		IsOwner:             isOwner,
-		IsAdmin:             isAdmin,
-		IsMember:            isMember,
-		CanInvite:           canInvite,
-		CanEditInfo:         canEditSettings,
-		CanEditVisibility:   canEditSettings,
-		CanEditPermissions:  canEditSettings,
-		UserRole:            userRole,
-		CircleStats:         stats,
-		ActiveTab:           "chat", // Default to chat tab
+		Circle:             *circle,
+		Members:            members,
+		MemberCount:        memberCount,
+		RecentPosts:        recentPosts,
+		UpcomingGatherings: []models.GatheringItem{}, // TODO: Implement gathering fetching
+		SharedFiles:        []models.CircleFile{},    // TODO: Implement file fetching
+		IsOwner:            isOwner,
+		IsAdmin:            isAdmin,
+		IsMember:           isMember,
+		CanInvite:          canInvite,
+		CanEditInfo:        canEditSettings,
+		CanEditVisibility:  canEditSettings,
+		CanEditPermissions: canEditSettings,
+		UserRole:           userRole,
+		CircleStats:        stats,
+		ActiveTab:          "chat", // Default to chat tab
 	}
 }
 
 // formatTimeAgo formats a time as a relative string
 func formatTimeAgo(t time.Time) string {
-	now := time.Now()
-	diff := now.Sub(t)
+	now := time.Now().UTC()
+	diff := now.Sub(t.UTC())
 
 	if diff < time.Minute {
 		return "just now"
@@ -1066,6 +1066,13 @@ func (h *CircleHandler) handleAPICircleActions(w http.ResponseWriter, r *http.Re
 			} else {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
+		case "join":
+			// POST /api/circles/{id}/join
+			if r.Method == http.MethodPost {
+				h.handleAPIJoinCircle(w, r, circleID)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
 		default:
 			http.Error(w, "Not found", http.StatusNotFound)
 		}
@@ -1201,4 +1208,41 @@ func (h *CircleHandler) handleAPILeaveCircle(w http.ResponseWriter, r *http.Requ
 	// Return success - the card will be removed by HTMX
 	RenderSuccess(w, h.logger, "You left the circle")
 	w.WriteHeader(http.StatusOK)
+}
+
+// handleAPIJoinCircle handles joining a public circle via HTMX
+func (h *CircleHandler) handleAPIJoinCircle(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	err := h.circleService.JoinPublicCircle(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to join circle",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("member joined circle via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return the "joined" button state
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<button class="join-btn joined" disabled>Joined</button>`))
 }

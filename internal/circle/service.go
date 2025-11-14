@@ -409,6 +409,104 @@ func (s *Service) AcceptInvitation(ctx context.Context, circleID, profileID stri
 	return nil
 }
 
+// JoinPublicCircle allows a user to directly join a public or unlisted circle
+func (s *Service) JoinPublicCircle(ctx context.Context, circleID, profileID string) error {
+	// Get circle
+	circle, err := s.repo.GetCircleByID(ctx, circleID)
+	if err != nil {
+		return fmt.Errorf("failed to get circle: %w", err)
+	}
+	if circle == nil {
+		return fmt.Errorf("circle not found")
+	}
+
+	// Only allow joining public or unlisted circles directly
+	if circle.Visibility == domain.CircleVisibilityPrivate {
+		return fmt.Errorf("cannot join private circles without an invitation")
+	}
+
+	// Check if membership already exists
+	existing, err := s.repo.GetMembershipByCircleAndProfile(ctx, circleID, profileID)
+	if err != nil {
+		return fmt.Errorf("failed to check existing membership: %w", err)
+	}
+
+	if existing != nil {
+		if existing.State == domain.MembershipStateBanned {
+			return fmt.Errorf("you are banned from this circle")
+		}
+		if existing.State == domain.MembershipStateActive {
+			return fmt.Errorf("you are already a member of this circle")
+		}
+		if existing.State == domain.MembershipStateInvited {
+			// If they have a pending invitation, accept it instead
+			return s.AcceptInvitation(ctx, circleID, profileID)
+		}
+		// If they previously left, allow them to rejoin by updating the existing membership
+		if existing.State == domain.MembershipStateLeft {
+			s.logger.Debug("rejoining circle",
+				zap.String("circle_id", circleID),
+				zap.String("profile_id", profileID),
+			)
+
+			now := time.Now()
+			existing.State = domain.MembershipStateActive
+			existing.JoinedAt = now
+			existing.LeftAt = nil
+			existing.UpdatedAt = now
+
+			if err := s.repo.UpdateMembership(ctx, existing); err != nil {
+				s.logger.Error("failed to rejoin circle",
+					zap.String("circle_id", circleID),
+					zap.String("profile_id", profileID),
+					zap.Error(err),
+				)
+				return fmt.Errorf("failed to rejoin circle: %w", err)
+			}
+
+			s.logger.Info("rejoined circle",
+				zap.String("circle_id", circleID),
+				zap.String("profile_id", profileID),
+			)
+
+			return nil
+		}
+	}
+
+	// Create new active membership
+	s.logger.Debug("joining public circle",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	now := time.Now()
+	membership := &domain.CircleMembership{
+		ID:        uuid.New().String(),
+		CircleID:  circleID,
+		ProfileID: profileID,
+		State:     domain.MembershipStateActive,
+		JoinedAt:  now,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := s.repo.CreateMembership(ctx, membership); err != nil {
+		s.logger.Error("failed to join circle",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		return fmt.Errorf("failed to join circle: %w", err)
+	}
+
+	s.logger.Info("joined public circle",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	return nil
+}
+
 // LeaveCircle allows a member to leave a circle
 func (s *Service) LeaveCircle(ctx context.Context, circleID, profileID string) error {
 	// Get circle

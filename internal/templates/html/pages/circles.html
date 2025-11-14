@@ -97,7 +97,10 @@
                                 <span class="featured-active">{{.OnlineCount}} online</span>
                             </div>
                         </div>
-                        <button class="join-btn">
+                        <button class="join-btn"
+                            hx-post="/api/circles/{{.ID}}/join"
+                            hx-swap="outerHTML"
+                            hx-target="this">
                             Join Circle
                         </button>
                     </div>

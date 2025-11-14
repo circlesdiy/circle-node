@@ -33,7 +33,7 @@
                 {{if .CircleGatherings}}
                     {{range .CircleGatherings}}
                     <div class="circle-gathering" data-circle-id="{{.CircleID}}">
-                        <div class="circle-gathering-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <div class="circle-gathering-header">
                             {{if .AvatarURL}}
                             <img src="{{.AvatarURL}}" alt="{{.CircleName}}" class="circle-avatar">
                             {{else}}

@@ -195,69 +195,6 @@
 
 <script>
 (function() {
-    const form = document.getElementById('post-composer-form');
-    const submitBtn = document.getElementById('composer-submit');
-    const composer = document.querySelector('.composer');
-    const circleID = composer.dataset.circleId;
-
-    // Fallback: Only use JavaScript fetch if HTMX is not available
-    if (typeof htmx === 'undefined') {
-        // Handle form submission with vanilla JavaScript
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const body = document.getElementById('post-body').value.trim();
-            const bodyFormat = document.getElementById('post-format').value;
-            const visibility = document.getElementById('post-visibility').value;
-            const contentWarning = document.getElementById('post-content-warning').value.trim();
-
-            if (!body) {
-                alert('Post body cannot be empty');
-                return;
-            }
-
-            // Disable submit button and show loading state
-            submitBtn.disabled = true;
-            submitBtn.querySelector('.btn-text').hidden = true;
-            submitBtn.querySelector('.btn-loading').hidden = false;
-
-            try {
-                const response = await fetch('/api/posts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        circle_id: circleID,
-                        body: body,
-                        body_format: bodyFormat,
-                        visibility: visibility,
-                        content_warning: contentWarning || '',
-                    }),
-                });
-
-                if (response.ok) {
-                    // Clear form
-                    form.reset();
-
-                    // Reload page to show new post
-                    window.location.reload();
-                } else {
-                    const error = await response.text();
-                    alert('Failed to create post: ' + error);
-                }
-            } catch (error) {
-                console.error('Error creating post:', error);
-                alert('Failed to create post. Please try again.');
-            } finally {
-                // Re-enable submit button
-                submitBtn.disabled = false;
-                submitBtn.querySelector('.btn-text').hidden = false;
-                submitBtn.querySelector('.btn-loading').hidden = true;
-            }
-        });
-    }
-
     // Placeholder functionality for tool buttons (to be implemented)
     const toolBtns = document.querySelectorAll('.composer-tool-btn');
     toolBtns.forEach(btn => {
