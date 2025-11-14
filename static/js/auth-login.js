@@ -1,6 +1,6 @@
 /**
  * WebAuthn Login Flow
- * Handles passwordless authentication using WebAuthn
+ * Handles passwordless authentication using WebAuthn with conditional mediation support
  */
 
 class AuthLogin {
@@ -12,14 +12,23 @@ class AuthLogin {
         this.emailForm = document.getElementById('email-login-form');
         this.emailCancel = document.getElementById('email-login-cancel');
 
+        // For conditional mediation cancellation
+        this.abortController = null;
+        this.conditionalRequest = null;
+
         this.init();
     }
 
-    init() {
+    async init() {
         // Check WebAuthn support
         if (!this.isWebAuthnSupported()) {
             this.showEmailFallback();
             return;
+        }
+
+        // Check for conditional UI support (autofill)
+        if (await this.supportsConditionalMediation()) {
+            this.startConditionalMediation();
         }
 
         // WebAuthn login form
@@ -50,12 +59,73 @@ class AuthLogin {
                navigator.credentials.create !== undefined;
     }
 
+    async supportsConditionalMediation() {
+        if (!window.PublicKeyCredential ||
+            !PublicKeyCredential.isConditionalMediationAvailable) {
+            return false;
+        }
+
+        try {
+            return await PublicKeyCredential.isConditionalMediationAvailable();
+        } catch (error) {
+            console.debug('Conditional mediation check failed:', error);
+            return false;
+        }
+    }
+
+    async startConditionalMediation() {
+        try {
+            // Get challenge without username for autofill
+            const beginResponse = await fetch('/auth/login/begin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: '' }) // Empty username triggers conditional flow
+            });
+
+            if (!beginResponse.ok) {
+                console.debug('Conditional mediation begin failed, falling back to username-first');
+                return;
+            }
+
+            const options = await beginResponse.json();
+            const publicKeyOptions = this.preparePublicKeyOptions(options);
+
+            // Create abort controller for cancellation
+            this.abortController = new AbortController();
+
+            // Start conditional mediation (autofill)
+            this.conditionalRequest = navigator.credentials.get({
+                publicKey: publicKeyOptions,
+                mediation: 'conditional',
+                signal: this.abortController.signal
+            });
+
+            // Wait for user selection from autofill
+            const credential = await this.conditionalRequest;
+
+            // User selected a passkey from autofill
+            await this.finishAuthentication(credential);
+
+        } catch (error) {
+            // Don't show errors for conditional mediation - it runs in background
+            if (error.name !== 'AbortError') {
+                console.debug('Conditional mediation error:', error);
+            }
+        }
+    }
+
     async handleWebAuthnLogin() {
         const username = this.usernameInput.value.trim();
 
         if (!username) {
             this.showError('Please enter your username or email');
             return;
+        }
+
+        // Cancel conditional mediation if running
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
         }
 
         try {
@@ -82,31 +152,12 @@ class AuthLogin {
             this.showStatus('Waiting for your passkey...');
 
             // Step 3: Get credential from authenticator
+            // No mediation parameter = browser chooses best UX
             const credential = await navigator.credentials.get({
                 publicKey: publicKeyOptions
             });
 
-            this.showStatus('Verifying...');
-
-            // Step 4: Send credential to server for verification
-            const finishResponse = await fetch('/auth/login/finish', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.credentialToJSON(credential))
-            });
-
-            if (!finishResponse.ok) {
-                const error = await finishResponse.json();
-                throw new Error(error.error || 'Authentication failed');
-            }
-
-            const result = await finishResponse.json();
-
-            // Success! Redirect to circles
-            this.showStatus('Success! Redirecting...');
-            setTimeout(() => {
-                window.location.href = result.redirect || '/dashboard';
-            }, 500);
+            await this.finishAuthentication(credential);
 
         } catch (error) {
             console.error('WebAuthn login error:', error);
@@ -116,11 +167,42 @@ class AuthLogin {
             if (error.name === 'NotAllowedError') {
                 this.showError('Authentication was cancelled or timed out');
             } else if (error.name === 'InvalidStateError') {
-                this.showError('This passkey is not registered');
+                this.showError('This passkey is not registered. Please try a different sign-in method.');
+            } else if (error.name === 'SecurityError') {
+                this.showError('Security error. Please ensure you\'re using HTTPS.');
+            } else if (error.name === 'NotSupportedError') {
+                this.showError('Your browser doesn\'t support this authentication method.');
+            } else if (error.name === 'AbortError') {
+                // User switched methods, don't show error
+                console.debug('Authentication aborted');
             } else {
                 this.showError(error.message || 'Authentication failed. Please try again.');
             }
         }
+    }
+
+    async finishAuthentication(credential) {
+        this.showStatus('Verifying...');
+
+        // Step 4: Send credential to server for verification
+        const finishResponse = await fetch('/auth/login/finish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.credentialToJSON(credential))
+        });
+
+        if (!finishResponse.ok) {
+            const error = await finishResponse.json();
+            throw new Error(error.error || 'Authentication failed');
+        }
+
+        const result = await finishResponse.json();
+
+        // Success! Redirect to circles
+        this.showStatus('Success! Redirecting...');
+        setTimeout(() => {
+            window.location.href = result.redirect || '/dashboard';
+        }, 500);
     }
 
     preparePublicKeyOptions(options) {

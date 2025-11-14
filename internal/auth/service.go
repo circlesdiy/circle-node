@@ -61,12 +61,12 @@ func DefaultWebAuthnConfig() *WebAuthnConfig {
 	return &WebAuthnConfig{
 		Config: &webauthn.Config{
 			ChallengeLength:         32,
-			Timeout:                 uint64(5 * time.Minute / time.Millisecond),
+			Timeout:                 uint64(3 * time.Minute / time.Millisecond),
 			RPID:                    "localhost",
 			RPName:                  "Circles.DIY",
 			RPIcon:                  "",
-			AuthenticatorAttachment: webauthn.AuthenticatorCrossPlatform, // Prefer external authenticators (1Password, security keys, etc.)
-			ResidentKey:             webauthn.ResidentKeyDiscouraged,
+			AuthenticatorAttachment: "",                            // No restriction - supports all authenticators (Touch ID, Windows Hello, 1Password, YubiKey, etc.)
+			ResidentKey:             webauthn.ResidentKeyPreferred, // Enable discoverable credentials for passkey autofill
 			UserVerification:        webauthn.UserVerificationPreferred,
 			Attestation:             webauthn.AttestationNone,
 			CredentialAlgs:          []int{webauthn.COSEAlgES256, webauthn.COSEAlgRS256},
@@ -225,18 +225,23 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		s.logger.Info("Created default user preferences", zap.String("user_id", domainUser.ID))
 	}
 
-	// Create credential
+	// Extract the public key credential from authenticator data
+	if authnData.Credential == nil {
+		return nil, fmt.Errorf("no credential found in authenticator data")
+	}
+
+	// Create credential with proper public key storage
 	credential := &domainauth.WebAuthnCredential{
 		ID:                GenerateID(),
 		UserID:            domainUser.ID,
 		CredentialID:      response.ID,
-		PublicKey:         base64.StdEncoding.EncodeToString(response.RawID), // Store raw ID as public key placeholder
+		PublicKey:         base64.StdEncoding.EncodeToString(authnData.Credential.Raw), // Store the CBOR-encoded public key
 		CredentialType:    "public-key",
 		SignCount:         int(authnData.Counter),
 		AttestationFormat: "",             // Will be set by attestation verification
-		AttestationObject: response.RawID, // Store raw credential data
+		AttestationObject: response.RawID, // Store raw credential data for reference
 		FriendlyName:      fmt.Sprintf("%s's authenticator", username),
-		IsSynced:          false,
+		IsSynced:          authnData.UserVerified, // Synced credentials typically require user verification
 		IsBackup:          false,
 		CreatedAt:         time.Now().UTC(),
 	}
@@ -278,8 +283,14 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 // Authentication flow
 
 // BeginAuthentication starts the WebAuthn authentication process
+// If username is empty, creates a conditional mediation challenge (for autofill)
 func (s *Service) BeginAuthentication(ctx context.Context, username string) (*webauthn.PublicKeyCredentialRequestOptions, error) {
 	s.logger.Info("Beginning WebAuthn authentication", zap.String("username", username))
+
+	// Handle conditional mediation (empty username = autofill)
+	if username == "" {
+		return s.beginConditionalAuthentication(ctx)
+	}
 
 	// Get user
 	user, err := s.userService.GetByUsername(ctx, username)
@@ -333,6 +344,42 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 	return options, nil
 }
 
+// beginConditionalAuthentication creates a challenge for conditional mediation (autofill)
+// This allows any user's passkey to be used without knowing the username first
+func (s *Service) beginConditionalAuthentication(ctx context.Context) (*webauthn.PublicKeyCredentialRequestOptions, error) {
+	s.logger.Info("Beginning conditional WebAuthn authentication (autofill)")
+
+	// Create assertion options without user context - empty allowCredentials
+	options, err := webauthn.NewAssertionOptions(s.config.Config, &webauthn.User{
+		ID:            []byte{},
+		Name:          "",
+		DisplayName:   "",
+		CredentialIDs: [][]byte{}, // Empty = any credential can be used
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create conditional assertion options: %w", err)
+	}
+
+	// Store challenge without user ID (will be matched when credential is presented)
+	challengeRecord := &domainauth.AuthenticationChallenge{
+		ID:        GenerateID(),
+		UserID:    nil, // No user ID for conditional challenges
+		Challenge: base64.RawURLEncoding.EncodeToString(options.Challenge),
+		Type:      "authentication_conditional",
+		Options:   map[string]interface{}{},
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Duration(s.config.Timeout) * time.Millisecond),
+	}
+
+	if err := s.repo.CreateAuthenticationChallenge(ctx, challengeRecord); err != nil {
+		return nil, fmt.Errorf("failed to store conditional challenge: %w", err)
+	}
+
+	s.logger.Info("Conditional authentication challenge created", zap.String("challenge_id", challengeRecord.ID))
+
+	return options, nil
+}
+
 // FinishAuthentication completes the WebAuthn authentication process
 func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.PublicKeyCredentialAssertion, r *http.Request) (*domainauth.Session, error) {
 	s.logger.Info("Finishing WebAuthn authentication")
@@ -366,13 +413,36 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 		return nil, fmt.Errorf("user not found")
 	}
 
-	// Verify the assertion (simplified - in production you'd do full verification)
+	// Verify the assertion
 	if clientData.Type != "webauthn.get" {
 		return nil, fmt.Errorf("invalid client data type")
 	}
 	if clientData.Origin != s.config.RPOrigin {
 		return nil, fmt.Errorf("invalid origin")
 	}
+
+	// Verify RP ID hash
+	expectedRPIDHash := sha256.Sum256([]byte(s.config.RPID))
+	if !bytes.Equal(response.AuthnData.RPIDHash[:], expectedRPIDHash[:]) {
+		return nil, fmt.Errorf("invalid RP ID hash")
+	}
+
+	// Parse the stored public key credential
+	storedCred, err := ToWebAuthnCredential(credential)
+	if storedCred == nil || err != nil {
+		return nil, fmt.Errorf("failed to parse stored credential: %w", err)
+	}
+
+	// Verify the signature using the stored public key
+	// The signature is over authenticatorData + hash(clientDataJSON)
+	clientDataHash := sha256.Sum256(response.ClientData.Raw)
+	signedData := append(response.AuthnData.Raw, clientDataHash[:]...)
+
+	if err := storedCred.Verify(signedData, response.Signature); err != nil {
+		return nil, fmt.Errorf("signature verification failed: %w", err)
+	}
+
+	s.logger.Info("Signature verified successfully", zap.String("credential_id", credential.CredentialID))
 
 	// Update sign count (replay attack protection)
 	newSignCount := int(response.AuthnData.Counter)

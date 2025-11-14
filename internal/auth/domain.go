@@ -29,7 +29,8 @@ func (u *User) ToDomain() *domain.User {
 func (u *User) ToWebAuthnUser(credentials []auth.WebAuthnCredential) *webauthn.User {
 	credentialIDs := make([][]byte, len(credentials))
 	for i, cred := range credentials {
-		if credID, err := base64.URLEncoding.DecodeString(cred.CredentialID); err == nil {
+		// Use RawURLEncoding to match JavaScript's URL-safe base64 without padding
+		if credID, err := base64.RawURLEncoding.DecodeString(cred.CredentialID); err == nil {
 			credentialIDs[i] = credID
 		}
 	}
@@ -45,15 +46,18 @@ func (u *User) ToWebAuthnUser(credentials []auth.WebAuthnCredential) *webauthn.U
 
 // ToWebAuthnCredential converts domain credential to fxamacker/webauthn.Credential
 // This is an adapter method to bridge domain entities with the WebAuthn library
-func ToWebAuthnCredential(c *auth.WebAuthnCredential) *webauthn.Credential {
-	pubKey, _ := base64.StdEncoding.DecodeString(c.PublicKey)
-
-	// Create credential with the proper fxamacker API
-	cred, _, _ := webauthn.ParseCredential(pubKey)
-	if cred == nil {
-		// Fallback to empty credential
-		cred = &webauthn.Credential{}
+func ToWebAuthnCredential(c *auth.WebAuthnCredential) (*webauthn.Credential, error) {
+	// Decode the stored CBOR-encoded public key
+	pubKey, err := base64.StdEncoding.DecodeString(c.PublicKey)
+	if err != nil {
+		return nil, err
 	}
 
-	return cred
+	// Parse the credential using the fxamacker API
+	cred, _, err := webauthn.ParseCredential(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return cred, nil
 }
