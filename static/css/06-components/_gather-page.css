@@ -34,12 +34,13 @@
     border: 1px solid var(--border-light);
 }
 
-.status-indicator {
+.gather-page .status-indicator {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
     color: var(--text-secondary);
+    margin-bottom: 0;
 }
 
 .status-dot {

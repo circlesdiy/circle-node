@@ -254,7 +254,7 @@ func (r *Repository) DeletePost(ctx context.Context, postID string) error {
 		WHERE id = $2 AND deleted_at IS NULL
 	`
 
-	result, err := r.pool.Exec(ctx, query, time.Now(), postID)
+	result, err := r.pool.Exec(ctx, query, time.Now().UTC(), postID)
 	if err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ func (r *Repository) DeleteComment(ctx context.Context, commentID string) error 
 		WHERE id = $2 AND deleted_at IS NULL
 	`
 
-	result, err := r.pool.Exec(ctx, query, time.Now(), commentID)
+	result, err := r.pool.Exec(ctx, query, time.Now().UTC(), commentID)
 	if err != nil {
 		return err
 	}

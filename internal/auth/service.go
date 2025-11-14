@@ -108,8 +108,8 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 		Username:      username,
 		Email:         email,
 		AccountStatus: domain.AccountStatusActive,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
 	}
 
 	// Wrap in auth.User for WebAuthn functionality
@@ -137,8 +137,8 @@ func (s *Service) BeginRegistration(ctx context.Context, username, email string)
 			"username": domainUser.Username,
 			"email":    domainUser.Email,
 		},
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Duration(s.config.Timeout) * time.Millisecond),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Duration(s.config.Timeout) * time.Millisecond),
 	}
 
 	if err := s.repo.CreateAuthenticationChallenge(ctx, challengeRecord); err != nil {
@@ -201,8 +201,8 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		Username:      username,
 		Email:         email,
 		AccountStatus: domain.AccountStatusActive,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
 	}
 
 	if err := s.userService.Create(ctx, domainUser); err != nil {
@@ -238,7 +238,7 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 		FriendlyName:      fmt.Sprintf("%s's authenticator", username),
 		IsSynced:          false,
 		IsBackup:          false,
-		CreatedAt:         time.Now(),
+		CreatedAt:         time.Now().UTC(),
 	}
 
 	if err := s.repo.CreateWebAuthnCredential(ctx, credential); err != nil {
@@ -255,7 +255,7 @@ func (s *Service) FinishRegistration(ctx context.Context, response *webauthn.Pub
 			ID:           GenerateID(),
 			DeviceID:     device.ID,
 			CredentialID: credential.ID,
-			LinkedAt:     time.Now(),
+			LinkedAt:     time.Now().UTC(),
 			LastUsedAt:   nil, // Will be set on first authentication use
 		}
 		if err := s.repo.LinkDeviceCredential(ctx, deviceCred); err != nil {
@@ -320,8 +320,8 @@ func (s *Service) BeginAuthentication(ctx context.Context, username string) (*we
 		Options: map[string]interface{}{
 			"user_id": user.ID,
 		},
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Duration(s.config.Timeout) * time.Millisecond),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Duration(s.config.Timeout) * time.Millisecond),
 	}
 
 	if err := s.repo.CreateAuthenticationChallenge(ctx, challengeRecord); err != nil {
@@ -401,7 +401,7 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 			ID:           GenerateID(),
 			DeviceID:     *session.DeviceID,
 			CredentialID: credential.ID,
-			LinkedAt:     time.Now(),
+			LinkedAt:     time.Now().UTC(),
 			LastUsedAt:   &session.CreatedAt,
 		}
 
@@ -411,7 +411,7 @@ func (s *Service) FinishAuthentication(ctx context.Context, response *webauthn.P
 		}
 
 		// Update last used timestamp
-		if err := s.repo.UpdateDeviceCredentialLastUsed(ctx, *session.DeviceID, credential.ID, time.Now()); err != nil {
+		if err := s.repo.UpdateDeviceCredentialLastUsed(ctx, *session.DeviceID, credential.ID, time.Now().UTC()); err != nil {
 			s.logger.Debug("Failed to update device-credential last used", zap.Error(err))
 		}
 	}
@@ -457,7 +457,7 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 			} else if device != nil {
 				deviceID = &device.ID
 				// Update last seen since we just used it
-				if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now()); err != nil {
+				if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now().UTC()); err != nil {
 					s.logger.Warn("Failed to update device last seen", zap.Error(err))
 				}
 			}
@@ -466,7 +466,7 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 		}
 	} else {
 		deviceID = &device.ID
-		if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now()); err != nil {
+		if err := s.repo.UpdateDeviceLastSeen(ctx, device.ID, time.Now().UTC()); err != nil {
 			s.logger.Warn("Failed to update device last seen", zap.Error(err))
 		}
 	}
@@ -488,9 +488,9 @@ func (s *Service) CreateSession(ctx context.Context, user *domain.User, r *http.
 		IPAddress:                  getClientIP(r),
 		UserAgent:                  r.UserAgent(),
 		AuthLevel:                  int(domainauth.AuthLevelBasic),
-		CreatedAt:                  time.Now(),
-		LastActivityAt:             time.Now(),
-		ExpiresAt:                  time.Now().Add(domainauth.DefaultSessionDuration),
+		CreatedAt:                  time.Now().UTC(),
+		LastActivityAt:             time.Now().UTC(),
+		ExpiresAt:                  time.Now().UTC().Add(domainauth.DefaultSessionDuration),
 	}
 
 	if err := s.repo.CreateSession(ctx, session); err != nil {
@@ -512,7 +512,7 @@ func (s *Service) ValidateSession(ctx context.Context, token string) (*domainaut
 	}
 
 	// Update last activity
-	if err := s.repo.UpdateSessionActivity(ctx, session.ID, time.Now()); err != nil {
+	if err := s.repo.UpdateSessionActivity(ctx, session.ID, time.Now().UTC()); err != nil {
 		s.logger.Warn("Failed to update session activity", zap.Error(err))
 	}
 
@@ -552,8 +552,8 @@ func (s *Service) createDeviceFromRequest(userID string, r *http.Request) *domai
 		OS:                parseOS(r.UserAgent()),
 		Browser:           parseBrowser(r.UserAgent()),
 		IsTrusted:         false,
-		FirstSeenAt:       time.Now(),
-		LastSeenAt:        time.Now(),
+		FirstSeenAt:       time.Now().UTC(),
+		LastSeenAt:        time.Now().UTC(),
 	}
 }
 

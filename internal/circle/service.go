@@ -48,7 +48,7 @@ func (s *Service) CreateCircle(ctx context.Context, name, description, visibilit
 	)
 
 	// Create circle entity
-	now := time.Now()
+	now := time.Now().UTC()
 	circle := &domain.Circle{
 		ID:             uuid.New().String(),
 		OwnerProfileID: ownerProfileID,
@@ -166,7 +166,7 @@ func (s *Service) UpdateCircle(ctx context.Context, circleID string, updates map
 		circle.AutoModEnabled = autoMod
 	}
 
-	circle.UpdatedAt = time.Now()
+	circle.UpdatedAt = time.Now().UTC()
 
 	if err := s.repo.UpdateCircle(ctx, circle); err != nil {
 		s.logger.Error("failed to update circle",
@@ -338,7 +338,7 @@ func (s *Service) InviteMember(ctx context.Context, circleID, profileID, inviter
 	)
 
 	// Create invitation
-	now := time.Now()
+	now := time.Now().UTC()
 	membership := &domain.CircleMembership{
 		ID:        uuid.New().String(),
 		CircleID:  circleID,
@@ -387,7 +387,7 @@ func (s *Service) AcceptInvitation(ctx context.Context, circleID, profileID stri
 	)
 
 	// Update membership to active
-	now := time.Now()
+	now := time.Now().UTC()
 	membership.State = domain.MembershipStateActive
 	membership.JoinedAt = now
 	membership.UpdatedAt = now
@@ -449,7 +449,7 @@ func (s *Service) JoinPublicCircle(ctx context.Context, circleID, profileID stri
 				zap.String("profile_id", profileID),
 			)
 
-			now := time.Now()
+			now := time.Now().UTC()
 			existing.State = domain.MembershipStateActive
 			existing.JoinedAt = now
 			existing.LeftAt = nil
@@ -479,7 +479,7 @@ func (s *Service) JoinPublicCircle(ctx context.Context, circleID, profileID stri
 		zap.String("profile_id", profileID),
 	)
 
-	now := time.Now()
+	now := time.Now().UTC()
 	membership := &domain.CircleMembership{
 		ID:        uuid.New().String(),
 		CircleID:  circleID,
@@ -542,7 +542,7 @@ func (s *Service) LeaveCircle(ctx context.Context, circleID, profileID string) e
 	)
 
 	// Update membership state
-	now := time.Now()
+	now := time.Now().UTC()
 	membership.State = domain.MembershipStateLeft
 	membership.LeftAt = &now
 	membership.UpdatedAt = now
@@ -609,7 +609,7 @@ func (s *Service) BanMember(ctx context.Context, circleID, profileID, bannerProf
 	)
 
 	// Update membership state
-	now := time.Now()
+	now := time.Now().UTC()
 	membership.State = domain.MembershipStateBanned
 	membership.LeftAt = &now
 	membership.UpdatedAt = now

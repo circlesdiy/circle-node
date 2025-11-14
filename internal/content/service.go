@@ -54,7 +54,7 @@ func (s *Service) CreatePost(ctx context.Context, circleID, authorProfileID, bod
 	}
 
 	// Create post
-	now := time.Now()
+	now := time.Now().UTC()
 	post := &domain.Post{
 		ID:               uuid.New().String(),
 		CircleID:         circleID,
@@ -163,7 +163,7 @@ func (s *Service) UpdatePost(ctx context.Context, postID, body, bodyFormat, cont
 	}
 	post.ContentWarning = contentWarning
 
-	now := time.Now()
+	now := time.Now().UTC()
 	post.EditedAt = &now
 	post.UpdatedAt = now
 
@@ -439,7 +439,7 @@ func (s *Service) AddReaction(ctx context.Context, targetType, targetID, profile
 		TargetID:   targetID,
 		ProfileID:  profileID,
 		Key:        key,
-		CreatedAt:  time.Now(),
+		CreatedAt:  time.Now().UTC(),
 	}
 
 	err = s.reactionRepo.CreateReaction(ctx, reaction)

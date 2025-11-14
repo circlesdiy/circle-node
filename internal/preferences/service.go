@@ -103,7 +103,7 @@ func (s *Service) UpdateBaseTheme(ctx context.Context, userID string, baseTheme 
 		return err
 	}
 
-	updatedAt := sql.NullTime{Time: time.Now(), Valid: true}
+	updatedAt := sql.NullTime{Time: time.Now().UTC(), Valid: true}
 	err = s.repo.UpsertBaseTheme(ctx, userID, themeJSON, updatedAt)
 	if err != nil {
 		s.logger.Error("failed to update base theme",
@@ -149,7 +149,7 @@ func (s *Service) UpdateProfileThemeOverrides(ctx context.Context, profileID str
 		return err
 	}
 
-	updatedAt := sql.NullTime{Time: time.Now(), Valid: true}
+	updatedAt := sql.NullTime{Time: time.Now().UTC(), Valid: true}
 	err = s.repo.UpsertProfileThemeOverrides(ctx, profileID, overridesJSON, updatedAt)
 	if err != nil {
 		s.logger.Error("failed to update profile theme overrides",
@@ -178,7 +178,7 @@ func (s *Service) CreateDefaultUserPreferences(ctx context.Context, userID strin
 	prefs := &domain.UserPreferences{
 		UserID:    userID,
 		BaseTheme: themeJSON,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
 	err = s.repo.UpsertUserPreferences(ctx, prefs)

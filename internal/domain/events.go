@@ -26,23 +26,23 @@ func (e *Event) IsDeleted() bool {
 
 // HasStarted checks if the event has already started
 func (e *Event) HasStarted() bool {
-	return time.Now().After(e.StartTime)
+	return time.Now().UTC().After(e.StartTime)
 }
 
 // HasEnded checks if the event has ended
 func (e *Event) HasEnded() bool {
-	return time.Now().After(e.EndTime)
+	return time.Now().UTC().After(e.EndTime)
 }
 
 // IsOngoing checks if the event is currently happening
 func (e *Event) IsOngoing() bool {
-	now := time.Now()
+	now := time.Now().UTC()
 	return now.After(e.StartTime) && now.Before(e.EndTime)
 }
 
 // IsUpcoming checks if the event is in the future
 func (e *Event) IsUpcoming() bool {
-	return time.Now().Before(e.StartTime)
+	return time.Now().UTC().Before(e.StartTime)
 }
 
 // HasCapacity checks if there are no capacity limits

@@ -52,7 +52,7 @@ func (s *Service) CreateEvent(
 	}
 
 	// Validate start time is in the future
-	if startTime.Before(time.Now()) {
+	if startTime.Before(time.Now().UTC()) {
 		return nil, fmt.Errorf("start time must be in the future")
 	}
 
@@ -81,8 +81,8 @@ func (s *Service) CreateEvent(
 		StartTime:          startTime,
 		EndTime:            endTime,
 		Capacity:           capacity,
-		CreatedAt:          time.Now(),
-		UpdatedAt:          time.Now(),
+		CreatedAt:          time.Now().UTC(),
+		UpdatedAt:          time.Now().UTC(),
 	}
 
 	if err := s.repo.CreateEvent(ctx, event); err != nil {
@@ -164,7 +164,7 @@ func (s *Service) UpdateEvent(
 	event.StartTime = startTime
 	event.EndTime = endTime
 	event.Capacity = capacity
-	event.UpdatedAt = time.Now()
+	event.UpdatedAt = time.Now().UTC()
 
 	if err := s.repo.UpdateEvent(ctx, event); err != nil {
 		return fmt.Errorf("failed to update event: %w", err)

@@ -131,7 +131,7 @@ func (r *Repository) UpdateWebAuthnCredentialSignCount(ctx context.Context, cred
 		SET sign_count = $1, last_used_at = $2
 		WHERE credential_id = $3`
 
-	_, err := r.db.Exec(ctx, query, signCount, time.Now(), credentialID)
+	_, err := r.db.Exec(ctx, query, signCount, time.Now().UTC(), credentialID)
 	return err
 }
 
@@ -290,7 +290,7 @@ func (r *Repository) UpdateSessionActivity(ctx context.Context, sessionID string
 // RevokeSession revokes a session
 func (r *Repository) RevokeSession(ctx context.Context, sessionID string) error {
 	query := `UPDATE sessions SET revoked_at = $1 WHERE id = $2`
-	_, err := r.db.Exec(ctx, query, time.Now(), sessionID)
+	_, err := r.db.Exec(ctx, query, time.Now().UTC(), sessionID)
 	return err
 }
 
@@ -361,7 +361,7 @@ func (r *Repository) GetAuthenticationChallenge(ctx context.Context, challengeSt
 // CompleteAuthenticationChallenge marks a challenge as completed
 func (r *Repository) CompleteAuthenticationChallenge(ctx context.Context, challengeID string) error {
 	query := `UPDATE authentication_challenges SET completed_at = $1 WHERE id = $2`
-	_, err := r.db.Exec(ctx, query, time.Now(), challengeID)
+	_, err := r.db.Exec(ctx, query, time.Now().UTC(), challengeID)
 	return err
 }
 
@@ -447,7 +447,7 @@ func (r *Repository) UseRecoveryMethod(ctx context.Context, methodID string) err
 		last_used_at = $1
 		WHERE id = $2`
 
-	_, err := r.db.Exec(ctx, query, time.Now(), methodID)
+	_, err := r.db.Exec(ctx, query, time.Now().UTC(), methodID)
 	return err
 }
 
@@ -456,13 +456,13 @@ func (r *Repository) UseRecoveryMethod(ctx context.Context, methodID string) err
 // CleanupExpiredChallenges removes expired authentication challenges
 func (r *Repository) CleanupExpiredChallenges(ctx context.Context) error {
 	query := `DELETE FROM authentication_challenges WHERE expires_at < $1`
-	_, err := r.db.Exec(ctx, query, time.Now())
+	_, err := r.db.Exec(ctx, query, time.Now().UTC())
 	return err
 }
 
 // CleanupExpiredSessions removes expired sessions
 func (r *Repository) CleanupExpiredSessions(ctx context.Context) error {
 	query := `DELETE FROM sessions WHERE expires_at < $1 OR revoked_at IS NOT NULL`
-	_, err := r.db.Exec(ctx, query, time.Now())
+	_, err := r.db.Exec(ctx, query, time.Now().UTC())
 	return err
 }

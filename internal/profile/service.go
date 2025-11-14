@@ -26,7 +26,7 @@ func NewService(repo domain.ProfileRepository, logger *zap.Logger) *Service {
 // CreateDefault creates a default profile for a new user
 // This is called during user registration to create the initial profile
 func (s *Service) CreateDefault(ctx context.Context, userID, username string) (*domain.Profile, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	profile := &domain.Profile{
 		ID:          uuid.New().String(),
@@ -94,7 +94,7 @@ func (s *Service) GetByUserID(ctx context.Context, userID string) ([]domain.Prof
 
 // Update updates an existing profile
 func (s *Service) Update(ctx context.Context, profile *domain.Profile) error {
-	profile.UpdatedAt = time.Now()
+	profile.UpdatedAt = time.Now().UTC()
 
 	s.logger.Debug("updating profile",
 		zap.String("profile_id", profile.ID),
@@ -143,7 +143,7 @@ func (s *Service) GetSettings(ctx context.Context, profileID string) (*domain.Pr
 
 // UpdateSettings updates profile settings
 func (s *Service) UpdateSettings(ctx context.Context, settings *domain.ProfileSettings) error {
-	settings.UpdatedAt = time.Now()
+	settings.UpdatedAt = time.Now().UTC()
 
 	s.logger.Debug("updating profile settings",
 		zap.String("profile_id", settings.ProfileID))

@@ -22,7 +22,7 @@ type Session struct {
 
 // IsExpired checks if the session has expired
 func (s *Session) IsExpired() bool {
-	return time.Now().After(s.ExpiresAt) || s.RevokedAt != nil
+	return time.Now().UTC().After(s.ExpiresAt) || s.RevokedAt != nil
 }
 
 // IsActive checks if the session is valid and active
