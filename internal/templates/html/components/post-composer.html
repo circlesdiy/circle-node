@@ -1,6 +1,11 @@
 {{define "post-composer"}}
 <div class="composer" data-circle-id="{{.CircleID}}">
-    <form class="composer-form" id="post-composer-form">
+    <form class="composer-form" id="post-composer-form"
+          hx-post="/api/posts/htmx"
+          hx-target=".posts-feed"
+          hx-swap="afterbegin"
+          hx-indicator="#composer-submit"
+          hx-on::after-request="if(event.detail.successful) this.reset()">
         <textarea
             name="body"
             id="post-body"
@@ -10,6 +15,7 @@
         ></textarea>
 
         <!-- Hidden fields with defaults -->
+        <input type="hidden" name="circle_id" value="{{.CircleID}}" />
         <input type="hidden" name="body_format" id="post-format" value="markdown" />
         <input type="hidden" name="visibility" id="post-visibility" value="members_only" />
         <input type="hidden" name="content_warning" id="post-content-warning" value="" />
@@ -22,7 +28,7 @@
             </div>
             <button type="submit" class="btn-primary" id="composer-submit">
                 <span class="btn-text">Post</span>
-                <span class="btn-loading" hidden>
+                <span class="btn-loading htmx-indicator" hidden>
                     <svg class="spinner" viewBox="0 0 24 24">
                         <circle class="spinner-track" cx="12" cy="12" r="10"></circle>
                         <circle class="spinner-head" cx="12" cy="12" r="10"></circle>
@@ -148,6 +154,19 @@
     stroke-dashoffset: 45;
 }
 
+/* HTMX loading indicator */
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-flex;
+}
+
+.htmx-request .btn-text {
+    display: none;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
@@ -181,60 +200,63 @@
     const composer = document.querySelector('.composer');
     const circleID = composer.dataset.circleId;
 
-    // Handle form submission
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // Fallback: Only use JavaScript fetch if HTMX is not available
+    if (typeof htmx === 'undefined') {
+        // Handle form submission with vanilla JavaScript
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const body = document.getElementById('post-body').value.trim();
-        const bodyFormat = document.getElementById('post-format').value;
-        const visibility = document.getElementById('post-visibility').value;
-        const contentWarning = document.getElementById('post-content-warning').value.trim();
+            const body = document.getElementById('post-body').value.trim();
+            const bodyFormat = document.getElementById('post-format').value;
+            const visibility = document.getElementById('post-visibility').value;
+            const contentWarning = document.getElementById('post-content-warning').value.trim();
 
-        if (!body) {
-            alert('Post body cannot be empty');
-            return;
-        }
-
-        // Disable submit button and show loading state
-        submitBtn.disabled = true;
-        submitBtn.querySelector('.btn-text').hidden = true;
-        submitBtn.querySelector('.btn-loading').hidden = false;
-
-        try {
-            const response = await fetch('/api/posts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    circle_id: circleID,
-                    body: body,
-                    body_format: bodyFormat,
-                    visibility: visibility,
-                    content_warning: contentWarning || '',
-                }),
-            });
-
-            if (response.ok) {
-                // Clear form
-                form.reset();
-
-                // Reload page to show new post
-                window.location.reload();
-            } else {
-                const error = await response.text();
-                alert('Failed to create post: ' + error);
+            if (!body) {
+                alert('Post body cannot be empty');
+                return;
             }
-        } catch (error) {
-            console.error('Error creating post:', error);
-            alert('Failed to create post. Please try again.');
-        } finally {
-            // Re-enable submit button
-            submitBtn.disabled = false;
-            submitBtn.querySelector('.btn-text').hidden = false;
-            submitBtn.querySelector('.btn-loading').hidden = true;
-        }
-    });
+
+            // Disable submit button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.querySelector('.btn-text').hidden = true;
+            submitBtn.querySelector('.btn-loading').hidden = false;
+
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        circle_id: circleID,
+                        body: body,
+                        body_format: bodyFormat,
+                        visibility: visibility,
+                        content_warning: contentWarning || '',
+                    }),
+                });
+
+                if (response.ok) {
+                    // Clear form
+                    form.reset();
+
+                    // Reload page to show new post
+                    window.location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Failed to create post: ' + error);
+                }
+            } catch (error) {
+                console.error('Error creating post:', error);
+                alert('Failed to create post. Please try again.');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.querySelector('.btn-text').hidden = false;
+                submitBtn.querySelector('.btn-loading').hidden = true;
+            }
+        });
+    }
 
     // Placeholder functionality for tool buttons (to be implemented)
     const toolBtns = document.querySelectorAll('.composer-tool-btn');

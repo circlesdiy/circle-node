@@ -1,19 +1,26 @@
 package models
 
-import "circles.diy/internal/utils"
+import (
+	"html/template"
+
+	"circles.diy/internal/utils"
+)
 
 type Circle struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Thumbnail    string `json:"thumbnail"`
-	Banner       string `json:"banner"`
-	MemberCount  string `json:"member_count"`
-	OnlineCount  string `json:"online_count"`
-	UserRole     string `json:"user_role"`     // owner, admin, member
-	JoinedDate   string `json:"joined_date"`
-	LastActivity string `json:"last_activity"`
-	Active       bool   `json:"active"`
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	Description  string       `json:"description"`
+	Thumbnail    string       `json:"thumbnail"`
+	Banner       string       `json:"banner"`
+	MemberCount  string       `json:"member_count"`
+	OnlineCount  string       `json:"online_count"`
+	UserRole     string       `json:"user_role"` // owner, admin, member
+	JoinedDate   string       `json:"joined_date"`
+	LastActivity string       `json:"last_activity"`
+	Active       bool         `json:"active"`
+	Icon         string       `json:"icon,omitempty"`
+	IconBgColor  template.CSS `json:"icon_bg_color,omitempty"`
+	AvatarURL    string       `json:"avatar_url,omitempty"`
 }
 
 // GetThumbnail returns the thumbnail URL or fallback if empty
@@ -23,7 +30,7 @@ func (c *Circle) GetThumbnail() string {
 
 // GetBanner returns the banner URL or fallback if empty
 func (c *Circle) GetBanner() string {
-	return utils.GetBannerURL(c.Banner)
+	return c.Banner
 }
 
 type Discussion struct {
@@ -43,17 +50,17 @@ type Event struct {
 }
 
 type Ripple struct {
-	ID          string      `json:"id"`
-	User        User        `json:"user"`
-	Content     string      `json:"content"`
-	ContentType string      `json:"content_type"`
-	Image       *MediaItem  `json:"image,omitempty"`
-	Video       *MediaItem  `json:"video,omitempty"`
-	Gallery     []MediaItem `json:"gallery,omitempty"`
+	ID          string       `json:"id"`
+	User        User         `json:"user"`
+	Content     string       `json:"content"`
+	ContentType string       `json:"content_type"`
+	Image       *MediaItem   `json:"image,omitempty"`
+	Video       *MediaItem   `json:"video,omitempty"`
+	Gallery     []MediaItem  `json:"gallery,omitempty"`
 	Link        *LinkPreview `json:"link,omitempty"`
-	ExpiresIn   string      `json:"expires_in"`
-	Circle      string      `json:"circle"`
-	ViewCount   int         `json:"view_count"`
+	ExpiresIn   string       `json:"expires_in"`
+	Circle      string       `json:"circle"`
+	ViewCount   int          `json:"view_count"`
 }
 
 type LinkPreview struct {
@@ -75,9 +82,9 @@ type CircleActivity struct {
 }
 
 type CircleStats struct {
-	TotalPosts      int    `json:"total_posts"`
-	ActiveMembers   int    `json:"active_members"`
-	RecentActivity  string `json:"recent_activity"`
-	WeeklyGrowth    string `json:"weekly_growth"`
-	EngagementRate  string `json:"engagement_rate"`
+	TotalPosts     int    `json:"total_posts"`
+	ActiveMembers  int    `json:"active_members"`
+	RecentActivity string `json:"recent_activity"`
+	WeeklyGrowth   string `json:"weekly_growth"`
+	EngagementRate string `json:"engagement_rate"`
 }

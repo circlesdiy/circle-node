@@ -3,6 +3,7 @@ package gather
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"sync"
 	"time"
 
@@ -144,7 +145,7 @@ func (s *Service) buildCircleGatherings(ctx context.Context, profileID string) (
 			CircleID:          cwe.CircleID,
 			CircleName:        cwe.CircleName,
 			Icon:              cwe.Icon,
-			IconBgColor:       cwe.IconBgColor,
+			IconBgColor:       template.CSS(cwe.IconBgColor),
 			AvatarURL:         cwe.AvatarURL,
 			GatheringCount:    len(gatheringItems),
 			NeedsCoordination: cwe.HasUnresolved,

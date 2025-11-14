@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"html/template"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -157,10 +158,12 @@ func (r *PostgresRepository) GetUpcomingEvents(ctx context.Context, profileID st
 	var events []EventWithDetails
 	for rows.Next() {
 		var e EventWithDetails
+		var circleBgColor string
 		if err := rows.Scan(&e.ID, &e.Title, &e.StartTime, &e.CircleID, &e.CircleName,
-			&e.CircleIcon, &e.CircleBgColor, &e.CircleAvatar, &e.AttendeeCount, &e.RSVPStatus); err != nil {
+			&e.CircleIcon, &circleBgColor, &e.CircleAvatar, &e.AttendeeCount, &e.RSVPStatus); err != nil {
 			return nil, err
 		}
+		e.CircleBgColor = template.CSS(circleBgColor)
 
 		coordQuery := `
 			SELECT ecn.type, ecn.message, p.handle
@@ -216,10 +219,12 @@ func (r *PostgresRepository) GetUserCirclesWithActivity(ctx context.Context, pro
 	var circles []CircleActivity
 	for rows.Next() {
 		var c CircleActivity
-		if err := rows.Scan(&c.ID, &c.Name, &c.Icon, &c.IconBgColor, &c.AvatarURL, &c.BannerURL,
+		var iconBgColor string
+		if err := rows.Scan(&c.ID, &c.Name, &c.Icon, &iconBgColor, &c.AvatarURL, &c.BannerURL,
 			&c.LastActivity, &c.NextEventTime); err != nil {
 			return nil, err
 		}
+		c.IconBgColor = template.CSS(iconBgColor)
 		circles = append(circles, c)
 	}
 

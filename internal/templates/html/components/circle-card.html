@@ -1,9 +1,15 @@
 {{define "circle-card"}}
 <div class="circle-card" data-active="{{.Active}}" data-role="{{.UserRole}}"  >
-    <div class="circle-card-header">
-        <img src="{{.GetBanner}}" alt="{{.Name}} banner" class="circle-banner" />
+    <div class="circle-card-header" style="background-image: url('{{.GetBanner}}'), linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
+        <!-- <img src="{{.GetBanner}}" alt="{{.Name}} banner" class="circle-banner" /> -->
         <div class="circle-card-thumbnail-wrapper">
-            <img src="{{.GetThumbnail}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
+            {{if .AvatarURL}}
+            <img src="{{.AvatarURL}}" alt="{{.Name}} thumbnail" class="circle-card-thumbnail" />
+            {{else}}
+            <div class="circle-card-thumbnail" style="background: {{.IconBgColor}};">
+                {{if .Icon}}{{.Icon}}{{else}}🔵{{end}}
+            </div>
+            {{end}}
         </div>
         <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
             {{if .Active}}{{.OnlineCount}} online{{end}}

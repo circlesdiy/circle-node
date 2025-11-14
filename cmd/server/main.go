@@ -75,6 +75,7 @@ func main() {
 		mux,
 		// middleware.SecurityMiddleware,
 		// middleware.CSRFMiddleware(csrfConfig),
+		middleware.NoCacheMiddleware,
 		middleware.RateLimitMiddleware,
 	)
 
@@ -143,6 +144,7 @@ func setupRoutes(app *app.App) *http.ServeMux {
 
 	// Register post API routes (requires authentication)
 	mux.HandleFunc("/api/posts", app.AuthHandler.RequireAuth(app.PostHandler.HandlePosts))
+	mux.HandleFunc("/api/posts/htmx", app.AuthHandler.RequireAuth(app.PostHandler.HandleCreatePostHTMX))
 	mux.HandleFunc("/api/posts/", app.AuthHandler.RequireAuth(app.PostHandler.HandlePost))
 	// Comment routes - TODO: Enable when comment handlers are implemented
 	// mux.HandleFunc("/api/comments/", app.AuthHandler.RequireAuth(app.PostHandler.HandleComment))

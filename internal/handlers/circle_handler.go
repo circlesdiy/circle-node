@@ -191,6 +191,9 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 			MemberCount: strconv.Itoa(memberCount),
 			UserRole:    userRole,
 			Active:      true,
+			Icon:        c.Icon,
+			IconBgColor: c.IconBgColor,
+			AvatarURL:   c.AvatarURL,
 		})
 	}
 
@@ -211,6 +214,9 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 				MemberCount: strconv.Itoa(memberCount),
 				UserRole:    "",
 				Active:      false,
+				Icon:        c.Icon,
+				IconBgColor: c.IconBgColor,
+				AvatarURL:   c.AvatarURL,
 			})
 		}
 	}

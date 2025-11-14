@@ -1,24 +1,30 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"circles.diy/internal/auth"
 	"circles.diy/internal/content"
 	"circles.diy/internal/domain"
 	"circles.diy/internal/models"
+	"circles.diy/internal/profile"
+	"circles.diy/internal/templates"
 )
 
 type PostHandler struct {
 	contentService *content.Service
+	profileService *profile.Service
 }
 
-func NewPostHandler(contentService *content.Service) *PostHandler {
+func NewPostHandler(contentService *content.Service, profileService *profile.Service) *PostHandler {
 	return &PostHandler{
 		contentService: contentService,
+		profileService: profileService,
 	}
 }
 
@@ -178,6 +184,141 @@ func (h *PostHandler) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)
+}
+
+// HandleCreatePostHTMX creates a new post and returns HTML partial for HTMX
+func (h *PostHandler) HandleCreatePostHTMX(w http.ResponseWriter, r *http.Request) {
+	// Get user from session
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	profileID := getProfileID(r)
+	if profileID == "" {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	circleID := r.FormValue("circle_id")
+	body := r.FormValue("body")
+	bodyFormat := r.FormValue("body_format")
+	contentWarning := r.FormValue("content_warning")
+	visibility := r.FormValue("visibility")
+
+	// Sanitize input
+	body = content.SanitizeInput(body, bodyFormat)
+
+	// Validate not empty after sanitization
+	if content.IsEmptyContent(body) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`<div class="error-message" style="color: var(--error); padding: 1rem; border: 1px solid var(--error); border-radius: 8px; margin-bottom: 1rem;">Post body cannot be empty</div>`))
+		return
+	}
+
+	// Create post
+	post, err := h.contentService.CreatePost(
+		r.Context(),
+		circleID,
+		profileID,
+		body,
+		bodyFormat,
+		contentWarning,
+		visibility,
+	)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message" style="color: var(--error); padding: 1rem; border: 1px solid var(--error); border-radius: 8px; margin-bottom: 1rem;">Failed to create post. Please try again.</div>`))
+		return
+	}
+
+	// Convert domain.Post to models.CirclePost for template
+	circlePost, err := h.mapPostToCirclePost(r.Context(), post, profileID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message" style="color: var(--error); padding: 1rem; border: 1px solid var(--error); border-radius: 8px; margin-bottom: 1rem;">Failed to render post. Please refresh the page.</div>`))
+		return
+	}
+
+	// Render post-card template
+	w.Header().Set("Content-Type", "text/html")
+	err = templates.GetTemplates().PostCard.ExecuteTemplate(w, "post-card", circlePost)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message" style="color: var(--error); padding: 1rem; border: 1px solid var(--error); border-radius: 8px; margin-bottom: 1rem;">Failed to render post template</div>`))
+		return
+	}
+}
+
+// mapPostToCirclePost converts a domain.Post to models.CirclePost for template rendering
+func (h *PostHandler) mapPostToCirclePost(ctx context.Context, post *domain.Post, viewerProfileID string) (*models.CirclePost, error) {
+	// Get reaction counts
+	reactionCounts, _ := h.contentService.GetReactionCounts(ctx, "post", post.ID)
+	likeCount := reactionCounts["like"]
+
+	// Check if viewer has liked
+	userHasLiked := false
+	if viewerProfileID != "" {
+		userReaction, _ := h.contentService.GetUserReaction(ctx, "post", post.ID, viewerProfileID)
+		userHasLiked = userReaction != nil && userReaction.Key == "like"
+	}
+
+	// Check if viewer can edit
+	canEdit := post.AuthorProfileID == viewerProfileID
+
+	// Format time
+	formattedTime := formatTimeAgo(post.CreatedAt)
+
+	// Check if edited
+	isEdited := post.EditedAt != nil
+	var editedAtStr *string
+	if isEdited {
+		editedStr := formatTimeAgo(*post.EditedAt)
+		editedAtStr = &editedStr
+	}
+
+	// Get author profile information
+	authorName := "Circle Member"
+	authorAvatar := ""
+	authorProfile, err := h.profileService.GetByID(ctx, post.AuthorProfileID)
+	if err == nil && authorProfile != nil {
+		if authorProfile.DisplayName != "" {
+			authorName = authorProfile.DisplayName
+		} else if authorProfile.Name != "" {
+			authorName = authorProfile.Name
+		} else if authorProfile.Handle != "" {
+			authorName = authorProfile.Handle
+		}
+		authorAvatar = authorProfile.AvatarURL
+	}
+
+	return &models.CirclePost{
+		ID:              post.ID,
+		AuthorProfileID: post.AuthorProfileID,
+		AuthorName:      authorName,
+		AuthorAvatar:    authorAvatar,
+		Body:            post.Body,
+		BodyFormat:      post.BodyFormat,
+		ContentWarning:  post.ContentWarning,
+		Visibility:      post.Visibility,
+		CreatedAt:       post.CreatedAt.Format(time.RFC3339),
+		EditedAt:        editedAtStr,
+		FormattedTime:   formattedTime,
+		IsEdited:        isEdited,
+		ReplyCount:      post.ReplyCount,
+		LikeCount:       likeCount,
+		UserHasLiked:    userHasLiked,
+		CanEdit:         canEdit,
+		ShowComments:    false,
+	}, nil
 }
 
 // handleGetPost retrieves a single post

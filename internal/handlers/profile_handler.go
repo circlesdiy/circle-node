@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
@@ -50,7 +51,7 @@ func mapCirclesToProfileCircles(circles []domain.Circle) []models.ProfileCircle 
 	}
 
 	for i, circle := range circles {
-		color := circleColorPalette[i%len(circleColorPalette)]
+		color := template.CSS(circleColorPalette[i%len(circleColorPalette)])
 		if circle.IconBgColor != "" {
 			color = circle.IconBgColor
 		}

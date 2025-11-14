@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"strings"
 	"sync"
 	"time"
@@ -113,7 +114,7 @@ func (s *Service) buildHappeningNow(ctx context.Context, profileID string) ([]mo
 		items = append(items, models.HappeningNowItem{
 			Type:         "coordination",
 			Icon:         iconType,
-			IconBgColor:  "var(--warm-accent)",
+			IconBgColor:  template.CSS("var(--warm-accent)"),
 			Title:        fmt.Sprintf("%s coordination needed", strings.Title(c.Type)),
 			Description:  fmt.Sprintf("%s asked \"%s\"", c.AuthorName, c.Message),
 			SourceCircle: c.CircleName,
@@ -139,7 +140,7 @@ func (s *Service) buildHappeningNow(ctx context.Context, profileID string) ([]mo
 		items = append(items, models.HappeningNowItem{
 			Type:        "messages",
 			Icon:        "💬",
-			IconBgColor: "var(--cool-accent)",
+			IconBgColor: template.CSS("var(--cool-accent)"),
 			Title:       "New messages",
 			Description: strings.Join(senderLines, "\n"),
 		})
@@ -170,7 +171,7 @@ func (s *Service) buildUpcomingEvents(ctx context.Context, profileID string) ([]
 			Circle: models.CircleBadge{
 				Name:        e.CircleName,
 				Icon:        e.CircleIcon,
-				IconBgColor: e.CircleBgColor,
+				IconBgColor: template.CSS(e.CircleBgColor),
 				AvatarURL:   e.CircleAvatar,
 			},
 			AttendeeCount: e.AttendeeCount,
@@ -200,7 +201,7 @@ func (s *Service) buildCirclesSummary(ctx context.Context, profileID string) ([]
 			ID:           c.ID,
 			Name:         c.Name,
 			Icon:         c.Icon,
-			IconBgColor:  c.IconBgColor,
+			IconBgColor:  template.CSS(c.IconBgColor),
 			AvatarURL:    c.AvatarURL,
 			BannerURL:    c.BannerURL,
 			LastActivity: fmt.Sprintf("Active %s", formatTimeAgo(c.LastActivity)),

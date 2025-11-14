@@ -81,7 +81,13 @@
                     {{range .FeaturedCircles}}
                     <div class="featured-circle"  >
                         <div class="featured-thumbnail">
-                            <img src="{{.Thumbnail}}" alt="{{.Name}}" />
+                            {{if .AvatarURL}}
+                            <img src="{{.AvatarURL}}" alt="{{.Name}}" />
+                            {{else}}
+                            <div class="featured-icon" style="background: {{.IconBgColor}};">
+                                {{if .Icon}}{{.Icon}}{{else}}🔵{{end}}
+                            </div>
+                            {{end}}
                         </div>
                         <div class="featured-info">
                             <h3 class="featured-name">{{.Name}}</h3>

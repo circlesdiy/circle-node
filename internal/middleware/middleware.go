@@ -60,3 +60,14 @@ func RequireAuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// NoCacheMiddleware adds cache control headers to prevent browser caching of dynamic HTML
+func NoCacheMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set headers to prevent caching of dynamic HTML pages
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate, private")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		next.ServeHTTP(w, r)
+	})
+}

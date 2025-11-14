@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"html/template"
 	"time"
 )
 
@@ -48,7 +49,7 @@ type EventWithDetails struct {
 	CircleID      string
 	CircleName    string
 	CircleIcon    string
-	CircleBgColor string
+	CircleBgColor template.CSS
 	CircleAvatar  string
 	AttendeeCount int
 	RSVPStatus    string
@@ -59,7 +60,7 @@ type CircleActivity struct {
 	ID            string
 	Name          string
 	Icon          string
-	IconBgColor   string
+	IconBgColor   template.CSS
 	AvatarURL     string
 	BannerURL     string
 	LastActivity  time.Time

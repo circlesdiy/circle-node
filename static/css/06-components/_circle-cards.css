@@ -38,13 +38,19 @@
     width: 64px;
     height: 64px;
     border-radius: calc(var(--container-radius) + 2px);
-    object-fit: cover;
     border: 3px solid var(--bg-primary);
     box-shadow: 0 2px 8px var(--shadow-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
+}
+
+.circle-card-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: calc(var(--container-radius) - 1px);
 }
 
 .circle-thumbnail {

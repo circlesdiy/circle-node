@@ -2,6 +2,7 @@ package gather
 
 import (
 	"context"
+	"html/template"
 	"time"
 )
 
@@ -37,7 +38,7 @@ type CircleWithEvents struct {
 	CircleID      string
 	CircleName    string
 	Icon          string
-	IconBgColor   string
+	IconBgColor   template.CSS
 	AvatarURL     string
 	Events        []EventItem
 	HasUnresolved bool // true if any events have unresolved coordination needs

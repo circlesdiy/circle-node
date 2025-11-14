@@ -1,22 +1,25 @@
 package domain
 
-import "time"
+import (
+	"html/template"
+	"time"
+)
 
 // Circle represents a community or group
 type Circle struct {
-	ID              string     `json:"id"`
-	OwnerProfileID  string     `json:"owner_profile_id"`
-	Name            string     `json:"name"`
-	Description     string     `json:"description"`
-	Visibility      string     `json:"visibility"` // public, private, unlisted
-	AutoModEnabled  bool       `json:"auto_mod_enabled"`
-	Icon            string     `json:"icon,omitempty"`
-	IconBgColor     string     `json:"icon_bg_color,omitempty"`
-	AvatarURL       string     `json:"avatar_url,omitempty"`
-	BannerURL       string     `json:"banner_url,omitempty"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
-	DeletedAt       *time.Time `json:"deleted_at,omitempty"`
+	ID              string       `json:"id"`
+	OwnerProfileID  string       `json:"owner_profile_id"`
+	Name            string       `json:"name"`
+	Description     string       `json:"description"`
+	Visibility      string       `json:"visibility"` // public, private, unlisted
+	AutoModEnabled  bool         `json:"auto_mod_enabled"`
+	Icon            string       `json:"icon,omitempty"`
+	IconBgColor     template.CSS `json:"icon_bg_color,omitempty"`
+	AvatarURL       string       `json:"avatar_url,omitempty"`
+	BannerURL       string       `json:"banner_url,omitempty"`
+	CreatedAt       time.Time    `json:"created_at"`
+	UpdatedAt       time.Time    `json:"updated_at"`
+	DeletedAt       *time.Time   `json:"deleted_at,omitempty"`
 }
 
 // IsDeleted checks if the circle has been soft deleted

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"html/template"
 
 	"circles.diy/internal/utils"
 )
@@ -72,10 +73,10 @@ func (p *Profile) GetBanner() string {
 
 // ProfileCircle represents a circle badge on a user's profile
 type ProfileCircle struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Icon  string `json:"icon"`
-	Color string `json:"color"` // CSS color/variable for background
+	ID    string       `json:"id"`
+	Name  string       `json:"name"`
+	Icon  string       `json:"icon"`
+	Color template.CSS `json:"color"` // CSS color/variable for background
 }
 
 // ProfileSettings2 represents user settings displayed on profile page

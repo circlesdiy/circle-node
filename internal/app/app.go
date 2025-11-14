@@ -149,7 +149,7 @@ func New(ctx context.Context) (*App, error) {
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
 	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
 	gatherAPIHandler := handlers.NewGatherAPIHandler(gatherService, eventService, logger)
-	postHandler := handlers.NewPostHandler(contentService)
+	postHandler := handlers.NewPostHandler(contentService, profileService)
 
 	app := &App{
 		Config:             cfg,

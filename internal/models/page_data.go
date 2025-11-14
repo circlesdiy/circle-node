@@ -1,6 +1,8 @@
 package models
 
 import (
+	"html/template"
+
 	"circles.diy/internal/domain"
 )
 
@@ -246,7 +248,7 @@ type CircleGathering struct {
 	CircleID         string           `json:"circle_id"`
 	CircleName       string           `json:"circle_name"`
 	Icon             string           `json:"icon"`
-	IconBgColor      string           `json:"icon_bg_color"`
+	IconBgColor      template.CSS     `json:"icon_bg_color"`
 	AvatarURL        string           `json:"avatar_url,omitempty"`
 	GatheringCount   int              `json:"gathering_count"`
 	NeedsCoordination bool            `json:"needs_coordination"`

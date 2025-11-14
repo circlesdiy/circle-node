@@ -2,6 +2,7 @@ package gather
 
 import (
 	"context"
+	"html/template"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -43,7 +44,7 @@ func (r *PostgresRepository) GetUserCircleEvents(ctx context.Context, profileID 
 			circle.Icon = *icon
 		}
 		if iconBgColor != nil {
-			circle.IconBgColor = *iconBgColor
+			circle.IconBgColor = template.CSS(*iconBgColor)
 		}
 		if avatarURL != nil {
 			circle.AvatarURL = *avatarURL

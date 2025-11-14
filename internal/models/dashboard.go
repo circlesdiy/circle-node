@@ -1,5 +1,7 @@
 package models
 
+import "html/template"
+
 type DashboardData struct {
 	BaseData
 	HappeningNow   []HappeningNowItem
@@ -11,7 +13,7 @@ type DashboardData struct {
 type HappeningNowItem struct {
 	Type         string
 	Icon         string
-	IconBgColor  string
+	IconBgColor  template.CSS
 	Title        string
 	Description  string
 	SourceCircle string
@@ -34,7 +36,7 @@ type UpcomingEvent struct {
 type CircleBadge struct {
 	Name        string
 	Icon        string
-	IconBgColor string
+	IconBgColor template.CSS
 	AvatarURL   string
 }
 
@@ -42,7 +44,7 @@ type CircleSummary struct {
 	ID           string
 	Name         string
 	Icon         string
-	IconBgColor  string
+	IconBgColor  template.CSS
 	AvatarURL    string
 	BannerURL    string
 	LastActivity string

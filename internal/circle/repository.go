@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"html/template"
 
 	"circles.diy/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -87,7 +88,7 @@ func (r *Repository) GetCircleByID(ctx context.Context, id string) (*domain.Circ
 		circle.Icon = icon.String
 	}
 	if iconBgColor.Valid {
-		circle.IconBgColor = iconBgColor.String
+		circle.IconBgColor = template.CSS(iconBgColor.String)
 	}
 	if avatarURL.Valid {
 		circle.AvatarURL = avatarURL.String
@@ -199,7 +200,7 @@ func (r *Repository) GetCirclesByOwnerID(ctx context.Context, ownerProfileID str
 			circle.Icon = icon.String
 		}
 		if iconBgColor.Valid {
-			circle.IconBgColor = iconBgColor.String
+			circle.IconBgColor = template.CSS(iconBgColor.String)
 		}
 		if avatarURL.Valid {
 			circle.AvatarURL = avatarURL.String
@@ -266,7 +267,7 @@ func (r *Repository) GetCirclesByMemberID(ctx context.Context, memberProfileID s
 			circle.Icon = icon.String
 		}
 		if iconBgColor.Valid {
-			circle.IconBgColor = iconBgColor.String
+			circle.IconBgColor = template.CSS(iconBgColor.String)
 		}
 		if avatarURL.Valid {
 			circle.AvatarURL = avatarURL.String
@@ -331,7 +332,7 @@ func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([
 			circle.Icon = icon.String
 		}
 		if iconBgColor.Valid {
-			circle.IconBgColor = iconBgColor.String
+			circle.IconBgColor = template.CSS(iconBgColor.String)
 		}
 		if avatarURL.Valid {
 			circle.AvatarURL = avatarURL.String

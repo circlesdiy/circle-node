@@ -1,7 +1,7 @@
 // Service Worker for circles.diy PWA
 // Basic caching strategy for static assets and core pages
 
-const CACHE_NAME = 'circles-diy-v1';
+const CACHE_NAME = 'circles-diy-v2';
 const STATIC_CACHE_URLS = [
   '/',
   '/dashboard',
@@ -44,36 +44,65 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Helper function to determine if request is for HTML page
+function isHTMLRequest(request) {
+  const acceptHeader = request.headers.get('Accept');
+  return request.mode === 'navigate' ||
+         (acceptHeader && acceptHeader.includes('text/html'));
+}
+
+// Fetch event - network-first for HTML, cache-first for static assets
 self.addEventListener('fetch', event => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
-  
+
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request)
-          .then(fetchResponse => {
-            // Cache successful responses for static assets
-            if (fetchResponse.status === 200) {
-              const responseClone = fetchResponse.clone();
-              caches.open(CACHE_NAME)
-                .then(cache => {
-                  cache.put(event.request, responseClone);
-                });
-            }
-            return fetchResponse;
-          });
-      })
-      .catch(() => {
-        // Fallback for navigation requests when offline
-        if (event.request.mode === 'navigate') {
-          return caches.match('/dashboard');
-        }
-      })
-  );
+  // Network-first strategy for HTML pages (always fetch fresh content)
+  if (isHTMLRequest(event.request)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache the fresh HTML for offline fallback
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseClone);
+              });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache when offline
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              return cachedResponse || caches.match('/dashboard');
+            });
+        })
+    );
+  } else {
+    // Cache-first strategy for static assets (CSS, JS, images)
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response; // Return cached version immediately
+          }
+          // Fetch from network and cache for next time
+          return fetch(event.request)
+            .then(fetchResponse => {
+              if (fetchResponse.status === 200) {
+                const responseClone = fetchResponse.clone();
+                caches.open(CACHE_NAME)
+                  .then(cache => {
+                    cache.put(event.request, responseClone);
+                  });
+              }
+              return fetchResponse;
+            });
+        })
+    );
+  }
 });
