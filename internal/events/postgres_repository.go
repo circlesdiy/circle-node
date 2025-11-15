@@ -20,15 +20,16 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 func (r *PostgresRepository) CreateEvent(ctx context.Context, event *domain.Event) error {
 	query := `
 		INSERT INTO events (
-			id, circle_id, organizer_profile_id, title, location, timezone,
+			id, circle_id, organizer_profile_id, title, description, location, timezone,
 			start_time, end_time, requires_ticket, capacity, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	_, err := r.pool.Exec(ctx, query,
 		event.ID,
 		event.CircleID,
 		event.OrganizerProfileID,
 		event.Title,
+		event.Description,
 		event.Location,
 		event.Timezone,
 		event.StartTime,
@@ -44,13 +45,13 @@ func (r *PostgresRepository) CreateEvent(ctx context.Context, event *domain.Even
 
 func (r *PostgresRepository) GetEventByID(ctx context.Context, eventID string) (*domain.Event, error) {
 	query := `
-		SELECT id, circle_id, organizer_profile_id, title, location, timezone,
+		SELECT id, circle_id, organizer_profile_id, title, description, location, timezone,
 		       start_time, end_time, requires_ticket, capacity, created_at, updated_at, deleted_at
 		FROM events
 		WHERE id = $1`
 
 	var event domain.Event
-	var location, timezone *string
+	var description, location, timezone *string
 	var endTime *time.Time
 	var capacity *int
 
@@ -59,6 +60,7 @@ func (r *PostgresRepository) GetEventByID(ctx context.Context, eventID string) (
 		&event.CircleID,
 		&event.OrganizerProfileID,
 		&event.Title,
+		&description,
 		&location,
 		&timezone,
 		&event.StartTime,
@@ -78,6 +80,9 @@ func (r *PostgresRepository) GetEventByID(ctx context.Context, eventID string) (
 	}
 
 	// Handle nullable fields
+	if description != nil {
+		event.Description = *description
+	}
 	if location != nil {
 		event.Location = *location
 	}
@@ -98,7 +103,7 @@ func (r *PostgresRepository) GetEventDetails(ctx context.Context, eventID, viewe
 	// Get event basic info with circle and organizer details
 	query := `
 		SELECT
-			e.id, e.circle_id, e.organizer_profile_id, e.title, e.location, e.timezone,
+			e.id, e.circle_id, e.organizer_profile_id, e.title, e.description, e.location, e.timezone,
 			e.start_time, e.end_time, e.requires_ticket, e.capacity, e.created_at, e.updated_at,
 			c.name as circle_name,
 			p.handle as organizer_name,
@@ -112,7 +117,7 @@ func (r *PostgresRepository) GetEventDetails(ctx context.Context, eventID, viewe
 
 	var details EventDetails
 	var event domain.Event
-	var location, timezone *string
+	var description, location, timezone *string
 	var endTime *time.Time
 	var capacity *int
 
@@ -121,6 +126,7 @@ func (r *PostgresRepository) GetEventDetails(ctx context.Context, eventID, viewe
 		&event.CircleID,
 		&event.OrganizerProfileID,
 		&event.Title,
+		&description,
 		&location,
 		&timezone,
 		&event.StartTime,
@@ -142,6 +148,9 @@ func (r *PostgresRepository) GetEventDetails(ctx context.Context, eventID, viewe
 	}
 
 	// Handle nullable fields
+	if description != nil {
+		event.Description = *description
+	}
 	if location != nil {
 		event.Location = *location
 	}
@@ -205,19 +214,21 @@ func (r *PostgresRepository) UpdateEvent(ctx context.Context, event *domain.Even
 	query := `
 		UPDATE events
 		SET title = $2,
-		    location = $3,
-		    timezone = $4,
-		    start_time = $5,
-		    end_time = $6,
-		    requires_ticket = $7,
-		    capacity = $8,
-		    updated_at = $9
+		    description = $3,
+		    location = $4,
+		    timezone = $5,
+		    start_time = $6,
+		    end_time = $7,
+		    requires_ticket = $8,
+		    capacity = $9,
+		    updated_at = $10
 		WHERE id = $1
 		AND deleted_at IS NULL`
 
 	_, err := r.pool.Exec(ctx, query,
 		event.ID,
 		event.Title,
+		event.Description,
 		event.Location,
 		event.Timezone,
 		event.StartTime,

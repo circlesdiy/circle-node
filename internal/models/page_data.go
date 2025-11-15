@@ -319,6 +319,7 @@ type EventDetailPageData struct {
 	Event              domain.Event   `json:"event"`
 	CircleName         string         `json:"circle_name"`
 	OrganizerName      string         `json:"organizer_name"`
+	OrganizerAvatar    string         `json:"organizer_avatar"`
 	FormattedStartTime string         `json:"formatted_start_time"`
 	FormattedEndTime   string         `json:"formatted_end_time,omitempty"`
 	ViewerRSVPStatus   string         `json:"viewer_rsvp_status"`

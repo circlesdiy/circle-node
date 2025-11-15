@@ -67,11 +67,11 @@
         <aside>
             <div class="card">
                 <h3>Account</h3>
-                <a href="/profile/edit" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem; text-decoration: none; justify-content: center;">Edit Profile</a>
-                <a href="/profile/settings" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem; text-decoration: none; justify-content: center;">Privacy Settings</a>
+                <a href="/profile/edit" class="btn-secondary sidebar-action-btn">Edit Profile</a>
+                <a href="/profile/settings" class="btn-secondary sidebar-action-btn">Privacy Settings</a>
                 <form action="/auth/logout" method="POST" style="width: 100%;">
                     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                    <button type="submit" class="btn-secondary" style="width: 100%; text-decoration: none; justify-content: center;">Sign Out</button>
+                    <button type="submit" class="btn-secondary sidebar-action-btn">Sign Out</button>
                 </form>
             </div>
         </aside>

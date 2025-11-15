@@ -4,6 +4,7 @@ import "html/template"
 
 type DashboardData struct {
 	BaseData
+	Greeting       string
 	WhatsNew       []WhatsNewItem
 	UpcomingEvents []UpcomingEvent
 	CirclesSummary []CircleSummary

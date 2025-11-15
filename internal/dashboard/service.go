@@ -26,6 +26,7 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 
 func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*models.DashboardData, error) {
 	var (
+		greeting       string
 		whatsNew       []models.WhatsNewItem
 		upcomingEvents []models.UpcomingEvent
 		circlesSummary []models.CircleSummary
@@ -35,7 +36,31 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 		mu sync.Mutex
 	)
 
-	wg.Add(4)
+	wg.Add(5)
+
+	go func() {
+		defer wg.Done()
+
+		// TODO: Timezone aware greetings
+		now := time.Now()
+		hour := now.Hour()
+
+		var greetingForCurrentTime string
+		switch {
+		case hour >= 5 && hour < 12:
+			greetingForCurrentTime = "Good morning"
+		case hour >= 12 && hour < 17:
+			greetingForCurrentTime = "Good afternoon"
+		case hour >= 17 && hour < 21:
+			greetingForCurrentTime = "Good evening"
+		default:
+			greetingForCurrentTime = "Hello"
+		}
+
+		mu.Lock()
+		greeting = greetingForCurrentTime
+		mu.Unlock()
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -88,6 +113,7 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 	wg.Wait()
 
 	return &models.DashboardData{
+		Greeting:       greeting,
 		WhatsNew:       whatsNew,
 		UpcomingEvents: upcomingEvents,
 		CirclesSummary: circlesSummary,

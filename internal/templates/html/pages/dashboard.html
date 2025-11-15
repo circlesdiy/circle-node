@@ -5,31 +5,37 @@
 {{define "main"}}
 <div class="dashboard-container">
     <div class="page-header">
-        <h1 class="page-title">Good evening{{if .ProfileName}}, {{.ProfileName}}{{else}}!{{end}}</h1>
+        <h1 class="page-title">{{.Greeting}}{{if .ProfileName}}, {{.ProfileName}}{{else}}!{{end}}</h1>
         <p class="page-subtitle">Here's what's happening in your circles</p>
     </div>
 
     <div class="two-column">
         <div>
-            {{if .WhatsNew}}
             <div class="section-header">
                 <h2 class="section-title">What's new</h2>
             </div>
-            {{range .WhatsNew}}
-            <div class="card">
-                <div class="whats-new-item">
-                    <div class="icon-container" style="background: {{.IconBgColor}};">{{.Icon}}</div>
-                    <div class="content">
-                        <div class="title">{{.Title}}</div>
-                        <div class="description">{{.Description}}</div>
-                        {{if .SourceCircle}}
-                        <div class="meta">{{.SourceCircle}}{{if .TimeAgo}} • {{.TimeAgo}}{{end}}</div>
-                        {{end}}
+            {{if .WhatsNew}}
+                {{range .WhatsNew}}
+                <div class="card">
+                    <div class="whats-new-item">
+                        <div class="icon-container" style="background: {{.IconBgColor}};">{{.Icon}}</div>
+                        <div class="content">
+                            <div class="title">{{.Title}}</div>
+                            <div class="description">{{.Description}}</div>
+                            {{if .SourceCircle}}
+                            <div class="meta">{{.SourceCircle}}{{if .TimeAgo}} • {{.TimeAgo}}{{end}}</div>
+                            {{end}}
+                        </div>
                     </div>
                 </div>
+                {{end}}
+            {{else}}
+                <div class="card empty-state">
+                <p>You're all caught up!</p>
+                <a href="/chat" class="btn-secondary">Start a conversation</a>
             </div>
             {{end}}
-            {{end}}
+
 
             <div class="section-header" {{if .WhatsNew}}style="margin-top: 2.5rem;"{{end}}>
                 <h2 class="section-title">Upcoming Events</h2>

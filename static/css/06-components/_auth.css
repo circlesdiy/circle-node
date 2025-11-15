@@ -298,7 +298,7 @@
 
 .btn-secondary:hover {
     background: var(--active-bg);
-    color: var(--active-text);
+    /* color: var(--active-text); */
 }
 
 .btn-text {

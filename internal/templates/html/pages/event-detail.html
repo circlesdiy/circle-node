@@ -4,286 +4,414 @@
 
 {{define "main"}}
 <div class="event-detail-page">
-    <div class="event-detail-container">
-        <!-- Event Header -->
-        <div class="event-header">
-            <div class="event-header-content">
-                <h1 class="event-title">{{.Event.Title}}</h1>
-                <div class="event-meta">
-                    <span class="meta-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        {{.FormattedStartTime}}
-                    </span>
-                    {{if .Event.Location}}
-                    <span class="meta-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        {{.Event.Location}}
-                    </span>
+    <div class="event-detail-layout">
+        <!-- Main Content -->
+        <div>
+            <!-- Event Header -->
+            <div class="event-detail-header">
+                <div class="event-hero">
+                    <div class="event-hero-icon">📅</div>
+                    {{if .Event.IsUpcoming}}
+                    <div class="event-status-badge">
+                        <span class="status-dot"></span>
+                        Happening soon
+                    </div>
+                    {{else if .Event.IsOngoing}}
+                    <div class="event-status-badge">
+                        <span class="status-dot"></span>
+                        Happening now
+                    </div>
                     {{end}}
-                    <span class="meta-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        {{.AttendeeCount}} attending
-                    </span>
                 </div>
-                <div class="event-organizer">
-                    <span>Organized by <strong>{{.OrganizerName}}</strong> in <strong>{{.CircleName}}</strong></span>
+
+                <div class="event-header-content">
+                    <div class="event-organizer">
+                        <div class="organizer-avatar">
+                            {{if .OrganizerAvatar}}
+                            <img src="{{.OrganizerAvatar}}" alt="{{.OrganizerName}}">
+                            {{else}}
+                            {{index .OrganizerName 0}}
+                            {{end}}
+                        </div>
+                        <div class="organizer-info">
+                            <div class="organizer-label">Organized by</div>
+                            <div class="organizer-name">{{.CircleName}}</div>
+                        </div>
+                        <a href="/circles/{{.Event.CircleID}}" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View circle</a>
+                    </div>
+
+                    <h1 class="event-title">{{.Event.Title}}</h1>
+
+                    <div class="event-actions">
+                        <button class="btn-primary btn-large"
+                                data-event-id="{{.Event.ID}}"
+                                data-current-status="{{.ViewerRSVPStatus}}"
+                                id="rsvp-button"
+                                onclick="toggleRSVP(this)">
+                            {{if eq .ViewerRSVPStatus "attending"}}✓ You're going
+                            {{else if eq .ViewerRSVPStatus "maybe"}}? Maybe
+                            {{else}}RSVP{{end}}
+                        </button>
+                        {{if .IsOrganizer}}
+                        <a href="/gather/{{.Event.ID}}/edit" class="btn-secondary" style="padding: 0.75rem 1.5rem;">
+                            ✏️ Edit Event
+                        </a>
+                        {{end}}
+                    </div>
                 </div>
             </div>
-            <div class="event-actions">
-                <button class="btn btn-primary"
-                        data-event-id="{{.Event.ID}}"
-                        data-current-status="{{.ViewerRSVPStatus}}"
-                        onclick="toggleRSVP(this)">
-                    {{if eq .ViewerRSVPStatus "going"}}Going
-                    {{else if eq .ViewerRSVPStatus "maybe"}}Maybe
-                    {{else}}RSVP{{end}}
-                </button>
-                {{if .IsOrganizer}}
-                <a href="/gather/{{.Event.ID}}/manage" class="btn btn-secondary">Manage Event</a>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="details">Details</button>
+                <button class="tab-btn" data-tab="attendees">Attendees ({{len .Attendees}})</button>
+                {{if .CoordinationNeeds}}
+                <button class="tab-btn" data-tab="coordination">Coordination ({{len .CoordinationNeeds}})</button>
                 {{end}}
             </div>
-        </div>
 
-        <div class="event-content">
-            <div class="event-main">
-                <!-- Attendees Section -->
-                {{if .Attendees}}
-                <section class="event-section">
-                    <h2 class="section-title">Attendees ({{len .Attendees}})</h2>
-                    <div class="attendees-list">
+            <!-- Details Tab -->
+            <div class="tab-content active" id="details-tab">
+                {{if .Event.Description}}
+                <div class="event-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">📋</span>
+                        About this gathering
+                    </h2>
+                    <div class="event-description">
+                        {{.Event.Description}}
+                    </div>
+                </div>
+                {{end}}
+
+                {{if .Event.Location}}
+                <div class="event-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">🗺️</span>
+                        Location details
+                    </h2>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">{{.Event.Location}}</div>
+                        {{if .Event.Timezone}}
+                        <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;">Timezone: {{.Event.Timezone}}</div>
+                        {{end}}
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn-secondary" onclick="copyLocation()">
+                            📋 Copy address
+                        </button>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+
+            <!-- Attendees Tab -->
+            <div class="tab-content" id="attendees-tab">
+                <div class="event-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">✓</span>
+                        Going ({{len .Attendees}})
+                    </h2>
+                    {{if .Attendees}}
+                    <div class="attendee-grid">
                         {{range .Attendees}}
-                        <div class="attendee-item">
+                        <div class="attendee-card">
                             <div class="attendee-avatar">
                                 {{if .Avatar}}
                                 <img src="{{.Avatar}}" alt="{{.Name}}">
                                 {{else}}
-                                <div class="avatar-placeholder">{{index .Name 0}}</div>
+                                {{index .Name 0}}
                                 {{end}}
                             </div>
-                            <div class="attendee-info">
-                                <div class="attendee-name">{{.Name}}</div>
-                                <div class="attendee-status status-{{.RSVPStatus}}">
-                                    {{if eq .RSVPStatus "attending"}}Going
-                                    {{else if eq .RSVPStatus "maybe"}}Maybe
-                                    {{end}}
-                                </div>
+                            <div class="attendee-name">{{.Name}}</div>
+                            <div class="attendee-status">
+                                {{if eq .RSVPStatus "attending"}}Going
+                                {{else if eq .RSVPStatus "maybe"}}Maybe
+                                {{end}}
                             </div>
                         </div>
                         {{end}}
                     </div>
-                </section>
-                {{end}}
+                    {{else}}
+                    <div class="empty-state" style="padding: 3rem 1rem;">
+                        <div class="empty-icon">👥</div>
+                        <div class="empty-title">No attendees yet</div>
+                        <div class="empty-description">Be the first to RSVP to this event!</div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
 
-                <!-- Coordination Needs Section -->
-                {{if .CoordinationNeeds}}
-                <section class="event-section">
-                    <h2 class="section-title">Coordination Needed</h2>
+            <!-- Coordination Tab -->
+            {{if .CoordinationNeeds}}
+            <div class="tab-content" id="coordination-tab">
+                <div class="event-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">🤝</span>
+                        Coordination needed
+                    </h2>
+
                     <div class="coordination-list">
                         {{range .CoordinationNeeds}}
                         {{if not .ResolvedAt}}
-                        <div class="coordination-card">
-                            <div class="coordination-icon">
-                                {{if eq .Type "transport"}}🚗
-                                {{else if eq .Type "tickets"}}🎫
-                                {{else if eq .Type "supplies"}}📦
-                                {{else}}❓{{end}}
+                        <div class="coordination-item needs-attention">
+                            <div class="coordination-header">
+                                <div class="coordination-title">
+                                    {{if eq .Type "transport"}}🚗 Transport coordination
+                                    {{else if eq .Type "tickets"}}🎫 Tickets needed
+                                    {{else if eq .Type "supplies"}}📦 Supplies needed
+                                    {{else}}❓ {{.Type}}{{end}}
+                                </div>
                             </div>
-                            <div class="coordination-content">
-                                <div class="coordination-author">{{.AuthorName}} needs help with {{.Type}}</div>
-                                <div class="coordination-message">{{.Message}}</div>
+                            <div class="coordination-text">
+                                <strong>{{.AuthorName}}</strong>: {{.Message}}
                             </div>
                         </div>
                         {{end}}
                         {{end}}
                     </div>
-                </section>
-                {{end}}
+
+                    {{if .IsOrganizer}}
+                    <button class="btn-secondary" style="width: 100%; margin-top: 1rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add coordination need
+                    </button>
+                    {{end}}
+                </div>
             </div>
+            {{end}}
         </div>
+
+        <!-- Sidebar -->
+        <aside class="event-sidebar">
+            <div class="card">
+                <div class="rsvp-status">
+                    <div class="rsvp-status-icon">
+                        {{if eq .ViewerRSVPStatus "attending"}}✓
+                        {{else if eq .ViewerRSVPStatus "maybe"}}?
+                        {{else}}📅{{end}}
+                    </div>
+                    <div class="rsvp-status-text">
+                        {{if eq .ViewerRSVPStatus "attending"}}You're going to this gathering
+                        {{else if eq .ViewerRSVPStatus "maybe"}}You might be going
+                        {{else}}RSVP to join{{end}}
+                    </div>
+                </div>
+
+                <div class="rsvp-count">
+                    <div class="rsvp-count-item">
+                        <div class="rsvp-count-number" id="sidebar-attendee-count">{{.AttendeeCount}}</div>
+                        <div class="rsvp-count-label">Going</div>
+                    </div>
+                    <div class="rsvp-count-item">
+                        <div class="rsvp-count-number">{{if .Event.Capacity}}{{.Event.Capacity}}{{else}}∞{{end}}</div>
+                        <div class="rsvp-count-label">
+                            {{if .Event.Capacity}}Capacity{{else}}Unlimited{{end}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-info">
+                    <div class="quick-info-item">
+                        <div class="quick-info-icon">📅</div>
+                        <div class="quick-info-text">
+                            <div class="quick-info-label">When</div>
+                            <div class="quick-info-value">{{.FormattedStartTime}}</div>
+                        </div>
+                    </div>
+                    {{if .Event.Location}}
+                    <div class="quick-info-item">
+                        <div class="quick-info-icon">📍</div>
+                        <div class="quick-info-text">
+                            <div class="quick-info-label">Where</div>
+                            <div class="quick-info-value">{{.Event.Location}}</div>
+                        </div>
+                    </div>
+                    {{end}}
+                    <div class="quick-info-item">
+                        <div class="quick-info-icon">🎵</div>
+                        <div class="quick-info-text">
+                            <div class="quick-info-label">Circle</div>
+                            <div class="quick-info-value">{{.CircleName}}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-secondary" style="width: 100%; margin-bottom: 0.75rem;">
+                    📅 Add to calendar
+                </button>
+
+                <div class="share-section">
+                    <div class="share-title">Share this gathering</div>
+                    <div class="share-buttons">
+                        <button class="share-btn" onclick="copyEventLink()">
+                            📋 Copy link
+                        </button>
+                        <button class="share-btn">
+                            📨 Invite
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{if .CoordinationNeeds}}
+            <div class="card">
+                <h3>Needs coordination</h3>
+                {{range .CoordinationNeeds}}
+                {{if not .ResolvedAt}}
+                <div style="padding: 0.875rem; background: rgba(232, 213, 196, 0.2); border-radius: 8px; border-left: 3px solid #8b7355; margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.875rem; font-weight: 600; color: #8b7355; margin-bottom: 0.25rem;">
+                        {{if eq .Type "transport"}}🚗 Transport
+                        {{else if eq .Type "tickets"}}🎫 Tickets
+                        {{else if eq .Type "supplies"}}📦 Supplies
+                        {{else}}{{.Type}}{{end}}
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{.AuthorName}} needs help</div>
+                </div>
+                {{end}}
+                {{end}}
+                <button class="btn-secondary" style="width: 100%; padding: 0.625rem; font-size: 0.875rem;" onclick="switchToCoordinationTab()">View coordination</button>
+            </div>
+            {{end}}
+
+            {{if .IsOrganizer}}
+            <div class="card">
+                <h3>Quick actions</h3>
+                <a href="/gather/{{.Event.ID}}/edit" class="btn-secondary" style="width: 100%; margin-bottom: 0.5rem; padding: 0.625rem; font-size: 0.875rem; display: block; text-align: center; text-decoration: none;">
+                    ✏️ Edit gathering
+                </a>
+                <button class="btn-secondary" style="width: 100%; padding: 0.625rem; font-size: 0.875rem;">
+                    ⚙️ Settings
+                </button>
+            </div>
+            {{end}}
+        </aside>
     </div>
 </div>
+{{end}}
 
-<style>
-.event-detail-page {
-    background: var(--bg-secondary);
-    min-height: calc(100vh - 61px);
-    padding: 2rem;
+{{define "scripts"}}
+<script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const tabName = this.dataset.tab;
+
+        // Update buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabName + '-tab').classList.add('active');
+    });
+});
+
+// RSVP Toggle
+function toggleRSVP(button) {
+    const eventId = button.dataset.eventId;
+    const currentStatus = button.dataset.currentStatus;
+
+    // Determine next status
+    let newStatus;
+    if (currentStatus === '' || currentStatus === 'not_attending') {
+        newStatus = 'attending';
+    } else if (currentStatus === 'attending') {
+        newStatus = 'maybe';
+    } else if (currentStatus === 'maybe') {
+        newStatus = 'not_attending';
+    }
+
+    // Disable button during request
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.textContent = 'Updating...';
+
+    fetch(`/api/events/${eventId}/rsvp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update button state
+            button.dataset.currentStatus = newStatus;
+
+            // Update button text
+            if (newStatus === 'attending') {
+                button.textContent = '✓ You\'re going';
+            } else if (newStatus === 'maybe') {
+                button.textContent = '? Maybe';
+            } else {
+                button.textContent = 'RSVP';
+            }
+
+            // Update attendee counts
+            if (data.attendeeCount !== undefined) {
+                document.getElementById('attendee-count').textContent = data.attendeeCount + ' attending';
+                document.getElementById('sidebar-attendee-count').textContent = data.attendeeCount;
+            }
+
+            // Reload page to show updated attendee list
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            alert('Failed to update RSVP');
+            button.textContent = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error updating RSVP:', error);
+        alert('Failed to update RSVP');
+        button.textContent = originalText;
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
 }
 
-.event-detail-container {
-    max-width: 900px;
-    margin: 0 auto;
+// Copy event link
+function copyEventLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    });
 }
 
-.event-header {
-    background: var(--bg-primary);
-    border-radius: var(--container-radius);
-    padding: 2rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border-light);
+// Copy location
+function copyLocation() {
+    const location = '{{.Event.Location}}';
+    if (location) {
+        navigator.clipboard.writeText(location).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        });
+    }
 }
 
-.event-header-content {
-    margin-bottom: 1.5rem;
+// Switch to coordination tab from sidebar
+function switchToCoordinationTab() {
+    const coordinationBtn = document.querySelector('[data-tab="coordination"]');
+    if (coordinationBtn) {
+        coordinationBtn.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
-
-.event-title {
-    font-size: 2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--text-primary);
-}
-
-.event-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-.meta-item svg {
-    flex-shrink: 0;
-}
-
-.event-organizer {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.event-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.event-section {
-    background: var(--bg-primary);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--border-light);
-}
-
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--text-primary);
-}
-
-.attendees-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.attendee-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-}
-
-.attendee-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.attendee-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatar-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--warm-accent);
-    color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.attendee-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.attendee-name {
-    font-weight: 500;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.attendee-status {
-    font-size: 0.85rem;
-    color: var(--text-tertiary);
-}
-
-.status-attending {
-    color: var(--success);
-}
-
-.coordination-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.coordination-card {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    border-left: 3px solid var(--warm-accent);
-}
-
-.coordination-icon {
-    font-size: 1.5rem;
-}
-
-.coordination-content {
-    flex: 1;
-}
-
-.coordination-author {
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: var(--text-primary);
-}
-
-.coordination-message {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-</style>
+</script>
 {{end}}

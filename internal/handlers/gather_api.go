@@ -154,6 +154,7 @@ func (h *GatherAPIHandler) HandleCreateEvent(w http.ResponseWriter, r *http.Requ
 	event, err := h.eventService.CreateEvent(
 		r.Context(),
 		title,
+		r.FormValue("description"),
 		r.FormValue("location"),
 		r.FormValue("timezone"),
 		startTime,
@@ -241,7 +242,7 @@ func (h *GatherAPIHandler) HandleUpdateEvent(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Update event via service (service will verify organizer ownership)
-	if err := h.eventService.UpdateEvent(r.Context(), eventID, title, location, timezone, startTime, endTime, capacity, profileID); err != nil {
+	if err := h.eventService.UpdateEvent(r.Context(), eventID, title, r.FormValue("description"), location, timezone, startTime, endTime, capacity, profileID); err != nil {
 		h.logger.Error("failed to update event",
 			zap.String("event_id", eventID),
 			zap.String("profile_id", profileID),

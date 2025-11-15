@@ -29,7 +29,7 @@ func NewService(repo Repository, circleService *circle.Service, logger *zap.Logg
 // CreateEvent creates a new event
 func (s *Service) CreateEvent(
 	ctx context.Context,
-	title, location, timezone string,
+	title, description, location, timezone string,
 	startTime, endTime time.Time,
 	circleID, organizerProfileID string,
 	capacity int,
@@ -42,6 +42,8 @@ func (s *Service) CreateEvent(
 	if len(title) > 500 {
 		return nil, fmt.Errorf("event title cannot exceed 500 characters")
 	}
+
+	description = strings.TrimSpace(description)
 
 	if circleID == "" {
 		return nil, fmt.Errorf("circle is required")
@@ -76,6 +78,7 @@ func (s *Service) CreateEvent(
 		CircleID:           circleID,
 		OrganizerProfileID: organizerProfileID,
 		Title:              title,
+		Description:        description,
 		Location:           strings.TrimSpace(location),
 		Timezone:           timezone,
 		StartTime:          startTime,
@@ -116,7 +119,7 @@ func (s *Service) GetEventDetails(ctx context.Context, eventID, viewerProfileID 
 func (s *Service) UpdateEvent(
 	ctx context.Context,
 	eventID string,
-	title, location, timezone string,
+	title, description, location, timezone string,
 	startTime, endTime time.Time,
 	capacity int,
 	updaterProfileID string,
@@ -149,6 +152,8 @@ func (s *Service) UpdateEvent(
 		return fmt.Errorf("event title cannot exceed 500 characters")
 	}
 
+	description = strings.TrimSpace(description)
+
 	if startTime.IsZero() {
 		return fmt.Errorf("start time is required")
 	}
@@ -159,6 +164,7 @@ func (s *Service) UpdateEvent(
 
 	// Update event fields
 	event.Title = title
+	event.Description = description
 	event.Location = strings.TrimSpace(location)
 	event.Timezone = timezone
 	event.StartTime = startTime

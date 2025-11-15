@@ -8,6 +8,7 @@ type Event struct {
 	CircleID           string     `json:"circle_id"`
 	OrganizerProfileID string     `json:"organizer_profile_id"`
 	Title              string     `json:"title"`
+	Description        string     `json:"description"`
 	Location           string     `json:"location"`
 	Timezone           string     `json:"timezone"`
 	StartTime          time.Time  `json:"start_time"`

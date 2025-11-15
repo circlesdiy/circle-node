@@ -255,6 +255,7 @@ func (h *GatherHandler) buildEventDetailPageData(details *events.EventDetails, p
 		Event:              details.Event,
 		CircleName:         details.CircleName,
 		OrganizerName:      details.OrganizerName,
+		OrganizerAvatar:    details.OrganizerAvatarURL,
 		FormattedStartTime: formatEventTime(details.Event.StartTime),
 		FormattedEndTime:   formatEventTime(details.Event.EndTime),
 		ViewerRSVPStatus:   details.ViewerRSVPStatus,
