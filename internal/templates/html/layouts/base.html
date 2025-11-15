@@ -57,19 +57,67 @@
     <div id="toast-container"></div>
 
     <!-- Modal container -->
-    <dialog id="modal" class="modal">
+    <dialog id="modal" class="modal" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()" aria-label="Close modal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                </svg>
+            </button>
             <div id="modal-body" class="modal-body">
                 <!-- Modal content will be loaded here -->
             </div>
-    </div>
+        </div>
+    </dialog>
 
     <script src="/static/js/htmx.min.js?v={{.AssetVersion}}"></script>
     <!-- <script src="/static/js/htmx-helpers.js?v={{.AssetVersion}}"></script> -->
     <script>
-        function closeModal(){
-            const element = document.getElementById('modal-content');
-            if (element.close) element.close()
+        // Modal management
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            if (modal) {
+                modal.close();
+            }
         }
+
+        // Open modal when HTMX swaps content into modal-body
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'modal-body') {
+                const modal = document.getElementById('modal');
+                if (modal) {
+                    modal.showModal();
+                }
+            }
+        });
+
+        // Close modal when clicking on backdrop
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    const rect = modal.getBoundingClientRect();
+                    if (
+                        e.clientX < rect.left ||
+                        e.clientX > rect.right ||
+                        e.clientY < rect.top ||
+                        e.clientY > rect.bottom
+                    ) {
+                        closeModal();
+                    }
+                });
+            }
+        });
+
+        // Close modal on successful HTMX requests that redirect
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.successful) {
+                const redirectHeader = evt.detail.xhr.getResponseHeader('HX-Redirect');
+                if (redirectHeader) {
+                    closeModal();
+                }
+            }
+        });
 // Theme Manager Implementation - Global for all pages
 class ThemeManager {
     constructor() {

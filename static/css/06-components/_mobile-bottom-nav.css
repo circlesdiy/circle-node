@@ -27,7 +27,8 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    transition: all 0.2s
+    transition: all 0.2s;
+    align-content: center;
 }
 
 .mobile-bottom-nav .nav-item:hover:not(.active) {

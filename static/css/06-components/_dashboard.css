@@ -237,14 +237,14 @@
     display: block;
 }
 
-/* Happening Now Section */
-.happening-now-item {
+/* Whats New Section */
+.whats-new-item {
     display: flex;
     gap: 1rem;
     padding: 1rem 0;
 }
 
-.happening-now-item .icon-container {
+.whats-new-item .icon-container {
     width: 48px;
     height: 48px;
     border-radius: var(--radius-lg);
@@ -255,24 +255,24 @@
     flex-shrink: 0;
 }
 
-.happening-now-item .content {
+.whats-new-item .content {
     flex: 1;
     min-width: 0;
 }
 
-.happening-now-item .title {
+.whats-new-item .title {
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 
-.happening-now-item .description {
+.whats-new-item .description {
     font-size: 0.875rem;
     color: var(--text-secondary);
     margin-bottom: 0.25rem;
 }
 
-.happening-now-item .meta {
+.whats-new-item .meta {
     font-size: 0.75rem;
     color: var(--text-tertiary);
 }
@@ -468,12 +468,12 @@
 }
 
 /* Empty State */
-.empty-state {
+.dashboard-container .empty-state {
     text-align: center;
     padding: 3rem 2rem;
 }
 
-.empty-state p {
+.dashboard-container .empty-state p {
     font-size: 0.875rem;
     color: var(--text-secondary);
     margin: 0 0 1rem 0;

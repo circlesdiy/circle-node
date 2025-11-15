@@ -74,15 +74,15 @@ func RenderSuccess(w http.ResponseWriter, logger *zap.Logger, message string) {
 }
 
 // SendHTMXRedirect sends an HX-Redirect header
+// Note: This must be called before any response body is written
 func SendHTMXRedirect(w http.ResponseWriter, url string) {
 	w.Header().Set("HX-Redirect", url)
-	w.WriteHeader(http.StatusOK)
 }
 
 // SendHTMXRefresh tells HTMX to refresh the page
+// Note: This must be called before any response body is written
 func SendHTMXRefresh(w http.ResponseWriter) {
 	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusOK)
 }
 
 // RenderValidationError renders a field-specific validation error

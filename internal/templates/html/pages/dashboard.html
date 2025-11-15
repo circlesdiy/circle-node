@@ -11,13 +11,13 @@
 
     <div class="two-column">
         <div>
-            {{if .HappeningNow}}
+            {{if .WhatsNew}}
             <div class="section-header">
-                <h2 class="section-title">Catch up</h2>
+                <h2 class="section-title">What's new</h2>
             </div>
-            {{range .HappeningNow}}
+            {{range .WhatsNew}}
             <div class="card">
-                <div class="happening-now-item">
+                <div class="whats-new-item">
                     <div class="icon-container" style="background: {{.IconBgColor}};">{{.Icon}}</div>
                     <div class="content">
                         <div class="title">{{.Title}}</div>
@@ -31,7 +31,7 @@
             {{end}}
             {{end}}
 
-            <div class="section-header" {{if .HappeningNow}}style="margin-top: 2.5rem;"{{end}}>
+            <div class="section-header" {{if .WhatsNew}}style="margin-top: 2.5rem;"{{end}}>
                 <h2 class="section-title">Upcoming Events</h2>
                 <a href="/gather" class="section-action">View calendar →</a>
             </div>

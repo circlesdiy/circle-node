@@ -58,16 +58,16 @@
     }
 }
 
-@media (max-width: var(--breakpoint-sm)) {    
+@media (max-width: var(--breakpoint-sm)) {
     .circles-subtitle {
         font-size: 1rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
         gap: 0.75rem;
     }
-    
+
     .stat-card {
         padding: 0.75rem;
         text-align: left;
@@ -75,7 +75,7 @@
         align-items: center;
         gap: 1rem;
     }
-    
+
     .stat-value {
         font-size: 1.5rem;
         margin-bottom: 0;

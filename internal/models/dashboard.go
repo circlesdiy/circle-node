@@ -4,13 +4,13 @@ import "html/template"
 
 type DashboardData struct {
 	BaseData
-	HappeningNow   []HappeningNowItem
+	WhatsNew       []WhatsNewItem
 	UpcomingEvents []UpcomingEvent
 	CirclesSummary []CircleSummary
 	Discovery      *DiscoverySection
 }
 
-type HappeningNowItem struct {
+type WhatsNewItem struct {
 	Type         string
 	Icon         string
 	IconBgColor  template.CSS

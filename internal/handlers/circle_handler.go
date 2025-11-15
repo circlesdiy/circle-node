@@ -1019,9 +1019,9 @@ func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Req
 		zap.String("profile_id", profileID),
 	)
 
-	// Return success and redirect
-	RenderSuccess(w, h.logger, "Circle created successfully!")
+	// Set redirect header before rendering response
 	SendHTMXRedirect(w, "/circles")
+	RenderSuccess(w, h.logger, "Circle created successfully!")
 }
 
 // handleAPICircleActions handles various circle API actions
@@ -1131,9 +1131,9 @@ func (h *CircleHandler) handleAPIUpdateCircle(w http.ResponseWriter, r *http.Req
 		zap.String("profile_id", profileID),
 	)
 
-	// Return success and refresh
-	RenderSuccess(w, h.logger, "Circle updated successfully!")
+	// Set refresh header before rendering response
 	SendHTMXRefresh(w)
+	RenderSuccess(w, h.logger, "Circle updated successfully!")
 }
 
 // handleAPIDeleteCircle handles deleting a circle via HTMX

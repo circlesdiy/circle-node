@@ -26,7 +26,7 @@ func NewService(repo Repository, logger *zap.Logger) *Service {
 
 func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*models.DashboardData, error) {
 	var (
-		happeningNow   []models.HappeningNowItem
+		whatsNew       []models.WhatsNewItem
 		upcomingEvents []models.UpcomingEvent
 		circlesSummary []models.CircleSummary
 		discovery      *models.DiscoverySection
@@ -39,13 +39,13 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 
 	go func() {
 		defer wg.Done()
-		items, err := s.buildHappeningNow(ctx, profileID)
+		items, err := s.buildWhatsNew(ctx, profileID)
 		if err != nil {
-			s.logger.Error("failed to build happening now", zap.Error(err))
+			s.logger.Error("failed to build whats new", zap.Error(err))
 			return
 		}
 		mu.Lock()
-		happeningNow = items
+		whatsNew = items
 		mu.Unlock()
 	}()
 
@@ -88,15 +88,15 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 	wg.Wait()
 
 	return &models.DashboardData{
-		HappeningNow:   happeningNow,
+		WhatsNew:       whatsNew,
 		UpcomingEvents: upcomingEvents,
 		CirclesSummary: circlesSummary,
 		Discovery:      discovery,
 	}, nil
 }
 
-func (s *Service) buildHappeningNow(ctx context.Context, profileID string) ([]models.HappeningNowItem, error) {
-	var items []models.HappeningNowItem
+func (s *Service) buildWhatsNew(ctx context.Context, profileID string) ([]models.WhatsNewItem, error) {
+	var items []models.WhatsNewItem
 
 	coordination, err := s.repo.GetCoordinationNeeds(ctx, profileID)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Service) buildHappeningNow(ctx context.Context, profileID string) ([]mo
 			iconType = "📦"
 		}
 
-		items = append(items, models.HappeningNowItem{
+		items = append(items, models.WhatsNewItem{
 			Type:         "coordination",
 			Icon:         iconType,
 			IconBgColor:  template.CSS("var(--warm-accent)"),
@@ -137,7 +137,7 @@ func (s *Service) buildHappeningNow(ctx context.Context, profileID string) ([]mo
 			}
 		}
 
-		items = append(items, models.HappeningNowItem{
+		items = append(items, models.WhatsNewItem{
 			Type:        "messages",
 			Icon:        "💬",
 			IconBgColor: template.CSS("var(--cool-accent)"),

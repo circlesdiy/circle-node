@@ -75,7 +75,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 func (h *DashboardHandler) getEmptyDashboard() *models.DashboardData {
 	return &models.DashboardData{
-		HappeningNow:   []models.HappeningNowItem{},
+		WhatsNew:       []models.WhatsNewItem{},
 		UpcomingEvents: []models.UpcomingEvent{},
 		CirclesSummary: []models.CircleSummary{},
 	}
