@@ -16,3 +16,11 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
 }
+
+@media (max-width: var(--breakpoint-md)) {
+    main {
+        padding-top: 1rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}

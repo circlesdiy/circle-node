@@ -9,6 +9,10 @@
         gap: 1rem;
         align-items: stretch;
     }
+
+    .circles-title-section h1 {
+        font-size: 1.75rem;
+    }
     
     .circles-actions {
         justify-content: stretch;

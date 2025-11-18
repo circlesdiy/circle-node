@@ -28,6 +28,7 @@ type ProfileRepository interface {
 	// Profile CRUD operations
 	CreateProfile(ctx context.Context, profile *Profile) error
 	GetProfileByID(ctx context.Context, id string) (*Profile, error)
+	GetProfilesByIDs(ctx context.Context, id []string) ([]Profile, error)
 	GetProfileByHandle(ctx context.Context, handle string) (*Profile, error)
 	GetProfilesByUserID(ctx context.Context, userID string) ([]Profile, error)
 	UpdateProfile(ctx context.Context, profile *Profile) error

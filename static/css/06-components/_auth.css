@@ -262,7 +262,7 @@
 }
 
 /* Auth Buttons */
-.btn {
+.auth-container .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -301,13 +301,13 @@
     /* color: var(--active-text); */
 }
 
-.btn-text {
+.auth-container .btn-text {
     background: transparent;
     color: var(--text-secondary);
     border-color: transparent;
 }
 
-.btn-text:hover {
+.auth-container .btn-text:hover {
     color: var(--text-primary);
     border-color: var(--border-light);
 }

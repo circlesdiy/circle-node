@@ -188,18 +188,6 @@
         <!-- Sidebar -->
         <aside class="event-sidebar">
             <div class="card">
-                <div class="rsvp-status">
-                    <div class="rsvp-status-icon">
-                        {{if eq .ViewerRSVPStatus "attending"}}✓
-                        {{else if eq .ViewerRSVPStatus "maybe"}}?
-                        {{else}}📅{{end}}
-                    </div>
-                    <div class="rsvp-status-text">
-                        {{if eq .ViewerRSVPStatus "attending"}}You're going to this gathering
-                        {{else if eq .ViewerRSVPStatus "maybe"}}You might be going
-                        {{else}}RSVP to join{{end}}
-                    </div>
-                </div>
 
                 <div class="rsvp-count">
                     <div class="rsvp-count-item">

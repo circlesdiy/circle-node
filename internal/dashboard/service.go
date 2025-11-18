@@ -51,10 +51,8 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 			greetingForCurrentTime = "Good morning"
 		case hour >= 12 && hour < 17:
 			greetingForCurrentTime = "Good afternoon"
-		case hour >= 17 && hour < 21:
-			greetingForCurrentTime = "Good evening"
 		default:
-			greetingForCurrentTime = "Hello"
+			greetingForCurrentTime = "Good evening"
 		}
 
 		mu.Lock()
@@ -235,7 +233,7 @@ func (s *Service) buildCirclesSummary(ctx context.Context, profileID string) ([]
 
 		if c.NextEventTime != nil {
 			dayName := c.NextEventTime.Format("Monday")
-			cs.NextEvent = fmt.Sprintf("Next gathering %s", dayName)
+			cs.NextEvent = fmt.Sprintf("Gathering on %s", dayName)
 		}
 
 		summary = append(summary, cs)

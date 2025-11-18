@@ -6,10 +6,14 @@
 <div class="circle-detail-page">
     <!-- Circle Header -->
     <div class="circle-detail-header">
-        <div class="circle-detail-banner"{{if .Circle.BannerURL}} style="background-image: url('{{.Circle.BannerURL}}'); background-size: cover; background-position: center;"{{end}}>
-            <div class="circle-detail-avatar"{{if not .Circle.AvatarURL}}{{if .Circle.IconBgColor}} style="background: {{.Circle.IconBgColor}};"{{end}}{{end}}>
+        <div class="circle-detail-banner" {{if .Circle.BannerURL}}
+            style="background-image: url('{{.Circle.BannerURL}}'); background-size: cover; background-position: center;"
+            {{end}}>
+            <div class="circle-detail-avatar" {{if not .Circle.AvatarURL}}{{if .Circle.IconBgColor}}
+                style="background: {{.Circle.IconBgColor}};" {{end}}{{end}}>
                 {{if .Circle.AvatarURL}}
-                <img src="{{.Circle.AvatarURL}}" alt="{{.Circle.Name}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px;">
+                <img src="{{.Circle.AvatarURL}}" alt="{{.Circle.Name}}"
+                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px;">
                 {{else if .Circle.Icon}}
                 <span>{{.Circle.Icon}}</span>
                 {{else}}
@@ -57,13 +61,16 @@
 
                 <div class="posts-feed">
                     {{if .RecentPosts}}
-                        {{range .RecentPosts}}
-                        {{template "post-card" .}}
-                        {{end}}
+                    {{range .RecentPosts}}
+                    {{template "post-card" .}}
+                    {{end}}
                     {{else}}
                     <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 256 256">
-                            <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z"></path>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                            viewBox="0 0 256 256">
+                            <path
+                                d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z">
+                            </path>
                         </svg>
                         <h3>No posts yet</h3>
                         <p>Be the first to share something with the circle!</p>
@@ -77,18 +84,20 @@
                 <div class="tab-header">
                     <h2>Upcoming Gatherings</h2>
                     {{if .IsMember}}
-                    <button class="btn btn-primary btn-sm" onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize Gathering</button>
+                    <button class="btn btn-primary btn-sm"
+                        onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize
+                        Gathering</button>
                     {{end}}
                 </div>
 
                 {{if .UpcomingGatherings}}
-                    {{range .UpcomingGatherings}}
-                    <div class="event-card">
-                        <div class="event-card-title">{{.Title}}</div>
-                        <div class="event-card-datetime">📅 {{.TimeRange}}</div>
-                        <div class="event-card-description">{{.Description}}</div>
-                    </div>
-                    {{end}}
+                {{range .UpcomingGatherings}}
+                <div class="event-card">
+                    <div class="event-card-title">{{.Title}}</div>
+                    <div class="event-card-datetime">📅 {{.TimeRange}}</div>
+                    <div class="event-card-description">{{.Description}}</div>
+                </div>
+                {{end}}
                 {{else}}
                 <div class="empty-state">
                     <p>No upcoming gatherings. Organize one to bring the circle together!</p>
@@ -154,38 +163,38 @@
             <div class="circle-tab" id="settings-tab">
                 {{if .IsOwner}}
 
-                    <div class="settings-section">
-                        <h3>Circle Information</h3>
-                        {{if .CanEditInfo}}
-                        <div class="form-group">
-                            <label>Circle name</label>
-                            <input type="text" value="{{.Circle.Name}}" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea class="form-textarea">{{.Circle.Description}}</textarea>
-                        </div>
-                        <button class="btn btn-primary">Save changes</button>
-                        {{else}}
-                        <p class="text-secondary">Only the owner can edit circle information.</p>
-                        {{end}}
+                <div class="settings-section">
+                    <h3>Circle Information</h3>
+                    {{if .CanEditInfo}}
+                    <div class="form-group">
+                        <label>Circle name</label>
+                        <input type="text" value="{{.Circle.Name}}" class="form-input">
                     </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-textarea">{{.Circle.Description}}</textarea>
+                    </div>
+                    <button class="btn btn-primary">Save changes</button>
+                    {{else}}
+                    <p class="text-secondary">Only the owner can edit circle information.</p>
+                    {{end}}
+                </div>
                 {{end}}
 
                 {{if .IsOwner}}
-                    <div class="settings-section">
-                        <h3>Visibility</h3>
-                        {{if .CanEditVisibility}}
-                        <div class="setting-item">
-                            <div>
-                                <div class="setting-label">Circle visibility</div>
-                                <div class="setting-description">Current: {{.Circle.Visibility}}</div>
-                            </div>
+                <div class="settings-section">
+                    <h3>Visibility</h3>
+                    {{if .CanEditVisibility}}
+                    <div class="setting-item">
+                        <div>
+                            <div class="setting-label">Circle visibility</div>
+                            <div class="setting-description">Current: {{.Circle.Visibility}}</div>
                         </div>
-                        {{else}}
-                        <p class="text-secondary">Only the owner can change visibility settings.</p>
-                        {{end}}
                     </div>
+                    {{else}}
+                    <p class="text-secondary">Only the owner can change visibility settings.</p>
+                    {{end}}
+                </div>
                 {{end}}
 
                 <div class="settings-section">
@@ -229,16 +238,38 @@
             <div class="sidebar-card">
                 <h3>Quick actions</h3>
                 {{if .IsMember}}
-                <button class="btn btn-primary sidebar-btn" onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize Gathering</button>
+                <button class="quick-action-btn btn-primary sidebar-btn"
+                    onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                        viewBox="0 0 256 256">
+                        <path
+                            d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-48-56a8,8,0,0,1-8,8H136v16a8,8,0,0,1-16,0V160H104a8,8,0,0,1,0-16h16V128a8,8,0,0,1,16,0v16h16A8,8,0,0,1,160,152Z">
+                        </path>
+                    </svg>
+                    Organize Gathering</button>
                 {{if .CanInvite}}
-                <button class="btn btn-secondary sidebar-btn">+ Invite Member</button>
+                <button class="quick-action-btn btn-secondary sidebar-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                        viewBox="0 0 256 256">
+                        <path
+                            d="M168,56a8,8,0,0,1,8-8h16V32a8,8,0,0,1,16,0V48h16a8,8,0,0,1,0,16H208V80a8,8,0,0,1-16,0V64H176A8,8,0,0,1,168,56Zm62.56,54.68a103.92,103.92,0,1,1-85.24-85.24,8,8,0,0,1-2.64,15.78A88.07,88.07,0,0,0,40,128a87.62,87.62,0,0,0,22.24,58.41A79.66,79.66,0,0,1,98.3,157.66a48,48,0,1,1,59.4,0,79.66,79.66,0,0,1,36.06,28.75A87.62,87.62,0,0,0,216,128a88.85,88.85,0,0,0-1.22-14.68,8,8,0,1,1,15.78-2.64ZM128,152a32,32,0,1,0-32-32A32,32,0,0,0,128,152Zm0,64a87.57,87.57,0,0,0,53.92-18.5,64,64,0,0,0-107.84,0A87.57,87.57,0,0,0,128,216Z">
+                        </path>
+                    </svg>
+                    Invite Member</button>
                 {{end}}
-                <button class="btn btn-secondary sidebar-btn">↑ Upload File</button>
+                <button class="quick-action-btn btn-secondary sidebar-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                        viewBox="0 0 256 256">
+                        <path
+                            d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0ZM93.66,77.66,120,51.31V144a8,8,0,0,0,16,0V51.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,77.66Z">
+                        </path>
+                    </svg>
+                    Upload File</button>
                 {{else}}
-                <button class="btn btn-primary sidebar-btn"
-                    hx-post="/api/circles/{{.Circle.ID}}/join"
-                    hx-swap="outerHTML"
-                    hx-target="this">Join Circle</button>
+                <button class="quick-action-btn btn-primary sidebar-btn" hx-post="/api/circles/{{.Circle.ID}}/join"
+                    hx-swap="outerHTML" hx-target="this">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm48-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H88a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,176,128Z"></path></svg>
+                    Join Circle</button>
                 {{end}}
             </div>
 
@@ -280,681 +311,681 @@
 </div>
 
 <style>
-/* Circle Detail Page Styles */
-.circle-detail-page {
-    background: var(--bg-secondary);
-    min-height: calc(100vh - 61px);
-    max-width: 1400px;
-    padding: 2rem;
-    margin: 0 auto;
-}
-
-.circle-detail-header {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
-
-.circle-detail-banner {
-    height: 200px;
-    background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    padding: 2rem;
-}
-
-.circle-detail-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 24px;
-    background: rgba(232, 213, 196, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    border: 4px solid var(--bg-primary);
-    box-shadow: 0 4px 16px var(--shadow-color, rgba(0, 0, 0, 0.1));
-}
-
-.circle-detail-info {
-    padding: 1.5rem 2rem 1rem;
-}
-
-.circle-detail-title-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-}
-
-.circle-detail-title {
-    font-size: 2rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-
-.circle-detail-badge {
-    padding: 0.375rem 0.875rem;
-    background: rgba(22, 163, 74, 0.1);
-    color: #16a34a;
-    border-radius: 10px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    background: #16a34a;
-    border-radius: 50%;
-}
-
-.circle-detail-description {
-    color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.circle-detail-meta {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    color: var(--text-tertiary);
-    font-size: 0.875rem;
-}
-
-.circle-detail-nav {
-    border-top: 1px solid var(--border-light);
-    padding: 0 2rem;
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-}
-
-.nav-pill {
-    padding: 0.875rem 1.25rem;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.nav-pill:hover {
-    color: var(--text-primary);
-    background: var(--bg-tertiary, #fafafa);
-}
-
-.nav-pill.active {
-    color: var(--accent-primary, #000);
-    border-bottom-color: var(--accent-primary, #000);
-}
-
-.circle-content {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 2rem;
-}
-
-.circle-tab {
-    display: none;
-}
-
-.circle-tab.active {
-    display: block;
-}
-
-.tab-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.tab-header h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* Composer */
-.composer {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.composer-input {
-    width: 100%;
-    padding: 1rem;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 100px;
-    margin-bottom: 1rem;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.composer-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.composer-tools {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.composer-tool-btn {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--border-light);
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.125rem;
-}
-
-/* Post */
-.post {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.post-header {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.post-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    background: var(--bg-secondary);
-}
-
-.post-author-info {
-    flex: 1;
-}
-
-.post-author-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-}
-
-.post-timestamp {
-    font-size: 0.8rem;
-    color: var(--text-tertiary);
-}
-
-.post-text {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-}
-
-.post-actions {
-    display: flex;
-    gap: 0.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-light);
-}
-
-.post-action-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-light);
-    background: transparent;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-/* Members */
-.members-grid {
-    display: grid;
-    gap: 1rem;
-}
-
-.member-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-}
-
-.member-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    background: var(--bg-secondary);
-}
-
-.member-info {
-    flex: 1;
-}
-
-.member-name {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.member-role {
-    font-size: 0.8rem;
-    color: var(--text-tertiary);
-}
-
-/* Files */
-.files-grid {
-    display: grid;
-    gap: 0.875rem;
-}
-
-.file-card {
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    padding: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-}
-
-.file-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    background: var(--bg-secondary);
-}
-
-.file-info {
-    flex: 1;
-}
-
-.file-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-
-.file-meta {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-}
-
-.file-action {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid var(--border-light);
-    background: var(--bg-primary);
-    cursor: pointer;
-}
-
-/* Settings */
-.settings-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.settings-section h3 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 1.25rem;
-    color: var(--text-primary);
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-}
-
-.form-input,
-.form-textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-}
-
-.form-textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.setting-item:last-child {
-    border-bottom: none;
-}
-
-.setting-label {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.setting-description {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 0.25rem;
-}
-
-.toggle-switch {
-    width: 44px;
-    height: 24px;
-    background: var(--border-secondary, #ccc);
-    border-radius: 12px;
-    position: relative;
-    cursor: pointer;
-}
-
-.toggle-switch.active {
-    background: var(--accent-primary, #000);
-}
-
-.toggle-switch::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    top: 2px;
-    left: 2px;
-    transition: left 0.2s;
-}
-
-.toggle-switch.active::after {
-    left: 22px;
-}
-
-.danger-zone {
-    border-color: rgba(239, 68, 68, 0.2);
-}
-
-.danger-content {
-    padding: 1rem;
-    background: rgba(239, 68, 68, 0.05);
-    border-radius: 8px;
-}
-
-.danger-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #dc2626;
-}
-
-.danger-description {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.75rem;
-}
-
-.btn-danger {
-    background: #dc2626;
-    color: white;
-    border: 1px solid #dc2626;
-}
-
-/* Sidebar */
-.circle-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.sidebar-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-}
-
-.sidebar-card h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--text-primary);
-}
-
-.sidebar-btn {
-    width: 100%;
-    margin-bottom: 0.75rem;
-}
-
-.sidebar-btn:last-child {
-    margin-bottom: 0;
-}
-
-.sidebar-event {
-    padding: 0.875rem;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    margin-bottom: 0.75rem;
-}
-
-.sidebar-event:last-child {
-    margin-bottom: 0;
-}
-
-.sidebar-event-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: var(--text-primary);
-}
-
-.sidebar-event-time {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-}
-
-.info-grid {
-    display: grid;
-    gap: 0.5rem;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.info-item strong {
-    color: var(--text-primary);
-}
-
-/* Empty state */
-.empty-state {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 3rem 2rem;
-    text-align: center;
-    color: var(--text-secondary);
-}
-
-/* Event card */
-.event-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--container-radius);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.event-card-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-}
-
-.event-card-datetime {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.event-card-description {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-/* Buttons */
-.btn {
-    padding: 0.625rem 1.25rem;
-    border-radius: var(--container-radius);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid;
-    transition: all 0.2s ease;
-}
-
-.btn-primary {
-    background: var(--accent-primary, #000);
-    color: var(--accent-secondary, #fff);
-    border-color: var(--accent-primary, #000);
-}
-
-.btn-secondary {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    border-color: var(--border-light);
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .circle-content {
-        grid-template-columns: 1fr;
+    /* Circle Detail Page Styles */
+    .circle-detail-page {
+        background: var(--bg-secondary);
+        min-height: calc(100vh - 61px);
+        max-width: 1400px;
+        padding: 2rem;
+        margin: 0 auto;
     }
 
-    .circle-sidebar {
-        display: none;
+    .circle-detail-header {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        overflow: hidden;
+        margin-bottom: 2rem;
     }
-}
 
-@media (max-width: 768px) {
     .circle-detail-banner {
-        height: 150px;
-        padding: 1.5rem;
+        height: 200px;
+        background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        padding: 2rem;
     }
 
     .circle-detail-avatar {
-        width: 80px;
-        height: 80px;
-        font-size: 2.5rem;
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+        background: rgba(232, 213, 196, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        border: 4px solid var(--bg-primary);
+        box-shadow: 0 4px 16px var(--shadow-color, rgba(0, 0, 0, 0.1));
     }
 
     .circle-detail-info {
-        padding: 1rem 1.5rem;
+        padding: 1.5rem 2rem 1rem;
+    }
+
+    .circle-detail-title-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .circle-detail-title {
+        font-size: 2rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+    }
+
+    .circle-detail-badge {
+        padding: 0.375rem 0.875rem;
+        background: rgba(22, 163, 74, 0.1);
+        color: #16a34a;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #16a34a;
+        border-radius: 50%;
+    }
+
+    .circle-detail-description {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .circle-detail-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
     }
 
     .circle-detail-nav {
-        padding: 0 1.5rem;
+        border-top: 1px solid var(--border-light);
+        padding: 0 2rem;
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
     }
-}
+
+    .nav-pill {
+        padding: 0.875rem 1.25rem;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .nav-pill:hover {
+        color: var(--text-primary);
+        background: var(--bg-tertiary, #fafafa);
+    }
+
+    .nav-pill.active {
+        color: var(--accent-primary, #000);
+        border-bottom-color: var(--accent-primary, #000);
+    }
+
+    .circle-content {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+    }
+
+    .circle-tab {
+        display: none;
+    }
+
+    .circle-tab.active {
+        display: block;
+    }
+
+    .tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .tab-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    /* Composer */
+    .composer {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .composer-input {
+        width: 100%;
+        padding: 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 100px;
+        margin-bottom: 1rem;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .composer-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .composer-tools {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .composer-tool-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.125rem;
+    }
+
+    /* Post */
+    .post {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .post-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .post-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: var(--bg-secondary);
+    }
+
+    .post-author-info {
+        flex: 1;
+    }
+
+    .post-author-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .post-timestamp {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
+
+    .post-text {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: var(--text-primary);
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .post-action-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-light);
+        background: transparent;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+    }
+
+    /* Members */
+    .members-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .member-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+    }
+
+    .member-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        background: var(--bg-secondary);
+    }
+
+    .member-info {
+        flex: 1;
+    }
+
+    .member-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .member-role {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Files */
+    .files-grid {
+        display: grid;
+        gap: 0.875rem;
+    }
+
+    .file-card {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+    }
+
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: var(--bg-secondary);
+    }
+
+    .file-info {
+        flex: 1;
+    }
+
+    .file-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+
+    .file-meta {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .file-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-primary);
+        cursor: pointer;
+    }
+
+    /* Settings */
+    .settings-section {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-section h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: var(--text-primary);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+
+    .setting-label {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .setting-description {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    .toggle-switch {
+        width: 44px;
+        height: 24px;
+        background: var(--border-secondary, #ccc);
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .toggle-switch.active {
+        background: var(--accent-primary, #000);
+    }
+
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+    }
+
+    .toggle-switch.active::after {
+        left: 22px;
+    }
+
+    .danger-zone {
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .danger-content {
+        padding: 1rem;
+        background: rgba(239, 68, 68, 0.05);
+        border-radius: 8px;
+    }
+
+    .danger-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #dc2626;
+    }
+
+    .danger-description {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+        border: 1px solid #dc2626;
+    }
+
+    /* Sidebar */
+    .circle-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sidebar-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 1.5rem;
+    }
+
+    .sidebar-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .sidebar-btn {
+        width: 100%;
+        margin-bottom: 0.75rem;
+    }
+
+    .sidebar-btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .sidebar-event {
+        padding: 0.875rem;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+    }
+
+    .sidebar-event:last-child {
+        margin-bottom: 0;
+    }
+
+    .sidebar-event-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary);
+    }
+
+    .sidebar-event-time {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .info-grid {
+        display: grid;
+        gap: 0.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .info-item strong {
+        color: var(--text-primary);
+    }
+
+    /* Empty state */
+    .empty-state {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: var(--text-secondary);
+    }
+
+    /* Event card */
+    .event-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--container-radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .event-card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .event-card-datetime {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .event-card-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: var(--container-radius);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: var(--accent-primary, #000);
+        color: var(--accent-secondary, #fff);
+        border-color: var(--accent-primary, #000);
+    }
+
+    .btn-secondary {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border-color: var(--border-light);
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .circle-content {
+            grid-template-columns: 1fr;
+        }
+
+        .circle-sidebar {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .circle-detail-banner {
+            height: 150px;
+            padding: 1.5rem;
+        }
+
+        .circle-detail-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 2.5rem;
+        }
+
+        .circle-detail-info {
+            padding: 1rem 1.5rem;
+        }
+
+        .circle-detail-nav {
+            padding: 0 1.5rem;
+        }
+    }
 </style>
 
 <script>
-// Tab switching
-document.querySelectorAll('.nav-pill').forEach(pill => {
-    pill.addEventListener('click', function() {
-        const tabName = this.dataset.tab;
+    // Tab switching
+    document.querySelectorAll('.nav-pill').forEach(pill => {
+        pill.addEventListener('click', function () {
+            const tabName = this.dataset.tab;
 
-        // Update pills
-        document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
-        this.classList.add('active');
+            // Update pills
+            document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
 
-        // Update content
-        document.querySelectorAll('.circle-tab').forEach(tab => {
-            tab.classList.remove('active');
+            // Update content
+            document.querySelectorAll('.circle-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
         });
-        document.getElementById(tabName + '-tab').classList.add('active');
     });
-});
 
-// Toggle switches
-document.querySelectorAll('.toggle-switch').forEach(toggle => {
-    toggle.addEventListener('click', function() {
-        this.classList.toggle('active');
+    // Toggle switches
+    document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        toggle.addEventListener('click', function () {
+            this.classList.toggle('active');
+        });
     });
-});
 
-// Auto-expanding textarea
-document.querySelectorAll('textarea').forEach(textarea => {
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
+    // Auto-expanding textarea
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
     });
-});
 </script>
 
 <script src="/static/js/post-cards.js"></script>

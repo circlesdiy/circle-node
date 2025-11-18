@@ -82,6 +82,10 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Profile, erro
 	return s.repo.GetProfileByID(ctx, id)
 }
 
+func (s *Service) GetByIDs(ctx context.Context, ids []string) ([]domain.Profile, error) {
+	return s.repo.GetProfilesByIDs(ctx, ids)
+}
+
 // GetByHandle retrieves a profile by its handle
 func (s *Service) GetByHandle(ctx context.Context, handle string) (*domain.Profile, error) {
 	return s.repo.GetProfileByHandle(ctx, handle)

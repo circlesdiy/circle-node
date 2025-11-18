@@ -296,6 +296,9 @@
 }
 
 .date-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     flex-shrink: 0;
     text-align: center;
     width: 60px;
@@ -364,7 +367,6 @@
 }
 
 .separator {
-    margin: 0 0.5rem;
     color: var(--border-secondary);
 }
 
@@ -477,19 +479,6 @@
     font-size: 0.875rem;
     color: var(--text-secondary);
     margin: 0 0 1rem 0;
-}
-
-/* Sidebar Styles */
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.quick-action-btn:last-child {
-    margin-bottom: 0;
 }
 
 .status-indicator {
@@ -627,7 +616,7 @@ aside h3 {
     }
 
     .page-title {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
     }
 
     .upcoming-event-item {
@@ -650,7 +639,7 @@ aside h3 {
 
 @media (max-width: var(--breakpoint-sm)) {
     .dashboard-container {
-        padding: 0.75rem;
+        padding: 1rem 0.75rem;
     }
 
     .dashboard {

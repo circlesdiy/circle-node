@@ -128,6 +128,59 @@ func (r *Repository) GetProfileByID(ctx context.Context, id string) (*domain.Pro
 	return &profile, nil
 }
 
+func (r *Repository) GetProfilesByIDs(ctx context.Context, userIDs []string) ([]domain.Profile, error) {
+	query := `
+		SELECT id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at, deleted_at
+		FROM profiles WHERE user_id in $1 AND deleted_at IS NULL
+		ORDER BY created_at ASC`
+
+	rows, err := r.db.Query(ctx, query, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var profiles []domain.Profile
+	for rows.Next() {
+		var profile domain.Profile
+		var name, displayName, bio, avatarURL, bannerURL sql.NullString
+		var deletedAt sql.NullTime
+
+		err := rows.Scan(
+			&profile.ID, &profile.UserID, &profile.Handle, &name, &displayName,
+			&bio, &avatarURL, &bannerURL, &profile.IsActive, &profile.CreatedAt, &profile.UpdatedAt,
+			&deletedAt)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// Assign nullable fields
+		if name.Valid {
+			profile.Name = name.String
+		}
+		if displayName.Valid {
+			profile.DisplayName = displayName.String
+		}
+		if bio.Valid {
+			profile.Bio = bio.String
+		}
+		if avatarURL.Valid {
+			profile.AvatarURL = avatarURL.String
+		}
+		if bannerURL.Valid {
+			profile.BannerURL = bannerURL.String
+		}
+		if deletedAt.Valid {
+			profile.DeletedAt = &deletedAt.Time
+		}
+
+		profiles = append(profiles, profile)
+	}
+
+	return profiles, rows.Err()
+}
+
 // GetProfileByHandle retrieves a profile by its handle
 func (r *Repository) GetProfileByHandle(ctx context.Context, handle string) (*domain.Profile, error) {
 	query := `

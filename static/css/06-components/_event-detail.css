@@ -475,25 +475,6 @@
     margin-bottom: 1rem;
 }
 
-.rsvp-status {
-    text-align: center;
-    padding: 1.25rem;
-    background: var(--bg-secondary);
-    border-radius: var(--container-radius);
-    margin-bottom: 1.25rem;
-}
-
-.rsvp-status-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.rsvp-status-text {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #16a34a;
-}
-
 .rsvp-count {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -575,6 +556,7 @@
 
 .share-btn {
     padding: 0.625rem;
+    color: var(--text-primary);
     background: var(--bg-secondary);
     border: 1px solid var(--border-light);
     border-radius: 8px;
