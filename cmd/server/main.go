@@ -142,6 +142,13 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/marketplace", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 	mux.HandleFunc("/marketplace/", app.AuthHandler.RequireAuth(handlers.MarketplaceHandler))
 
+	// Register profile API routes (requires authentication)
+	mux.HandleFunc("PUT /api/profile", app.AuthHandler.RequireAuth(app.ProfileHandler.UpdateProfile))
+	mux.HandleFunc("POST /api/profile/avatar", app.AuthHandler.RequireAuth(app.ProfileUploadHandler.UploadAvatar))
+	mux.HandleFunc("POST /api/profile/banner", app.AuthHandler.RequireAuth(app.ProfileUploadHandler.UploadBanner))
+	mux.HandleFunc("DELETE /api/profile/avatar", app.AuthHandler.RequireAuth(app.ProfileUploadHandler.DeleteAvatar))
+	mux.HandleFunc("DELETE /api/profile/banner", app.AuthHandler.RequireAuth(app.ProfileUploadHandler.DeleteBanner))
+
 	// Register post API routes (requires authentication)
 	mux.HandleFunc("/api/posts", app.AuthHandler.RequireAuth(app.PostHandler.HandlePosts))
 	mux.HandleFunc("/api/posts/htmx", app.AuthHandler.RequireAuth(app.PostHandler.HandleCreatePostHTMX))
@@ -182,6 +189,10 @@ func setupRoutes(app *app.App) *http.ServeMux {
 			http.Error(w, "Not found", http.StatusNotFound)
 		}
 	}))
+
+	// Upload file serving (publicly accessible)
+	uploadFS := http.FileServer(http.Dir(app.Config.Upload.StorageDir))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", uploadFS))
 
 	// Static asset routes
 	isDev := app.Config.IsDevelopment()

@@ -13,6 +13,7 @@ import (
 	"circles.diy/internal/config"
 	"circles.diy/internal/content"
 	"circles.diy/internal/dashboard"
+	"circles.diy/internal/domain"
 	"circles.diy/internal/events"
 	"circles.diy/internal/gather"
 	"circles.diy/internal/handlers"
@@ -26,11 +27,12 @@ import (
 
 // App represents the application with all its dependencies
 type App struct {
-	Config   *config.Config
-	Logger   *zap.Logger
-	Postgres *storage.Postgres
-	Redis    *storage.Redis
-	Server   *http.Server
+	Config      *config.Config
+	Logger      *zap.Logger
+	Postgres    *storage.Postgres
+	Redis       *storage.Redis
+	FileStorage domain.FileStorage
+	Server      *http.Server
 
 	// Domain services
 	UserService        *user.Service
@@ -49,12 +51,14 @@ type App struct {
 	// Feature handlers
 	ProfileHandler interface {
 		Handle(w http.ResponseWriter, r *http.Request)
+		UpdateProfile(w http.ResponseWriter, r *http.Request)
 	}
-	CircleHandler     *handlers.CircleHandler
-	DashboardHandler  *handlers.DashboardHandler
-	GatherHandler     *handlers.GatherHandler
-	GatherAPIHandler  *handlers.GatherAPIHandler
-	PostHandler       *handlers.PostHandler
+	ProfileUploadHandler *handlers.ProfileUploadHandler
+	CircleHandler        *handlers.CircleHandler
+	DashboardHandler     *handlers.DashboardHandler
+	GatherHandler        *handlers.GatherHandler
+	GatherAPIHandler     *handlers.GatherAPIHandler
+	PostHandler          *handlers.PostHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -98,6 +102,31 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
+	// Initialize file storage
+	logger.Debug("initializing file storage...")
+	var fileStorage domain.FileStorage
+	switch cfg.Upload.Provider {
+	case "local":
+		fileStorage, err = storage.NewLocalStorage(cfg.Upload, logger)
+		if err != nil {
+			postgres.Close()
+			redis.Close()
+			return nil, fmt.Errorf("failed to initialize local storage: %w", err)
+		}
+	case "s3":
+		postgres.Close()
+		redis.Close()
+		return nil, fmt.Errorf("s3 provider not yet implemented")
+	case "minio":
+		postgres.Close()
+		redis.Close()
+		return nil, fmt.Errorf("minio provider not yet implemented")
+	default:
+		postgres.Close()
+		redis.Close()
+		return nil, fmt.Errorf("unknown storage provider: %s", cfg.Upload.Provider)
+	}
+
 	// Initialize domain services
 	logger.Debug("initializing domain services...")
 
@@ -107,7 +136,7 @@ func New(ctx context.Context) (*App, error) {
 
 	// Profile service
 	profileRepo := profile.NewRepository(postgres.Pool)
-	profileService := profile.NewService(profileRepo, logger)
+	profileService := profile.NewService(profileRepo, fileStorage, logger)
 
 	// Preferences service
 	prefsRepo := preferences.NewRepository(postgres.Pool)
@@ -145,6 +174,7 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize feature handlers
 	logger.Debug("initializing feature handlers...")
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, circleService, logger)
+	profileUploadHandler := handlers.NewProfileUploadHandler(profileService, logger)
 	circleHandler := handlers.NewCircleHandler(circleService, contentService, prefsService, profileService, cfg.AssetVersion, logger)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
 	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
@@ -152,26 +182,28 @@ func New(ctx context.Context) (*App, error) {
 	postHandler := handlers.NewPostHandler(contentService, profileService)
 
 	app := &App{
-		Config:             cfg,
-		Logger:             logger,
-		Postgres:           postgres,
-		Redis:              redis,
-		UserService:        userService,
-		ProfileService:     profileService,
-		PreferencesService: prefsService,
-		CircleService:      circleService,
-		DashboardService:   dashboardService,
-		GatherService:      gatherService,
-		EventService:       eventService,
-		ContentService:     contentService,
-		AuthService:        authService,
-		AuthHandler:        authHandler,
-		ProfileHandler:     profileHandler,
-		CircleHandler:      circleHandler,
-		DashboardHandler:   dashboardHandler,
-		GatherHandler:      gatherHandler,
-		GatherAPIHandler:   gatherAPIHandler,
-		PostHandler:        postHandler,
+		Config:               cfg,
+		Logger:               logger,
+		Postgres:             postgres,
+		Redis:                redis,
+		FileStorage:          fileStorage,
+		UserService:          userService,
+		ProfileService:       profileService,
+		PreferencesService:   prefsService,
+		CircleService:        circleService,
+		DashboardService:     dashboardService,
+		GatherService:        gatherService,
+		EventService:         eventService,
+		ContentService:       contentService,
+		AuthService:          authService,
+		AuthHandler:          authHandler,
+		ProfileHandler:       profileHandler,
+		ProfileUploadHandler: profileUploadHandler,
+		CircleHandler:        circleHandler,
+		DashboardHandler:     dashboardHandler,
+		GatherHandler:        gatherHandler,
+		GatherAPIHandler:     gatherAPIHandler,
+		PostHandler:          postHandler,
 	}
 
 	return app, nil
@@ -276,6 +308,11 @@ func (a *App) HealthCheck(ctx context.Context) error {
 	// Check Redis
 	if err := a.Redis.HealthCheck(ctx); err != nil {
 		return fmt.Errorf("redis health check failed: %w", err)
+	}
+
+	// Check file storage
+	if err := a.FileStorage.HealthCheck(ctx); err != nil {
+		return fmt.Errorf("file storage health check failed: %w", err)
 	}
 
 	return nil

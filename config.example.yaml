@@ -55,3 +55,21 @@ templates:
 
 static:
   hot_reload: true # Auto-rebuild CSS in development
+
+upload:
+  provider: "local" # local, s3, minio
+  storage_dir: "./data/uploads"
+  base_url: "/uploads"
+  max_avatar_size_mb: 5
+  max_banner_size_mb: 10
+  allowed_types:
+    - "image/jpeg"
+    - "image/png"
+    - "image/webp"
+  # S3/MinIO settings (only needed if provider is s3 or minio)
+  # endpoint: "localhost:9000"
+  # access_key: "minioadmin"
+  # secret_key: "minioadmin"
+  # region: "us-east-1"
+  # bucket_name: "circles-uploads"
+  # use_ssl: false

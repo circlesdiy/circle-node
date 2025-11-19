@@ -18,6 +18,7 @@ type Config struct {
 	Logging      LoggingConfig   `yaml:"logging"`
 	Templates    TemplatesConfig `yaml:"templates"`
 	Static       StaticConfig    `yaml:"static"`
+	Upload       UploadConfig    `yaml:"upload"`
 	AssetVersion string          // Generated at build time for cache busting
 }
 
@@ -84,6 +85,28 @@ type StaticConfig struct {
 	HotReload bool `yaml:"hot_reload"`
 }
 
+type UploadConfig struct {
+	// Storage provider: "local", "s3", "minio"
+	Provider string `yaml:"provider"`
+
+	// Local filesystem settings
+	StorageDir string `yaml:"storage_dir"`
+	BaseURL    string `yaml:"base_url"`
+
+	// S3/MinIO settings (for future use)
+	Endpoint   string `yaml:"endpoint"`
+	AccessKey  string `yaml:"access_key"`
+	SecretKey  string `yaml:"secret_key"`
+	Region     string `yaml:"region"`
+	BucketName string `yaml:"bucket_name"`
+	UseSSL     bool   `yaml:"use_ssl"`
+
+	// Validation limits
+	MaxAvatarSizeMB int64    `yaml:"max_avatar_size_mb"`
+	MaxBannerSizeMB int64    `yaml:"max_banner_size_mb"`
+	AllowedTypes    []string `yaml:"allowed_types"`
+}
+
 // Load reads configuration from YAML file and applies environment variable overrides
 func Load(path string) (*Config, error) {
 	// Set default config path if not provided
@@ -146,6 +169,14 @@ func Load(path string) (*Config, error) {
 		},
 		Static: StaticConfig{
 			HotReload: true,
+		},
+		Upload: UploadConfig{
+			Provider:        "local",
+			StorageDir:      "./data/uploads",
+			BaseURL:         "/uploads",
+			MaxAvatarSizeMB: 5,
+			MaxBannerSizeMB: 10,
+			AllowedTypes:    []string{"image/jpeg", "image/png", "image/webp"},
 		},
 	}
 
@@ -253,6 +284,32 @@ func (c *Config) applyEnvOverrides() {
 	if v := os.Getenv("LOG_FORMAT"); v != "" {
 		c.Logging.Format = v
 	}
+
+	// Upload
+	if v := os.Getenv("UPLOAD_PROVIDER"); v != "" {
+		c.Upload.Provider = v
+	}
+	if v := os.Getenv("UPLOAD_STORAGE_DIR"); v != "" {
+		c.Upload.StorageDir = v
+	}
+	if v := os.Getenv("UPLOAD_BASE_URL"); v != "" {
+		c.Upload.BaseURL = v
+	}
+	if v := os.Getenv("UPLOAD_ENDPOINT"); v != "" {
+		c.Upload.Endpoint = v
+	}
+	if v := os.Getenv("UPLOAD_ACCESS_KEY"); v != "" {
+		c.Upload.AccessKey = v
+	}
+	if v := os.Getenv("UPLOAD_SECRET_KEY"); v != "" {
+		c.Upload.SecretKey = v
+	}
+	if v := os.Getenv("UPLOAD_REGION"); v != "" {
+		c.Upload.Region = v
+	}
+	if v := os.Getenv("UPLOAD_BUCKET_NAME"); v != "" {
+		c.Upload.BucketName = v
+	}
 }
 
 // Validate checks if the configuration is valid
@@ -298,6 +355,45 @@ func (c *Config) Validate() error {
 	if c.Server.Environment == "production" &&
 		c.Security.CSRFSecret == "change-this-to-a-random-32-byte-string" {
 		return fmt.Errorf("must set a secure CSRF secret in production")
+	}
+
+	// Validate upload config
+	if c.Upload.Provider == "" {
+		return fmt.Errorf("upload provider is required")
+	}
+	if c.Upload.Provider != "local" && c.Upload.Provider != "s3" && c.Upload.Provider != "minio" {
+		return fmt.Errorf("invalid upload provider: %s (must be local, s3, or minio)", c.Upload.Provider)
+	}
+	if c.Upload.Provider == "local" {
+		if c.Upload.StorageDir == "" {
+			return fmt.Errorf("upload storage_dir is required for local provider")
+		}
+		if c.Upload.BaseURL == "" {
+			return fmt.Errorf("upload base_url is required for local provider")
+		}
+	}
+	if c.Upload.Provider == "s3" || c.Upload.Provider == "minio" {
+		if c.Upload.Endpoint == "" {
+			return fmt.Errorf("upload endpoint is required for %s provider", c.Upload.Provider)
+		}
+		if c.Upload.AccessKey == "" {
+			return fmt.Errorf("upload access_key is required for %s provider", c.Upload.Provider)
+		}
+		if c.Upload.SecretKey == "" {
+			return fmt.Errorf("upload secret_key is required for %s provider", c.Upload.Provider)
+		}
+		if c.Upload.BucketName == "" {
+			return fmt.Errorf("upload bucket_name is required for %s provider", c.Upload.Provider)
+		}
+	}
+	if c.Upload.MaxAvatarSizeMB <= 0 {
+		return fmt.Errorf("upload max_avatar_size_mb must be positive")
+	}
+	if c.Upload.MaxBannerSizeMB <= 0 {
+		return fmt.Errorf("upload max_banner_size_mb must be positive")
+	}
+	if len(c.Upload.AllowedTypes) == 0 {
+		return fmt.Errorf("upload allowed_types cannot be empty")
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -327,4 +328,106 @@ func (h *ProfileHandler) handleExternalProfile(
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+// UpdateProfile handles PUT /api/profile - Updates profile text fields
+func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get authenticated session
+	session := auth.GetSession(ctx)
+	if session == nil || session.ActiveProfileID == nil {
+		h.logger.Warn("update profile attempted without session")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Parse JSON request body
+	var req struct {
+		Handle      *string `json:"handle"`
+		Name        *string `json:"name"`
+		DisplayName *string `json:"display_name"`
+		Bio         *string `json:"bio"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("failed to parse request body",
+			zap.String("profile_id", profileID),
+			zap.Error(err))
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Get current profile
+	profile, err := h.profileService.GetByID(ctx, profileID)
+	if err != nil {
+		h.logger.Error("failed to get profile",
+			zap.String("profile_id", profileID),
+			zap.Error(err))
+		http.Error(w, "Failed to load profile", http.StatusInternalServerError)
+		return
+	}
+
+	if profile == nil {
+		http.Error(w, "Profile not found", http.StatusNotFound)
+		return
+	}
+
+	// Update fields if provided
+	if req.Handle != nil {
+		// Check if handle is already taken (unless it's the same)
+		if *req.Handle != profile.Handle {
+			exists, err := h.profileService.CheckHandleExists(ctx, *req.Handle)
+			if err != nil {
+				h.logger.Error("failed to check handle existence",
+					zap.String("handle", *req.Handle),
+					zap.Error(err))
+				http.Error(w, "Failed to validate handle", http.StatusInternalServerError)
+				return
+			}
+			if exists {
+				http.Error(w, "Handle is already taken", http.StatusConflict)
+				return
+			}
+		}
+		profile.Handle = *req.Handle
+	}
+
+	if req.Name != nil {
+		profile.Name = *req.Name
+	}
+
+	if req.DisplayName != nil {
+		profile.DisplayName = *req.DisplayName
+	}
+
+	if req.Bio != nil {
+		profile.Bio = *req.Bio
+	}
+
+	// Update profile
+	if err := h.profileService.Update(ctx, profile); err != nil {
+		h.logger.Error("failed to update profile",
+			zap.String("profile_id", profileID),
+			zap.Error(err))
+		http.Error(w, "Failed to update profile: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated profile
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"profile": map[string]string{
+			"id":           profile.ID,
+			"handle":       profile.Handle,
+			"name":         profile.Name,
+			"display_name": profile.DisplayName,
+			"bio":          profile.Bio,
+			"avatar_url":   profile.AvatarURL,
+			"banner_url":   profile.BannerURL,
+		},
+		"message": "Profile updated successfully",
+	})
 }

@@ -305,12 +305,12 @@ func (r *Repository) GetActiveProfileByUserID(ctx context.Context, userID string
 func (r *Repository) UpdateProfile(ctx context.Context, profile *domain.Profile) error {
 	query := `
 		UPDATE profiles
-		SET handle = $2, name = $3, display_name = $4, bio = $5, avatar_url = $6, is_active = $7, updated_at = $8
+		SET handle = $2, name = $3, display_name = $4, bio = $5, avatar_url = $6, banner_url = $7, is_active = $8, updated_at = $9
 		WHERE id = $1`
 
 	_, err := r.db.Exec(ctx, query,
 		profile.ID, profile.Handle, profile.Name, profile.DisplayName,
-		profile.Bio, profile.AvatarURL, profile.IsActive, profile.UpdatedAt)
+		profile.Bio, profile.AvatarURL, profile.BannerURL, profile.IsActive, profile.UpdatedAt)
 
 	return err
 }
