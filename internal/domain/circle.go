@@ -46,14 +46,15 @@ const (
 
 // CircleMembership represents a profile's membership in a circle
 type CircleMembership struct {
-	ID        string     `json:"id"`
-	CircleID  string     `json:"circle_id"`
-	ProfileID string     `json:"profile_id"`
-	State     string     `json:"state"` // active, invited, banned, left
-	JoinedAt  time.Time  `json:"joined_at"`
-	LeftAt    *time.Time `json:"left_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID               string     `json:"id"`
+	CircleID         string     `json:"circle_id"`
+	ProfileID        string     `json:"profile_id"`
+	InviterProfileID *string    `json:"inviter_profile_id,omitempty"` // Who invited this member
+	State            string     `json:"state"`                         // active, invited, banned, left
+	JoinedAt         time.Time  `json:"joined_at"`
+	LeftAt           *time.Time `json:"left_at,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
 // IsActive checks if the membership is currently active
@@ -73,3 +74,10 @@ const (
 	MembershipStateBanned  = "banned"
 	MembershipStateLeft    = "left"
 )
+
+// CircleMembershipWithInviter includes membership data with inviter profile information
+type CircleMembershipWithInviter struct {
+	CircleMembership
+	InviterName   string `json:"inviter_name,omitempty"`
+	InviterHandle string `json:"inviter_handle,omitempty"`
+}

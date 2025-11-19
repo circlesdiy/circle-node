@@ -21,7 +21,9 @@
                         <div class="icon-container" style="background: {{.IconBgColor}};">{{.Icon}}</div>
                         <div class="content">
                             <div class="title">{{.Title}}</div>
+                            {{if .Description}}
                             <div class="description">{{.Description}}</div>
+                            {{end}}
                             {{if .SourceCircle}}
                             <div class="meta">{{.SourceCircle}}{{if .TimeAgo}} • {{.TimeAgo}}{{end}}</div>
                             {{end}}

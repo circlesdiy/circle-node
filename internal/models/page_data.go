@@ -58,6 +58,7 @@ type CircleDetailPageData struct {
 	BaseData
 	Circle              domain.Circle       `json:"circle"`
 	Members             []CircleMember      `json:"members"`
+	PendingInvites      []CircleMember      `json:"pending_invites"`
 	MemberCount         int                 `json:"member_count"`
 	RecentPosts         []CirclePost        `json:"recent_posts"`
 	UpcomingGatherings  []GatheringItem     `json:"upcoming_gatherings"`
@@ -70,6 +71,7 @@ type CircleDetailPageData struct {
 	CanEditVisibility   bool                `json:"can_edit_visibility"`
 	CanEditPermissions  bool                `json:"can_edit_permissions"`
 	UserRole            string              `json:"user_role"` // owner, admin, member, or empty
+	ActiveProfileID     string              `json:"active_profile_id"`
 	CircleStats         CircleDetailStats   `json:"circle_stats"`
 	ActiveTab           string              `json:"active_tab"` // chat, gatherings, files, members, settings
 }

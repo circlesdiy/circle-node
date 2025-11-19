@@ -35,7 +35,7 @@
                 </div>
                 <div class="invitations-grid" style="display: grid; gap: 1rem;">
                     {{range .PendingInvitations}}
-                    <div class="card invitation-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px);">
+                    <div class="card invitation-card" style="background: linear-gradient(135deg, var(--warm-accent) 0%, var(--cool-accent) 100%); border: 1px solid rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px);">
                         <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem;">
                             <div style="flex-shrink: 0;">
                                 {{if .CircleAvatar}}

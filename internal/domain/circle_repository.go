@@ -21,6 +21,7 @@ type CircleRepository interface {
 	GetMembershipsByProfileID(ctx context.Context, profileID string) ([]CircleMembership, error)
 	GetActiveMembershipsByCircleID(ctx context.Context, circleID string) ([]CircleMembership, error)
 	GetPendingInvitationsByProfileID(ctx context.Context, profileID string) ([]CircleMembership, error)
+	GetPendingInvitationsWithInviterByProfileID(ctx context.Context, profileID string) ([]CircleMembershipWithInviter, error)
 	GetCircleMembersByCircleID(ctx context.Context, circleID string, limit, offset int) ([]CircleMembership, error)
 	CountMembersByCircleID(ctx context.Context, circleID string) (int, error)
 	UpdateMembership(ctx context.Context, membership *CircleMembership) error

@@ -340,13 +340,14 @@ func (s *Service) InviteMember(ctx context.Context, circleID, profileID, inviter
 	// Create invitation
 	now := time.Now().UTC()
 	membership := &domain.CircleMembership{
-		ID:        uuid.New().String(),
-		CircleID:  circleID,
-		ProfileID: profileID,
-		State:     domain.MembershipStateInvited,
-		JoinedAt:  now, // Will be updated when accepted
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:               uuid.New().String(),
+		CircleID:         circleID,
+		ProfileID:        profileID,
+		InviterProfileID: &inviterProfileID,
+		State:            domain.MembershipStateInvited,
+		JoinedAt:         now, // Will be updated when accepted
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	if err := s.repo.CreateMembership(ctx, membership); err != nil {
@@ -746,6 +747,24 @@ func (s *Service) GetPendingInvitations(ctx context.Context, profileID string) (
 	invitations, err := s.repo.GetPendingInvitationsByProfileID(ctx, profileID)
 	if err != nil {
 		s.logger.Error("failed to get pending invitations",
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		return nil, fmt.Errorf("failed to get pending invitations: %w", err)
+	}
+
+	return invitations, nil
+}
+
+// GetPendingInvitationsWithInviter retrieves pending invitations with inviter profile information
+func (s *Service) GetPendingInvitationsWithInviter(ctx context.Context, profileID string) ([]domain.CircleMembershipWithInviter, error) {
+	s.logger.Debug("getting pending invitations with inviter info",
+		zap.String("profile_id", profileID),
+	)
+
+	invitations, err := s.repo.GetPendingInvitationsWithInviterByProfileID(ctx, profileID)
+	if err != nil {
+		s.logger.Error("failed to get pending invitations with inviter",
 			zap.String("profile_id", profileID),
 			zap.Error(err),
 		)

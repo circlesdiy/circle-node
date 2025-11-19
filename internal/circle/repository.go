@@ -351,15 +351,16 @@ func (r *Repository) GetPublicCircles(ctx context.Context, limit, offset int) ([
 func (r *Repository) CreateMembership(ctx context.Context, membership *domain.CircleMembership) error {
 	query := `
 		INSERT INTO circle_memberships (
-			id, circle_id, profile_id, state,
+			id, circle_id, profile_id, inviter_profile_id, state,
 			joined_at, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
 	_, err := r.db.Exec(ctx, query,
 		membership.ID,
 		membership.CircleID,
 		membership.ProfileID,
+		membership.InviterProfileID,
 		membership.State,
 		membership.JoinedAt,
 		membership.CreatedAt,
@@ -372,7 +373,7 @@ func (r *Repository) CreateMembership(ctx context.Context, membership *domain.Ci
 // GetMembershipByID retrieves a membership by ID
 func (r *Repository) GetMembershipByID(ctx context.Context, id string) (*domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE id = $1
@@ -380,11 +381,13 @@ func (r *Repository) GetMembershipByID(ctx context.Context, id string) (*domain.
 
 	var membership domain.CircleMembership
 	var leftAt sql.NullTime
+	var inviterProfileID sql.NullString
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&membership.ID,
 		&membership.CircleID,
 		&membership.ProfileID,
+		&inviterProfileID,
 		&membership.State,
 		&membership.JoinedAt,
 		&leftAt,
@@ -401,6 +404,9 @@ func (r *Repository) GetMembershipByID(ctx context.Context, id string) (*domain.
 
 	if leftAt.Valid {
 		membership.LeftAt = &leftAt.Time
+	}
+	if inviterProfileID.Valid {
+		membership.InviterProfileID = &inviterProfileID.String
 	}
 
 	return &membership, nil
@@ -409,7 +415,7 @@ func (r *Repository) GetMembershipByID(ctx context.Context, id string) (*domain.
 // GetMembershipByCircleAndProfile retrieves a membership by circle and profile
 func (r *Repository) GetMembershipByCircleAndProfile(ctx context.Context, circleID, profileID string) (*domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE circle_id = $1 AND profile_id = $2
@@ -417,11 +423,13 @@ func (r *Repository) GetMembershipByCircleAndProfile(ctx context.Context, circle
 
 	var membership domain.CircleMembership
 	var leftAt sql.NullTime
+	var inviterProfileID sql.NullString
 
 	err := r.db.QueryRow(ctx, query, circleID, profileID).Scan(
 		&membership.ID,
 		&membership.CircleID,
 		&membership.ProfileID,
+		&inviterProfileID,
 		&membership.State,
 		&membership.JoinedAt,
 		&leftAt,
@@ -438,6 +446,9 @@ func (r *Repository) GetMembershipByCircleAndProfile(ctx context.Context, circle
 
 	if leftAt.Valid {
 		membership.LeftAt = &leftAt.Time
+	}
+	if inviterProfileID.Valid {
+		membership.InviterProfileID = &inviterProfileID.String
 	}
 
 	return &membership, nil
@@ -496,7 +507,7 @@ func (r *Repository) DeleteMembership(ctx context.Context, id string) error {
 // GetMembershipsByCircleID retrieves all memberships for a circle
 func (r *Repository) GetMembershipsByCircleID(ctx context.Context, circleID string) ([]domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE circle_id = $1
@@ -513,11 +524,13 @@ func (r *Repository) GetMembershipsByCircleID(ctx context.Context, circleID stri
 	for rows.Next() {
 		var membership domain.CircleMembership
 		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
 
 		err := rows.Scan(
 			&membership.ID,
 			&membership.CircleID,
 			&membership.ProfileID,
+			&inviterProfileID,
 			&membership.State,
 			&membership.JoinedAt,
 			&leftAt,
@@ -531,6 +544,9 @@ func (r *Repository) GetMembershipsByCircleID(ctx context.Context, circleID stri
 		if leftAt.Valid {
 			membership.LeftAt = &leftAt.Time
 		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
+		}
 
 		memberships = append(memberships, membership)
 	}
@@ -541,7 +557,7 @@ func (r *Repository) GetMembershipsByCircleID(ctx context.Context, circleID stri
 // GetMembershipsByProfileID retrieves all memberships for a profile
 func (r *Repository) GetMembershipsByProfileID(ctx context.Context, profileID string) ([]domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE profile_id = $1
@@ -558,11 +574,13 @@ func (r *Repository) GetMembershipsByProfileID(ctx context.Context, profileID st
 	for rows.Next() {
 		var membership domain.CircleMembership
 		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
 
 		err := rows.Scan(
 			&membership.ID,
 			&membership.CircleID,
 			&membership.ProfileID,
+			&inviterProfileID,
 			&membership.State,
 			&membership.JoinedAt,
 			&leftAt,
@@ -576,6 +594,9 @@ func (r *Repository) GetMembershipsByProfileID(ctx context.Context, profileID st
 		if leftAt.Valid {
 			membership.LeftAt = &leftAt.Time
 		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
+		}
 
 		memberships = append(memberships, membership)
 	}
@@ -586,7 +607,7 @@ func (r *Repository) GetMembershipsByProfileID(ctx context.Context, profileID st
 // GetActiveMembershipsByCircleID retrieves active memberships for a circle
 func (r *Repository) GetActiveMembershipsByCircleID(ctx context.Context, circleID string) ([]domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE circle_id = $1 AND state = 'active' AND left_at IS NULL
@@ -603,11 +624,13 @@ func (r *Repository) GetActiveMembershipsByCircleID(ctx context.Context, circleI
 	for rows.Next() {
 		var membership domain.CircleMembership
 		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
 
 		err := rows.Scan(
 			&membership.ID,
 			&membership.CircleID,
 			&membership.ProfileID,
+			&inviterProfileID,
 			&membership.State,
 			&membership.JoinedAt,
 			&leftAt,
@@ -621,6 +644,9 @@ func (r *Repository) GetActiveMembershipsByCircleID(ctx context.Context, circleI
 		if leftAt.Valid {
 			membership.LeftAt = &leftAt.Time
 		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
+		}
 
 		memberships = append(memberships, membership)
 	}
@@ -631,7 +657,7 @@ func (r *Repository) GetActiveMembershipsByCircleID(ctx context.Context, circleI
 // GetPendingInvitationsByProfileID retrieves pending invitations for a profile
 func (r *Repository) GetPendingInvitationsByProfileID(ctx context.Context, profileID string) ([]domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
 		WHERE profile_id = $1 AND state = 'invited'
@@ -648,11 +674,13 @@ func (r *Repository) GetPendingInvitationsByProfileID(ctx context.Context, profi
 	for rows.Next() {
 		var membership domain.CircleMembership
 		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
 
 		err := rows.Scan(
 			&membership.ID,
 			&membership.CircleID,
 			&membership.ProfileID,
+			&inviterProfileID,
 			&membership.State,
 			&membership.JoinedAt,
 			&leftAt,
@@ -666,6 +694,68 @@ func (r *Repository) GetPendingInvitationsByProfileID(ctx context.Context, profi
 		if leftAt.Valid {
 			membership.LeftAt = &leftAt.Time
 		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
+		}
+
+		memberships = append(memberships, membership)
+	}
+
+	return memberships, rows.Err()
+}
+
+// GetPendingInvitationsWithInviterByProfileID retrieves pending invitations with inviter profile information
+func (r *Repository) GetPendingInvitationsWithInviterByProfileID(ctx context.Context, profileID string) ([]domain.CircleMembershipWithInviter, error) {
+	query := `
+		SELECT
+			cm.id, cm.circle_id, cm.profile_id, cm.inviter_profile_id, cm.state,
+			cm.joined_at, cm.left_at, cm.created_at, cm.updated_at,
+			COALESCE(p.name, '') as inviter_name,
+			COALESCE(p.handle, '') as inviter_handle
+		FROM circle_memberships cm
+		LEFT JOIN profiles p ON cm.inviter_profile_id = p.id
+		WHERE cm.profile_id = $1 AND cm.state = 'invited'
+		ORDER BY cm.created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, profileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var memberships []domain.CircleMembershipWithInviter
+	for rows.Next() {
+		var membership domain.CircleMembershipWithInviter
+		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
+		var inviterName, inviterHandle string
+
+		err := rows.Scan(
+			&membership.ID,
+			&membership.CircleID,
+			&membership.ProfileID,
+			&inviterProfileID,
+			&membership.State,
+			&membership.JoinedAt,
+			&leftAt,
+			&membership.CreatedAt,
+			&membership.UpdatedAt,
+			&inviterName,
+			&inviterHandle,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if leftAt.Valid {
+			membership.LeftAt = &leftAt.Time
+		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
+		}
+		membership.InviterName = inviterName
+		membership.InviterHandle = inviterHandle
 
 		memberships = append(memberships, membership)
 	}
@@ -676,10 +766,10 @@ func (r *Repository) GetPendingInvitationsByProfileID(ctx context.Context, profi
 // GetCircleMembersByCircleID retrieves members with pagination
 func (r *Repository) GetCircleMembersByCircleID(ctx context.Context, circleID string, limit, offset int) ([]domain.CircleMembership, error) {
 	query := `
-		SELECT id, circle_id, profile_id, state,
+		SELECT id, circle_id, profile_id, inviter_profile_id, state,
 			   joined_at, left_at, created_at, updated_at
 		FROM circle_memberships
-		WHERE circle_id = $1 AND state = 'active'
+		WHERE circle_id = $1
 		ORDER BY joined_at ASC
 		LIMIT $2 OFFSET $3
 	`
@@ -694,11 +784,13 @@ func (r *Repository) GetCircleMembersByCircleID(ctx context.Context, circleID st
 	for rows.Next() {
 		var membership domain.CircleMembership
 		var leftAt sql.NullTime
+		var inviterProfileID sql.NullString
 
 		err := rows.Scan(
 			&membership.ID,
 			&membership.CircleID,
 			&membership.ProfileID,
+			&inviterProfileID,
 			&membership.State,
 			&membership.JoinedAt,
 			&leftAt,
@@ -711,6 +803,9 @@ func (r *Repository) GetCircleMembersByCircleID(ctx context.Context, circleID st
 
 		if leftAt.Valid {
 			membership.LeftAt = &leftAt.Time
+		}
+		if inviterProfileID.Valid {
+			membership.InviterProfileID = &inviterProfileID.String
 		}
 
 		memberships = append(memberships, membership)

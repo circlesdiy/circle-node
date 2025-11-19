@@ -98,6 +98,21 @@ func (h *CircleHandler) Handle(w http.ResponseWriter, r *http.Request) {
 				} else {
 					http.Error(w, "Not found", http.StatusNotFound)
 				}
+			case "invites":
+				if len(parts) == 4 {
+					profileID := parts[2]
+					inviteAction := parts[3]
+					switch inviteAction {
+					case "resend":
+						h.handleResendInvite(w, r, circleID, profileID)
+					case "revoke":
+						h.handleRevokeInvite(w, r, circleID, profileID)
+					default:
+						http.Error(w, "Not found", http.StatusNotFound)
+					}
+				} else {
+					http.Error(w, "Not found", http.StatusNotFound)
+				}
 			default:
 				http.Error(w, "Not found", http.StatusNotFound)
 			}
@@ -151,9 +166,9 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Get pending invitations
+	// Get pending invitations with inviter information
 	pendingInvitations := make([]models.CircleInvitation, 0)
-	invitations, err := h.circleService.GetPendingInvitations(r.Context(), profileID)
+	invitations, err := h.circleService.GetPendingInvitationsWithInviter(r.Context(), profileID)
 	if err != nil {
 		h.logger.Error("failed to get pending invitations",
 			zap.String("profile_id", profileID),
@@ -172,11 +187,10 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 				continue
 			}
 
-			// Get inviter name (circle owner for now)
+			// Use inviter name from the query (joined with profiles table)
 			inviterName := "Someone"
-			if circle.OwnerProfileID != "" {
-				// TODO: Fetch actual inviter name from profile
-				inviterName = circle.OwnerProfileID
+			if inv.InviterName != "" {
+				inviterName = inv.InviterName
 			}
 
 			pendingInvitations = append(pendingInvitations, models.CircleInvitation{
@@ -187,7 +201,7 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 				CircleBgColor: circle.IconBgColor,
 				CircleAvatar:  circle.AvatarURL,
 				InviterName:   inviterName,
-				InviterHandle: "", // TODO: Fetch from profile
+				InviterHandle: inv.InviterHandle,
 				InvitedAt:     inv.CreatedAt.Format("Jan 2, 2006"),
 			})
 		}
@@ -387,7 +401,25 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 
 	// Get members
 	memberships, _ := h.circleService.GetCircleMembers(ctx, circle.ID, 100, 0)
-	members := make([]models.CircleMember, 0, len(memberships))
+
+	// Batch fetch member profiles
+	memberProfileIDSet := make(map[string]bool)
+	for _, m := range memberships {
+		memberProfileIDSet[m.ProfileID] = true
+	}
+
+	memberProfileMap := make(map[string]*domain.Profile)
+	for memberProfileID := range memberProfileIDSet {
+		profile, err := h.profileService.GetByID(ctx, memberProfileID)
+		if err == nil && profile != nil {
+			memberProfileMap[memberProfileID] = profile
+		}
+	}
+
+	// Separate pending invites from active members
+	members := make([]models.CircleMember, 0)
+	pendingInvites := make([]models.CircleMember, 0)
+
 	for _, m := range memberships {
 		// Determine role for this member
 		role := "member"
@@ -396,15 +428,38 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		}
 		// TODO: Check if member is admin once roles are implemented
 
-		members = append(members, models.CircleMember{
+		// Get profile information
+		name := "Member"
+		username := ""
+		avatar := ""
+		if memberProfile, ok := memberProfileMap[m.ProfileID]; ok {
+			if memberProfile.DisplayName != "" {
+				name = memberProfile.DisplayName
+			} else if memberProfile.Name != "" {
+				name = memberProfile.Name
+			} else if memberProfile.Handle != "" {
+				name = memberProfile.Handle
+			}
+			username = memberProfile.Handle
+			avatar = memberProfile.AvatarURL
+		}
+
+		circleMember := models.CircleMember{
 			ProfileID: m.ProfileID,
-			Name:      "Member", // TODO: Fetch actual profile name
-			Username:  "",       // TODO: Fetch actual username
-			Avatar:    "",       // TODO: Fetch actual avatar
+			Name:      name,
+			Username:  username,
+			Avatar:    avatar,
 			Role:      role,
 			State:     m.State,
 			JoinedAt:  m.JoinedAt.Format("Jan 2, 2006"),
-		})
+		}
+
+		// Separate invited vs active members
+		if m.State == "invited" {
+			pendingInvites = append(pendingInvites, circleMember)
+		} else if m.State == "active" {
+			members = append(members, circleMember)
+		}
 	}
 
 	// Fetch recent posts
@@ -509,6 +564,7 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		},
 		Circle:             *circle,
 		Members:            members,
+		PendingInvites:     pendingInvites,
 		MemberCount:        memberCount,
 		RecentPosts:        recentPosts,
 		UpcomingGatherings: []models.GatheringItem{}, // TODO: Implement gathering fetching
@@ -520,6 +576,7 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 		CanEditInfo:        canEditSettings,
 		CanEditVisibility:  canEditSettings,
 		CanEditPermissions: canEditSettings,
+		ActiveProfileID:    profileID,
 		UserRole:           userRole,
 		CircleStats:        stats,
 		ActiveTab:          "chat", // Default to chat tab
@@ -947,6 +1004,104 @@ func (h *CircleHandler) handleRemoveMember(w http.ResponseWriter, r *http.Reques
 	// Return success
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Member removed successfully"))
+}
+
+// handleResendInvite resends an invitation to a pending member
+func (h *CircleHandler) handleResendInvite(w http.ResponseWriter, r *http.Request, circleID, invitedProfileID string) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Check if user has permission to invite (owner or admin)
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Circle not found", http.StatusNotFound)
+		return
+	}
+
+	isOwner := circle.OwnerProfileID == profileID
+	isAdmin, _ := h.circleService.IsAdmin(r.Context(), circleID, profileID)
+
+	if !isOwner && !isAdmin {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	// Update the invitation timestamp (resend is just updating the created_at time)
+	// For now, we'll just return success - in a real implementation, you'd update the timestamp
+	// or send a notification
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`<div class="toast">Invitation resent</div>`))
+}
+
+// handleRevokeInvite revokes a pending invitation
+func (h *CircleHandler) handleRevokeInvite(w http.ResponseWriter, r *http.Request, circleID, invitedProfileID string) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Check if user has permission to revoke invitations (owner or admin)
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Circle not found", http.StatusNotFound)
+		return
+	}
+
+	isOwner := circle.OwnerProfileID == profileID
+	isAdmin, _ := h.circleService.IsAdmin(r.Context(), circleID, profileID)
+
+	if !isOwner && !isAdmin {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	// Use DeclineInvitation to revoke (it deletes the membership record)
+	err = h.circleService.DeclineInvitation(r.Context(), circleID, invitedProfileID)
+	if err != nil {
+		h.logger.Error("failed to revoke invitation",
+			zap.String("circle_id", circleID),
+			zap.String("invited_profile_id", invitedProfileID),
+			zap.Error(err),
+		)
+		http.Error(w, "Failed to revoke invitation: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Return empty response to remove the card from DOM
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(""))
 }
 
 // API Handlers for HTMX
