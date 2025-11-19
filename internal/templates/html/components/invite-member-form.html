@@ -1,0 +1,48 @@
+{{define "invite-member-form"}}
+<form class="circle-form" hx-post="/api/circles/{{.CircleID}}/invite" hx-swap="innerHTML" hx-target="#modal-body">
+  <h2 class="modal-title">Invite Member</h2>
+  <p class="modal-description">Add someone new to this circle</p>
+
+  <div class="form-group">
+    <label class="form-label" for="username">
+      Username <span class="form-label-required">*</span>
+    </label>
+    <input
+      class="form-input"
+      type="text"
+      id="username"
+      name="username"
+      required
+      autocomplete="off"
+      placeholder="Enter their username"
+      autofocus
+    />
+    <span class="form-help">The person's @username or handle</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="role">Role</label>
+    <div class="radio-group">
+      <label class="radio-option">
+        <input type="radio" name="role" value="member" checked />
+        <div class="radio-content">
+          <span class="radio-title">Member</span>
+          <span class="radio-description">Can participate and view content</span>
+        </div>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="role" value="admin" />
+        <div class="radio-content">
+          <span class="radio-title">Admin</span>
+          <span class="radio-description">Can manage members and settings</span>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-text" onclick="closeModal()">Cancel</button>
+    <button type="submit" class="btn btn-primary">Send Invitation</button>
+  </div>
+</form>
+{{end}}

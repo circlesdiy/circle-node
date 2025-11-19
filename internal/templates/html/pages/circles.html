@@ -28,6 +28,57 @@
 
     <div class="circles-content">
         <div class="circles-main">
+            {{if .PendingInvitations}}
+            <section class="pending-invitations-section" style="margin-bottom: 2rem;">
+                <div class="section-header">
+                    <h2>Pending Invitations</h2>
+                </div>
+                <div class="invitations-grid" style="display: grid; gap: 1rem;">
+                    {{range .PendingInvitations}}
+                    <div class="card invitation-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px);">
+                        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem;">
+                            <div style="flex-shrink: 0;">
+                                {{if .CircleAvatar}}
+                                <img src="{{.CircleAvatar}}" alt="{{.CircleName}}" style="width: 3rem; height: 3rem; border-radius: 0.5rem; object-fit: cover;">
+                                {{else if .CircleIcon}}
+                                <div style="width: 3rem; height: 3rem; border-radius: 0.5rem; background: {{.CircleBgColor}}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                    {{.CircleIcon}}
+                                </div>
+                                {{else}}
+                                <div style="width: 3rem; height: 3rem; border-radius: 0.5rem; background: var(--primary-accent); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                    ⭕
+                                </div>
+                                {{end}}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h3 style="margin: 0 0 0.25rem 0; font-size: 1.125rem; font-weight: 600;">{{.CircleName}}</h3>
+                                <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">
+                                    {{.InviterName}} invited you to join • {{.InvitedAt}}
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                <button class="btn-primary"
+                                        hx-post="/api/circles/{{.CircleID}}/invite/accept"
+                                        hx-swap="outerHTML"
+                                        hx-target="closest .invitation-card"
+                                        style="padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+                                    Accept
+                                </button>
+                                <button class="btn-secondary"
+                                        hx-post="/api/circles/{{.CircleID}}/invite/decline"
+                                        hx-swap="outerHTML"
+                                        hx-target="closest .invitation-card"
+                                        style="padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap;">
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </section>
+            {{end}}
+
             <section class="my-circles-section">
                 <div class="section-header">
                     <h2>Your Circles</h2>

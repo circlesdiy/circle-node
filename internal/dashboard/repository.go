@@ -13,6 +13,7 @@ type Repository interface {
 	GetUpcomingEvents(ctx context.Context, profileID string, days int) ([]EventWithDetails, error)
 	GetUserCirclesWithActivity(ctx context.Context, profileID string) ([]CircleActivity, error)
 	GetSerendipityRecommendations(ctx context.Context, profileID string) (*Recommendation, error)
+	GetPendingInvitations(ctx context.Context, profileID string) ([]PendingInvitation, error)
 }
 
 type CoordinationNeed struct {
@@ -73,4 +74,17 @@ type Recommendation struct {
 	EventTitle       string
 	EventDescription string
 	EventTime        string
+}
+
+type PendingInvitation struct {
+	MembershipID  string
+	CircleID      string
+	CircleName    string
+	CircleIcon    string
+	CircleBgColor template.CSS
+	CircleAvatar  string
+	InviterID     string
+	InviterName   string
+	InviterHandle string
+	InvitedAt     time.Time
 }

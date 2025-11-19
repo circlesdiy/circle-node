@@ -19,6 +19,8 @@ type WhatsNewItem struct {
 	Description  string
 	SourceCircle string
 	TimeAgo      string
+	CircleID     string // For invitation-specific actions
+	EntityID     string // For invitation membership ID
 }
 
 type UpcomingEvent struct {

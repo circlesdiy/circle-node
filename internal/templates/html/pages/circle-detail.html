@@ -248,7 +248,10 @@
                     </svg>
                     Organize Gathering</button>
                 {{if .CanInvite}}
-                <button class="quick-action-btn btn-secondary sidebar-btn">
+                <button class="quick-action-btn btn-secondary sidebar-btn"
+                        hx-get="/api/circles/{{.Circle.ID}}/invite/form"
+                        hx-target="#modal-body"
+                        hx-swap="innerHTML">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                         viewBox="0 0 256 256">
                         <path

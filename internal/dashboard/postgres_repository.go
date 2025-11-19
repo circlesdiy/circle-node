@@ -238,3 +238,40 @@ func (r *PostgresRepository) GetSerendipityRecommendations(ctx context.Context, 
 func (r *PostgresRepository) GetRecentUpdates(ctx context.Context, profileID string, since time.Duration) ([]Activity, error) {
 	return nil, nil
 }
+
+func (r *PostgresRepository) GetPendingInvitations(ctx context.Context, profileID string) ([]PendingInvitation, error) {
+	query := `
+		SELECT cm.id, c.id, c.name, COALESCE(c.icon, ''), COALESCE(c.icon_bg_color, ''),
+		       COALESCE(c.avatar_url, ''), cm.created_at,
+		       owner_profile.id, COALESCE(owner_profile.name, owner_profile.handle, 'Someone'),
+		       COALESCE(owner_profile.handle, '')
+		FROM circle_memberships cm
+		JOIN circles c ON c.id = cm.circle_id
+		JOIN profiles owner_profile ON owner_profile.id = c.owner_profile_id
+		WHERE cm.profile_id = $1
+		AND cm.state = 'invited'
+		AND c.deleted_at IS NULL
+		ORDER BY cm.created_at DESC
+		LIMIT 20`
+
+	rows, err := r.pool.Query(ctx, query, profileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var invitations []PendingInvitation
+	for rows.Next() {
+		var inv PendingInvitation
+		var iconBgColor string
+		if err := rows.Scan(&inv.MembershipID, &inv.CircleID, &inv.CircleName, &inv.CircleIcon,
+			&iconBgColor, &inv.CircleAvatar, &inv.InvitedAt,
+			&inv.InviterID, &inv.InviterName, &inv.InviterHandle); err != nil {
+			return nil, err
+		}
+		inv.CircleBgColor = template.CSS(iconBgColor)
+		invitations = append(invitations, inv)
+	}
+
+	return invitations, rows.Err()
+}

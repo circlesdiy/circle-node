@@ -151,6 +151,48 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	// Get pending invitations
+	pendingInvitations := make([]models.CircleInvitation, 0)
+	invitations, err := h.circleService.GetPendingInvitations(r.Context(), profileID)
+	if err != nil {
+		h.logger.Error("failed to get pending invitations",
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		// Don't fail the whole page, just log the error
+	} else {
+		for _, inv := range invitations {
+			// Get circle details
+			circle, err := h.circleService.GetCircleByID(r.Context(), inv.CircleID)
+			if err != nil {
+				h.logger.Error("failed to get circle for invitation",
+					zap.String("circle_id", inv.CircleID),
+					zap.Error(err),
+				)
+				continue
+			}
+
+			// Get inviter name (circle owner for now)
+			inviterName := "Someone"
+			if circle.OwnerProfileID != "" {
+				// TODO: Fetch actual inviter name from profile
+				inviterName = circle.OwnerProfileID
+			}
+
+			pendingInvitations = append(pendingInvitations, models.CircleInvitation{
+				MembershipID:  inv.ID,
+				CircleID:      circle.ID,
+				CircleName:    circle.Name,
+				CircleIcon:    circle.Icon,
+				CircleBgColor: circle.IconBgColor,
+				CircleAvatar:  circle.AvatarURL,
+				InviterName:   inviterName,
+				InviterHandle: "", // TODO: Fetch from profile
+				InvitedAt:     inv.CreatedAt.Format("Jan 2, 2006"),
+			})
+		}
+	}
+
 	// Get user's circles (owned + member)
 	userCircles, err := h.circleService.GetUserCircles(r.Context(), profileID)
 	if err != nil {
@@ -234,9 +276,10 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 			CSRFToken:    middleware.GetCSRFToken(r),
 			AssetVersion: h.assetVersion,
 		},
-		Circles:         templateCircles,
-		FeaturedCircles: featuredCircles,
-		RecentActivity:  []models.CircleActivity{}, // TODO: Implement activity feed
+		Circles:            templateCircles,
+		PendingInvitations: pendingInvitations,
+		FeaturedCircles:    featuredCircles,
+		RecentActivity:     []models.CircleActivity{}, // TODO: Implement activity feed
 		Stats: models.CircleStats{
 			TotalPosts:     0, // TODO: Implement stats
 			ActiveMembers:  len(templateCircles),
@@ -958,6 +1001,51 @@ func (h *CircleHandler) handleAPICircleForm(w http.ResponseWriter, r *http.Reque
 	RenderFragment(w, h.logger, "circle-form", data)
 }
 
+// handleAPIInviteMemberForm renders the invite member form in a modal
+func (h *CircleHandler) handleAPIInviteMemberForm(w http.ResponseWriter, r *http.Request, circleID string) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Verify user has permission to invite
+	canInvite, err := h.circleService.CanInvite(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to check invite permission",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusInternalServerError, "Failed to check permissions")
+		return
+	}
+
+	if !canInvite {
+		RenderError(w, h.logger, http.StatusForbidden, "You don't have permission to invite members")
+		return
+	}
+
+	data := map[string]interface{}{
+		"CircleID": circleID,
+	}
+
+	RenderFragment(w, h.logger, "invite-member-form", data)
+}
+
 // handleAPICreateCircle handles circle creation via HTMX
 func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -1070,6 +1158,41 @@ func (h *CircleHandler) handleAPICircleActions(w http.ResponseWriter, r *http.Re
 			// POST /api/circles/{id}/join
 			if r.Method == http.MethodPost {
 				h.handleAPIJoinCircle(w, r, circleID)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		case "invite":
+			// Handle invitation sub-routes
+			if len(parts) >= 3 {
+				inviteAction := parts[2]
+				switch inviteAction {
+				case "accept":
+					// POST /api/circles/{id}/invite/accept
+					if r.Method == http.MethodPost {
+						h.handleAPIAcceptInvitation(w, r, circleID)
+					} else {
+						http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+					}
+				case "decline":
+					// POST /api/circles/{id}/invite/decline
+					if r.Method == http.MethodPost {
+						h.handleAPIDeclineInvitation(w, r, circleID)
+					} else {
+						http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+					}
+				case "form":
+					// GET /api/circles/{id}/invite/form
+					if r.Method == http.MethodGet {
+						h.handleAPIInviteMemberForm(w, r, circleID)
+					} else {
+						http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+					}
+				default:
+					http.Error(w, "Not found", http.StatusNotFound)
+				}
+			} else if r.Method == http.MethodPost {
+				// POST /api/circles/{id}/invite - Send invitation
+				h.handleAPIInviteMemberSubmit(w, r, circleID)
 			} else {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
@@ -1245,4 +1368,158 @@ func (h *CircleHandler) handleAPIJoinCircle(w http.ResponseWriter, r *http.Reque
 	// Return the "joined" button state
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(`<button class="join-btn joined" disabled>Joined</button>`))
+}
+
+// handleAPIAcceptInvitation handles accepting a circle invitation via HTMX
+func (h *CircleHandler) handleAPIAcceptInvitation(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	err := h.circleService.AcceptInvitation(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to accept invitation",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("invitation accepted via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return success message that will replace the invitation card
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<div class="card" style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text);">
+		<p style="margin: 0;">✓ Invitation accepted! Refresh to see the circle in your list.</p>
+	</div>`))
+}
+
+// handleAPIDeclineInvitation handles declining a circle invitation via HTMX
+func (h *CircleHandler) handleAPIDeclineInvitation(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	err := h.circleService.DeclineInvitation(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to decline invitation",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("invitation declined via API",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	// Return empty div to remove the invitation card
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(``))
+}
+
+// handleAPIInviteMemberSubmit handles sending a circle invitation via HTMX
+func (h *CircleHandler) handleAPIInviteMemberSubmit(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		RenderError(w, h.logger, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "No active profile")
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Parse form
+	if err := r.ParseForm(); err != nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
+		return
+	}
+
+	username := r.FormValue("username")
+	role := r.FormValue("role")
+
+	if username == "" {
+		RenderError(w, h.logger, http.StatusBadRequest, "Username is required")
+		return
+	}
+
+	// Look up the profile by handle (username)
+	inviteeProfile, err := h.profileService.GetByHandle(r.Context(), username)
+	if err != nil {
+		h.logger.Error("failed to find profile by handle",
+			zap.String("handle", username),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, "User not found")
+		return
+	}
+
+	if inviteeProfile == nil {
+		RenderError(w, h.logger, http.StatusBadRequest, "User not found")
+		return
+	}
+
+	// Send the invitation (role is captured for logging but not used yet in backend)
+	err = h.circleService.InviteMember(r.Context(), circleID, inviteeProfile.ID, profileID)
+	if err != nil {
+		h.logger.Error("failed to invite member",
+			zap.String("circle_id", circleID),
+			zap.String("invitee_profile_id", inviteeProfile.ID),
+			zap.String("role", role),
+			zap.Error(err),
+		)
+		RenderError(w, h.logger, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logger.Info("member invited via API",
+		zap.String("circle_id", circleID),
+		zap.String("invitee_profile_id", inviteeProfile.ID),
+		zap.String("handle", username),
+		zap.String("role", role),
+	)
+
+	// Return success message that replaces the modal
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<div style="padding: 2rem; text-align: center;">
+		<div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+		<h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600;">Invitation sent!</h3>
+		<p style="margin: 0; color: var(--text-muted);">@` + username + ` will receive the invitation.</p>
+		<button onclick="htmx.find('#modal-body').innerHTML = ''; location.reload();" class="btn-primary" style="margin-top: 1.5rem; padding: 0.75rem 1.5rem;">
+			Done
+		</button>
+	</div>`))
 }

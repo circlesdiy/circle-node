@@ -122,9 +122,29 @@ func (s *Service) GetDashboardData(ctx context.Context, profileID string) (*mode
 func (s *Service) buildWhatsNew(ctx context.Context, profileID string) ([]models.WhatsNewItem, error) {
 	var items []models.WhatsNewItem
 
+	// Get pending circle invitations
+	invitations, err := s.repo.GetPendingInvitations(ctx, profileID)
+	if err != nil {
+		s.logger.Error("failed to get pending invitations", zap.Error(err))
+	} else {
+		for _, inv := range invitations {
+			items = append(items, models.WhatsNewItem{
+				Type:         "invitation",
+				Icon:         "👋",
+				IconBgColor:  template.CSS("var(--primary-accent)"),
+				Title:        fmt.Sprintf("Invitation to %s", inv.CircleName),
+				Description:  fmt.Sprintf("%s invited you to join", inv.InviterName),
+				SourceCircle: inv.CircleName,
+				TimeAgo:      formatTimeAgo(inv.InvitedAt),
+				CircleID:     inv.CircleID,
+				EntityID:     inv.MembershipID,
+			})
+		}
+	}
+
 	coordination, err := s.repo.GetCoordinationNeeds(ctx, profileID)
 	if err != nil {
-		return nil, err
+		return items, nil
 	}
 
 	for _, c := range coordination {

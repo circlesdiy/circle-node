@@ -22,13 +22,14 @@ type Templates struct {
 	Marketplace     *template.Template
 
 	// Components
-	Modal        *template.Template
-	Toast        *template.Template
-	CircleCard   *template.Template
-	CircleForm   *template.Template
-	EmptyState   *template.Template
-	PostComposer *template.Template
-	PostCard     *template.Template
+	Modal            *template.Template
+	Toast            *template.Template
+	CircleCard       *template.Template
+	CircleForm       *template.Template
+	InviteMemberForm *template.Template
+	EmptyState       *template.Template
+	PostComposer     *template.Template
+	PostCard         *template.Template
 }
 
 var templates *Templates
@@ -117,6 +118,11 @@ func InitTemplates() error {
 	}
 
 	templates.CircleForm, err = parseTemplateFromEmbedded("circle-form", "html/components/circle-form.html")
+	if err != nil {
+		return err
+	}
+
+	templates.InviteMemberForm, err = parseTemplateFromEmbedded("invite-member-form", "html/components/invite-member-form.html")
 	if err != nil {
 		return err
 	}

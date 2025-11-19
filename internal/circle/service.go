@@ -409,6 +409,35 @@ func (s *Service) AcceptInvitation(ctx context.Context, circleID, profileID stri
 	return nil
 }
 
+// DeclineInvitation declines a circle invitation
+func (s *Service) DeclineInvitation(ctx context.Context, circleID, profileID string) error {
+	// Get membership
+	membership, err := s.repo.GetMembershipByCircleAndProfile(ctx, circleID, profileID)
+	if err != nil {
+		return fmt.Errorf("failed to get membership: %w", err)
+	}
+	if membership == nil {
+		return fmt.Errorf("invitation not found")
+	}
+
+	// Verify state is invited
+	if membership.State != domain.MembershipStateInvited {
+		return fmt.Errorf("no pending invitation found")
+	}
+
+	// Delete the invitation (membership record)
+	if err := s.repo.DeleteMembership(ctx, membership.ID); err != nil {
+		return fmt.Errorf("failed to decline invitation: %w", err)
+	}
+
+	s.logger.Info("invitation declined",
+		zap.String("circle_id", circleID),
+		zap.String("profile_id", profileID),
+	)
+
+	return nil
+}
+
 // JoinPublicCircle allows a user to directly join a public or unlisted circle
 func (s *Service) JoinPublicCircle(ctx context.Context, circleID, profileID string) error {
 	// Get circle

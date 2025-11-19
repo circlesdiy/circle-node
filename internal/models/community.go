@@ -88,3 +88,15 @@ type CircleStats struct {
 	WeeklyGrowth   string `json:"weekly_growth"`
 	EngagementRate string `json:"engagement_rate"`
 }
+
+type CircleInvitation struct {
+	MembershipID  string       `json:"membership_id"`
+	CircleID      string       `json:"circle_id"`
+	CircleName    string       `json:"circle_name"`
+	CircleIcon    string       `json:"circle_icon"`
+	CircleBgColor template.CSS `json:"circle_bg_color"`
+	CircleAvatar  string       `json:"circle_avatar"`
+	InviterName   string       `json:"inviter_name"`
+	InviterHandle string       `json:"inviter_handle"`
+	InvitedAt     string       `json:"invited_at"`
+}

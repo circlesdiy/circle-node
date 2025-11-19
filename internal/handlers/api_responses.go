@@ -28,6 +28,8 @@ func RenderFragment(w http.ResponseWriter, logger *zap.Logger, templateName stri
 		err = tmpl.CircleCard.ExecuteTemplate(w, "circle-card", data)
 	case "circle-form":
 		err = tmpl.CircleForm.ExecuteTemplate(w, "circle-form", data)
+	case "invite-member-form":
+		err = tmpl.CircleForm.ExecuteTemplate(w, "invite-member-form", data)
 	case "empty-state":
 		err = tmpl.EmptyState.ExecuteTemplate(w, "empty-state", data)
 	default:

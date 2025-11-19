@@ -47,10 +47,11 @@ type ProfileData struct {
 
 type CirclesPageData struct {
 	BaseData
-	Circles         []Circle         `json:"circles"`
-	RecentActivity  []CircleActivity `json:"recent_activity"`
-	Stats           CircleStats      `json:"stats"`
-	FeaturedCircles []Circle         `json:"featured_circles"`
+	Circles           []Circle           `json:"circles"`
+	PendingInvitations []CircleInvitation `json:"pending_invitations"`
+	RecentActivity    []CircleActivity   `json:"recent_activity"`
+	Stats             CircleStats        `json:"stats"`
+	FeaturedCircles   []Circle           `json:"featured_circles"`
 }
 
 type CircleDetailPageData struct {
