@@ -51,6 +51,7 @@ type App struct {
 	// Feature handlers
 	ProfileHandler interface {
 		Handle(w http.ResponseWriter, r *http.Request)
+		HandleEdit(w http.ResponseWriter, r *http.Request)
 		UpdateProfile(w http.ResponseWriter, r *http.Request)
 	}
 	ProfileUploadHandler *handlers.ProfileUploadHandler

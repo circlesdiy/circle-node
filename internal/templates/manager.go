@@ -13,6 +13,7 @@ type Templates struct {
 	Dashboard       *template.Template
 	ProfilePublic   *template.Template
 	ProfileInternal *template.Template
+	ProfileEdit     *template.Template
 	Circles         *template.Template
 	CircleDetail    *template.Template
 	Chat            *template.Template
@@ -62,6 +63,11 @@ func InitTemplates() error {
 	}
 
 	templates.ProfileInternal, err = parseTemplateFromEmbedded("profile-internal", "html/pages/profile-internal.html")
+	if err != nil {
+		return err
+	}
+
+	templates.ProfileEdit, err = parseTemplateFromEmbedded("profile-edit", "html/pages/profile-edit.html")
 	if err != nil {
 		return err
 	}

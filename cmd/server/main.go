@@ -130,6 +130,7 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/dashboard", app.AuthHandler.RequireAuth(app.DashboardHandler.Handle))
 	mux.HandleFunc("/dashboard/", app.AuthHandler.RequireAuth(app.DashboardHandler.Handle))
 	mux.HandleFunc("/profile", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))
+	mux.HandleFunc("/profile/edit", app.AuthHandler.RequireAuth(app.ProfileHandler.HandleEdit))
 	mux.HandleFunc("/profile/", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))
 
 	// Register circle routes

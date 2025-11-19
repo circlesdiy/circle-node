@@ -1,0 +1,382 @@
+{{define "profile-edit"}}
+{{template "base" .}}
+{{end}}
+
+{{define "main"}}
+<div class="form-page" style="max-width: 700px; margin: 0 auto; padding: 2rem;">
+  <div class="page-header" style="margin-bottom: 2rem;">
+    <h1 class="page-title">Edit Profile</h1>
+    <p class="page-subtitle" style="color: var(--text-secondary);">
+      Update your profile information and settings
+    </p>
+  </div>
+
+  <!-- Banner Upload Section -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Banner Image</h3>
+    <div class="banner-upload-container">
+      <div class="banner-preview" id="banner-preview-container">
+        {{if .Profile.BannerURL}}
+        <img src="{{.Profile.BannerURL}}" alt="Current banner" id="banner-preview" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" />
+        {{else}}
+        <div id="banner-preview" style="width: 100%; height: 200px; background: var(--bg-secondary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary);">
+          No banner image
+        </div>
+        {{end}}
+      </div>
+      <form id="banner-upload-form" hx-post="/api/profile/banner" hx-encoding="multipart/form-data" hx-swap="none" style="margin-top: 1rem;">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input
+            type="file"
+            name="banner"
+            id="banner-input"
+            accept="image/jpeg,image/png,image/webp"
+            class="form-input"
+            style="flex: 1;"
+          />
+          <button type="submit" class="btn btn-secondary" id="banner-upload-btn" disabled>Upload</button>
+          {{if .Profile.BannerURL}}
+          <button type="button" class="btn btn-text" id="banner-remove-btn" hx-delete="/api/profile/banner" hx-swap="none">Remove</button>
+          {{end}}
+        </div>
+        <span class="form-help">JPG, PNG, or WebP. Max 10MB. Recommended: 1500×500px</span>
+      </form>
+    </div>
+  </div>
+
+  <!-- Avatar Upload Section -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Profile Picture</h3>
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <div class="profile-avatar-xl" style="flex-shrink: 0;">
+        {{if .Profile.AvatarURL}}
+        <img src="{{.Profile.AvatarURL}}" alt="Current avatar" id="avatar-preview" />
+        {{else}}
+        <span id="avatar-preview" style="font-size: 3rem;">👤</span>
+        {{end}}
+      </div>
+      <form id="avatar-upload-form" hx-post="/api/profile/avatar" hx-encoding="multipart/form-data" hx-swap="none" style="flex: 1;">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <div style="display: flex; gap: 1rem; flex-direction: column;">
+          <input
+            type="file"
+            name="avatar"
+            id="avatar-input"
+            accept="image/jpeg,image/png,image/webp"
+            class="form-input"
+          />
+          <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-secondary" id="avatar-upload-btn" disabled>Upload</button>
+            {{if .Profile.AvatarURL}}
+            <button type="button" class="btn btn-text" id="avatar-remove-btn" hx-delete="/api/profile/avatar" hx-swap="none">Remove</button>
+            {{end}}
+          </div>
+        </div>
+        <span class="form-help">JPG, PNG, or WebP. Max 5MB. Recommended: 512×512px</span>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Information Form -->
+  <form id="profile-form" hx-put="/api/profile" hx-swap="none">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+    <!-- Basic Information Section -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">Basic Information</h3>
+
+      <div class="form-group">
+        <label class="form-label" for="display_name">
+          Display Name <span class="form-label-required">*</span>
+        </label>
+        <input
+          class="form-input"
+          type="text"
+          id="display_name"
+          name="display_name"
+          value="{{.Profile.DisplayName}}"
+          required
+          maxlength="255"
+          placeholder="Your display name"
+          autofocus
+        />
+        <span class="form-help">This is how your name will appear across the platform</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="name">
+          Short Name <span class="form-label-required">*</span>
+        </label>
+        <input
+          class="form-input"
+          type="text"
+          id="name"
+          name="name"
+          value="{{.Profile.Name}}"
+          required
+          maxlength="255"
+          placeholder="Your short name"
+        />
+        <span class="form-help">Used as a fallback if display name is not set</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="bio">Bio</label>
+        <textarea
+          class="form-input"
+          id="bio"
+          name="bio"
+          rows="4"
+          maxlength="500"
+          placeholder="Tell us about yourself..."
+        >{{.Profile.Bio}}</textarea>
+        <span class="form-help character-count" id="bio-counter">0 / 500 characters</span>
+      </div>
+    </div>
+
+    <!-- Additional Information Section (if available) -->
+    {{if .Profile.Location}}
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">Additional Information</h3>
+
+      <div class="form-group">
+        <label class="form-label" for="location">Location</label>
+        <input
+          class="form-input"
+          type="text"
+          id="location"
+          name="location"
+          value="{{.Profile.Location}}"
+          placeholder="City, Country"
+          maxlength="255"
+        />
+        <span class="form-help">Optional</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="website">Website</label>
+        <input
+          class="form-input"
+          type="url"
+          id="website"
+          name="website"
+          value="{{.Profile.Website}}"
+          placeholder="https://example.com"
+          maxlength="255"
+        />
+        <span class="form-help">Optional</span>
+      </div>
+    </div>
+    {{end}}
+
+    <!-- Privacy Section -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">Privacy</h3>
+
+      <div class="form-group">
+        <label class="form-label">Profile Visibility</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="is_public"
+              value="true"
+              {{if .Profile.IsPublic}}checked{{end}}
+            />
+            <div class="radio-content">
+              <span class="radio-title">Public</span>
+              <span class="radio-description">Anyone can view your profile</span>
+            </div>
+          </label>
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="is_public"
+              value="false"
+              {{if not .Profile.IsPublic}}checked{{end}}
+            />
+            <div class="radio-content">
+              <span class="radio-title">Private</span>
+              <span class="radio-description">Only your connections can view your profile</span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+      <button type="button" class="btn btn-secondary" onclick="window.location.href='/profile'">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary">
+        Save Changes
+      </button>
+    </div>
+  </form>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+// Bio character counter
+const bioTextarea = document.getElementById('bio');
+const bioCounter = document.getElementById('bio-counter');
+
+function updateBioCount() {
+  const length = bioTextarea.value.length;
+  const max = bioTextarea.getAttribute('maxlength');
+  bioCounter.textContent = `${length} / ${max} characters`;
+}
+
+if (bioTextarea) {
+  bioTextarea.addEventListener('input', updateBioCount);
+  updateBioCount(); // Initial count
+}
+
+// Avatar upload preview and button state
+const avatarInput = document.getElementById('avatar-input');
+const avatarPreview = document.getElementById('avatar-preview');
+const avatarUploadBtn = document.getElementById('avatar-upload-btn');
+
+if (avatarInput) {
+  avatarInput.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Check file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Avatar file size must be less than 5MB');
+        this.value = '';
+        avatarUploadBtn.disabled = true;
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (avatarPreview.tagName === 'IMG') {
+          avatarPreview.src = e.target.result;
+        } else {
+          // Replace emoji with image
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.alt = 'Avatar preview';
+          avatarPreview.parentNode.replaceChild(img, avatarPreview);
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Enable upload button
+      avatarUploadBtn.disabled = false;
+    } else {
+      avatarUploadBtn.disabled = true;
+    }
+  });
+}
+
+// Banner upload preview and button state
+const bannerInput = document.getElementById('banner-input');
+const bannerPreview = document.getElementById('banner-preview');
+const bannerUploadBtn = document.getElementById('banner-upload-btn');
+
+if (bannerInput) {
+  bannerInput.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Check file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Banner file size must be less than 10MB');
+        this.value = '';
+        bannerUploadBtn.disabled = true;
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (bannerPreview.tagName === 'IMG') {
+          bannerPreview.src = e.target.result;
+        } else {
+          // Replace placeholder with image
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.alt = 'Banner preview';
+          img.id = 'banner-preview';
+          img.style.cssText = 'width: 100%; height: 200px; object-fit: cover; border-radius: 8px;';
+          bannerPreview.parentNode.replaceChild(img, bannerPreview);
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Enable upload button
+      bannerUploadBtn.disabled = false;
+    } else {
+      bannerUploadBtn.disabled = true;
+    }
+  });
+}
+
+// Handle successful uploads
+document.body.addEventListener('htmx:afterRequest', function(event) {
+  if (event.detail.successful) {
+    const target = event.target;
+
+    if (target.id === 'avatar-upload-form') {
+      // Show success message
+      alert('Avatar uploaded successfully!');
+      // Reset file input
+      avatarInput.value = '';
+      avatarUploadBtn.disabled = true;
+      // Reload page to show new avatar everywhere
+      setTimeout(() => window.location.reload(), 500);
+    }
+
+    if (target.id === 'banner-upload-form') {
+      // Show success message
+      alert('Banner uploaded successfully!');
+      // Reset file input
+      bannerInput.value = '';
+      bannerUploadBtn.disabled = true;
+      // Reload page to show new banner everywhere
+      setTimeout(() => window.location.reload(), 500);
+    }
+
+    if (target.id === 'profile-form') {
+      // Show success message
+      alert('Profile updated successfully!');
+      // Redirect to profile page
+      window.location.href = '/profile';
+    }
+  } else if (event.detail.failed) {
+    // Show error message
+    const errorMsg = event.detail.xhr.responseText || 'An error occurred';
+    alert('Error: ' + errorMsg);
+  }
+});
+
+// Handle remove buttons
+const avatarRemoveBtn = document.getElementById('avatar-remove-btn');
+const bannerRemoveBtn = document.getElementById('banner-remove-btn');
+
+if (avatarRemoveBtn) {
+  avatarRemoveBtn.addEventListener('htmx:afterRequest', function(event) {
+    if (event.detail.successful) {
+      alert('Avatar removed successfully!');
+      setTimeout(() => window.location.reload(), 500);
+    }
+  });
+}
+
+if (bannerRemoveBtn) {
+  bannerRemoveBtn.addEventListener('htmx:afterRequest', function(event) {
+    if (event.detail.successful) {
+      alert('Banner removed successfully!');
+      setTimeout(() => window.location.reload(), 500);
+    }
+  });
+}
+</script>
+{{end}}

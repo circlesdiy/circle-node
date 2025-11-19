@@ -344,20 +344,34 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	profileID := *session.ActiveProfileID
 
-	// Parse JSON request body
-	var req struct {
-		Handle      *string `json:"handle"`
-		Name        *string `json:"name"`
-		DisplayName *string `json:"display_name"`
-		Bio         *string `json:"bio"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error("failed to parse request body",
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		h.logger.Error("failed to parse form data",
 			zap.String("profile_id", profileID),
 			zap.Error(err))
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
+	}
+
+	// Extract form values (only update if provided and non-empty)
+	var req struct {
+		Handle      *string
+		Name        *string
+		DisplayName *string
+		Bio         *string
+	}
+
+	if val := r.FormValue("handle"); val != "" {
+		req.Handle = &val
+	}
+	if val := r.FormValue("name"); val != "" {
+		req.Name = &val
+	}
+	if val := r.FormValue("display_name"); val != "" {
+		req.DisplayName = &val
+	}
+	if val := r.FormValue("bio"); val != "" {
+		req.Bio = &val
 	}
 
 	// Get current profile
@@ -430,4 +444,101 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		},
 		"message": "Profile updated successfully",
 	})
+}
+
+// HandleEdit handles GET /profile/edit - Renders the profile edit page
+func (h *ProfileHandler) HandleEdit(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get authenticated user
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get user's active profile ID from session
+	session := auth.GetSession(ctx)
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	activeProfileID := *session.ActiveProfileID
+
+	// Load theme for the current user
+	theme, err := h.prefsService.GetEffectiveTheme(ctx, user.ID, session.ActiveProfileID)
+	if err != nil {
+		h.logger.Warn("failed to load theme, using defaults", zap.Error(err))
+		theme = domain.DefaultEffectiveTheme()
+	}
+
+	themeSettings := models.ThemeSettings{
+		Mode:   theme.Mode,
+		Radius: theme.Radius,
+	}
+
+	// Fetch the user's active profile
+	profile, err := h.profileService.GetByID(ctx, activeProfileID)
+	if err != nil {
+		h.logger.Error("failed to fetch profile for editing", zap.Error(err))
+		http.Error(w, "Failed to load profile", http.StatusInternalServerError)
+		return
+	}
+
+	if profile == nil {
+		http.Error(w, "Profile not found", http.StatusNotFound)
+		return
+	}
+
+	// Fetch profile settings
+	settings, err := h.profileService.GetSettings(ctx, activeProfileID)
+	if err != nil {
+		h.logger.Warn("failed to fetch profile settings", zap.Error(err))
+		// Continue with nil settings - template should handle this
+	}
+
+	// Map domain profile to template model
+	templateProfile := models.Profile{
+		ID:          profile.ID,
+		UserID:      profile.UserID,
+		Handle:      profile.Handle,
+		Name:        profile.Name,
+		DisplayName: profile.DisplayName,
+		Bio:         profile.Bio,
+		AvatarURL:   profile.AvatarURL,
+		BannerURL:   profile.BannerURL,
+		IsActive:    profile.IsActive,
+		IsPublic:    true, // Default
+	}
+
+	// Add settings if available
+	if settings != nil {
+		templateProfile.IsPublic = settings.IsPublic
+		templateProfile.Location = settings.Location
+		templateProfile.Website = settings.Website
+		templateProfile.Interests = settings.Interests
+		templateProfile.SocialLinks = settings.SocialLinks
+	}
+
+	// Build template data
+	data := &models.ProfileData{
+		BaseData: models.BaseData{
+			Title:     "Edit Profile - " + profile.DisplayName,
+			ActiveNav: "profile",
+			Theme:     themeSettings,
+			User:      user,
+			CSRFToken: middleware.GetCSRFToken(r),
+		},
+		Profile: templateProfile,
+		IsOwner: true,
+	}
+
+	// Render the profile edit template
+	err = templates.GetTemplates().ProfileEdit.ExecuteTemplate(w, "profile-edit", data)
+	if err != nil {
+		h.logger.Error("error rendering profile-edit template", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }
