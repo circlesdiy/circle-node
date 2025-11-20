@@ -154,8 +154,10 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/api/posts", app.AuthHandler.RequireAuth(app.PostHandler.HandlePosts))
 	mux.HandleFunc("/api/posts/htmx", app.AuthHandler.RequireAuth(app.PostHandler.HandleCreatePostHTMX))
 	mux.HandleFunc("/api/posts/", app.AuthHandler.RequireAuth(app.PostHandler.HandlePost))
-	// Comment routes - TODO: Enable when comment handlers are implemented
-	// mux.HandleFunc("/api/comments/", app.AuthHandler.RequireAuth(app.PostHandler.HandleComment))
+
+	// Comment routes
+	mux.HandleFunc("/api/posts/{postID}/comments", app.AuthHandler.RequireAuth(app.PostHandler.HandleComments))
+	mux.HandleFunc("/api/comments/", app.AuthHandler.RequireAuth(app.PostHandler.HandleComment))
 
 	// API routes
 	mux.HandleFunc("/api/events", app.AuthHandler.RequireAuth(func(w http.ResponseWriter, r *http.Request) {

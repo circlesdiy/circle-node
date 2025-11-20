@@ -31,6 +31,9 @@ type Templates struct {
 	EmptyState       *template.Template
 	PostComposer     *template.Template
 	PostCard         *template.Template
+	CommentCard      *template.Template
+	CommentList      *template.Template
+	CommentForm      *template.Template
 }
 
 var templates *Templates
@@ -139,6 +142,21 @@ func InitTemplates() error {
 	}
 
 	templates.PostCard, err = parseTemplateFromEmbedded("post-card", "html/components/post-card.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CommentCard, err = parseTemplateFromEmbedded("comment-card", "html/components/comment-card.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CommentList, err = parseTemplateFromEmbedded("comment-list", "html/components/comment-list.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CommentForm, err = parseTemplateFromEmbedded("comment-form", "html/components/comment-form.html")
 	if err != nil {
 		return err
 	}

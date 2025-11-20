@@ -212,11 +212,10 @@ func (s *Service) CanDeletePost(ctx context.Context, postID, profileID string) (
 	return post.AuthorProfileID == profileID, nil
 }
 
-// Comment operations - TODO: Implement based on actual domain model structure
+// Comment operations
 
-/*
-// CreateComment creates a new comment on a post
-func (s *Service) CreateComment(ctx context.Context, postID, authorProfileID, body, bodyFormat string) (*domain.Comment, error) {
+// CreateCommentOnPost creates a new comment on a post
+func (s *Service) CreateCommentOnPost(ctx context.Context, postID, authorProfileID, body, bodyFormat string) (*domain.Comment, error) {
 	// Validate required fields
 	if postID == "" {
 		return nil, fmt.Errorf("post_id is required")
@@ -248,18 +247,16 @@ func (s *Service) CreateComment(ctx context.Context, postID, authorProfileID, bo
 	// Create comment
 	now := time.Now()
 	comment := &domain.Comment{
-		ID:               uuid.New().String(),
-		PostID:           postID,
-		AuthorProfileID:  authorProfileID,
-		Body:             body,
-		BodyFormat:       bodyFormat,
-		ReplyCount:       0,
-		ModerationStatus: domain.ModerationStatusApproved,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		ID:              uuid.New().String(),
+		AuthorProfileID: authorProfileID,
+		Body:            body,
+		BodyFormat:      bodyFormat,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
-	err = s.repo.CreateComment(ctx, comment)
+	// Use the new repository method that handles junction table
+	err = s.repo.CreateCommentForPost(ctx, comment, postID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create comment: %w", err)
 	}
@@ -341,9 +338,9 @@ func (s *Service) UpdateComment(ctx context.Context, commentID, body, bodyFormat
 	return comment, nil
 }
 
-// DeleteComment soft-deletes a comment
-func (s *Service) DeleteComment(ctx context.Context, commentID string) error {
-	// Get comment to find parent post
+// DeleteCommentOnPost soft-deletes a comment and decrements post reply count
+func (s *Service) DeleteCommentOnPost(ctx context.Context, commentID, postID string) error {
+	// Verify comment exists
 	comment, err := s.repo.GetCommentByID(ctx, commentID)
 	if err != nil {
 		return fmt.Errorf("failed to get comment: %w", err)
@@ -358,7 +355,7 @@ func (s *Service) DeleteComment(ctx context.Context, commentID string) error {
 	}
 
 	// Decrement reply count on post
-	err = s.repo.DecrementReplyCount(ctx, comment.PostID)
+	err = s.repo.DecrementReplyCount(ctx, postID)
 	if err != nil {
 		return fmt.Errorf("failed to decrement reply count: %w", err)
 	}
@@ -393,7 +390,6 @@ func (s *Service) CanDeleteComment(ctx context.Context, commentID, profileID str
 	// Author can delete, or circle owners/admins (to be implemented with circle service integration)
 	return comment.AuthorProfileID == profileID, nil
 }
-*/
 
 // Reaction operations
 

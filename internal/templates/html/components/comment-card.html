@@ -1,0 +1,66 @@
+{{define "comment-card"}}
+<div class="comment-card" data-comment-id="{{.ID}}" data-post-id="{{.PostID}}">
+    <div class="comment-header">
+        <div class="comment-author">
+            <div class="comment-avatar">
+                {{if .AuthorAvatar}}
+                <img src="{{.AuthorAvatar}}" alt="{{.AuthorName}}" />
+                {{else}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-120H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Z"></path>
+                </svg>
+                {{end}}
+            </div>
+            <div class="comment-author-info">
+                <a href="/profile/{{.AuthorHandle}}" class="comment-author-name">{{.AuthorName}}</a>
+                <div class="comment-meta">
+                    <time datetime="{{.CreatedAt}}" class="comment-time">{{.FormattedTime}}</time>
+                    {{if .IsEdited}}
+                    <span class="comment-edited">• edited</span>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        {{if or .CanEdit .CanDelete}}
+        <div class="comment-actions-menu">
+            <button class="comment-action-btn" aria-label="More actions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                    <circle cx="128" cy="64" r="16"></circle>
+                    <circle cx="128" cy="128" r="16"></circle>
+                    <circle cx="128" cy="192" r="16"></circle>
+                </svg>
+            </button>
+            <div class="comment-action-dropdown" hidden>
+                {{if .CanEdit}}
+                <button class="dropdown-action" data-action="edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63Z"></path>
+                    </svg>
+                    Edit
+                </button>
+                {{end}}
+                {{if .CanDelete}}
+                {{if .CanEdit}}<hr class="dropdown-separator">{{end}}
+                <button class="dropdown-action danger" data-action="delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16Z"></path>
+                    </svg>
+                    Delete
+                </button>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="comment-body">
+        {{if eq .BodyFormat "markdown"}}
+        <div class="comment-markdown">{{.Body}}</div>
+        {{else if eq .BodyFormat "html"}}
+        <div class="comment-html">{{.Body | safeHTML}}</div>
+        {{else}}
+        <div class="comment-plaintext">{{.Body}}</div>
+        {{end}}
+    </div>
+</div>
+{{end}}

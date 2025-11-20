@@ -116,6 +116,24 @@ type CirclePost struct {
 	Attachments       []Attachment `json:"attachments,omitempty"`
 }
 
+type CircleComment struct {
+	ID              string  `json:"id"`
+	PostID          string  `json:"post_id"`
+	AuthorProfileID string  `json:"author_profile_id"`
+	AuthorName      string  `json:"author_name"`
+	AuthorHandle    string  `json:"author_handle"`
+	AuthorAvatar    string  `json:"author_avatar"`
+	Body            string  `json:"body"`
+	BodyFormat      string  `json:"body_format"`
+	CreatedAt       string  `json:"created_at"`
+	EditedAt        *string `json:"edited_at,omitempty"`
+	FormattedTime   string  `json:"formatted_time"`
+	IsEdited        bool    `json:"is_edited"`
+	CanEdit         bool    `json:"can_edit"`
+	CanDelete       bool    `json:"can_delete"`
+	ReplyCount      int     `json:"reply_count"` // For future nested comments
+}
+
 type CircleFile struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

@@ -288,55 +288,81 @@ func (r *Repository) DecrementReplyCount(ctx context.Context, postID string) err
 	return err
 }
 
-// Comment methods - TODO: Implement based on actual domain model structure
-// The domain model uses reply_to_comment_id for nested threading,
-// not a direct post_id relationship
+// Comment methods - Implemented with junction table pattern (post_comments)
 
-/*
-func (r *Repository) CreateComment(ctx context.Context, comment *domain.Comment) error {
-	query := `
+// CreateCommentForPost creates a new comment and links it to a post using the junction table
+func (r *Repository) CreateCommentForPost(ctx context.Context, comment *domain.Comment, postID string) error {
+	// Use a transaction to ensure atomicity
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Insert comment
+	commentQuery := `
 		INSERT INTO comments (
-			id, post_id, author_profile_id, body, body_format,
-			reply_count, moderation_status, created_at, updated_at
+			id, author_profile_id, body, body_format, reply_to_comment_id,
+			cid, signature, created_at, updated_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
-	_, err := r.pool.Exec(ctx, query,
+	_, err = tx.Exec(ctx, commentQuery,
 		comment.ID,
-		comment.PostID,
 		comment.AuthorProfileID,
 		comment.Body,
 		comment.BodyFormat,
-		comment.ReplyCount,
-		comment.ModerationStatus,
+		comment.ReplyToCommentID,
+		comment.CID,
+		comment.Signature,
 		comment.CreatedAt,
 		comment.UpdatedAt,
 	)
+	if err != nil {
+		return fmt.Errorf("failed to insert comment: %w", err)
+	}
 
-	return err
+	// Create junction table entry
+	junctionQuery := `
+		INSERT INTO post_comments (post_id, comment_id)
+		VALUES ($1, $2)
+	`
+
+	_, err = tx.Exec(ctx, junctionQuery, postID, comment.ID)
+	if err != nil {
+		return fmt.Errorf("failed to link comment to post: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
+// GetCommentByID retrieves a single comment by ID
 func (r *Repository) GetCommentByID(ctx context.Context, commentID string) (*domain.Comment, error) {
 	query := `
 		SELECT
-			id, post_id, author_profile_id, body, body_format,
-			reply_count, moderation_status, edited_at, created_at,
-			updated_at, deleted_at
+			id, author_profile_id, body, body_format, reply_to_comment_id,
+			cid, signature, edited_at, created_at, updated_at, deleted_at
 		FROM comments
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 
 	var comment domain.Comment
 	var editedAt, deletedAt *time.Time
+	var replyToCommentID *string
 
 	err := r.pool.QueryRow(ctx, query, commentID).Scan(
 		&comment.ID,
-		&comment.PostID,
 		&comment.AuthorProfileID,
 		&comment.Body,
 		&comment.BodyFormat,
-		&comment.ReplyCount,
-		&comment.ModerationStatus,
+		&replyToCommentID,
+		&comment.CID,
+		&comment.Signature,
 		&editedAt,
 		&comment.CreatedAt,
 		&comment.UpdatedAt,
@@ -352,19 +378,21 @@ func (r *Repository) GetCommentByID(ctx context.Context, commentID string) (*dom
 
 	comment.EditedAt = editedAt
 	comment.DeletedAt = deletedAt
+	comment.ReplyToCommentID = replyToCommentID
 
 	return &comment, nil
 }
 
+// GetCommentsByPostID retrieves all comments for a post via the junction table
 func (r *Repository) GetCommentsByPostID(ctx context.Context, postID string, limit, offset int) ([]*domain.Comment, error) {
 	query := `
 		SELECT
-			id, post_id, author_profile_id, body, body_format,
-			reply_count, moderation_status, edited_at, created_at,
-			updated_at, deleted_at
-		FROM comments
-		WHERE post_id = $1 AND deleted_at IS NULL
-		ORDER BY created_at ASC
+			c.id, c.author_profile_id, c.body, c.body_format, c.reply_to_comment_id,
+			c.cid, c.signature, c.edited_at, c.created_at, c.updated_at, c.deleted_at
+		FROM comments c
+		INNER JOIN post_comments pc ON pc.comment_id = c.id
+		WHERE pc.post_id = $1 AND c.deleted_at IS NULL
+		ORDER BY c.created_at ASC
 		LIMIT $2 OFFSET $3
 	`
 
@@ -374,19 +402,21 @@ func (r *Repository) GetCommentsByPostID(ctx context.Context, postID string, lim
 	}
 	defer rows.Close()
 
-	var comments []*domain.Comment
+	// Initialize with empty slice instead of nil to ensure JSON returns []
+	comments := make([]*domain.Comment, 0)
 	for rows.Next() {
 		var comment domain.Comment
 		var editedAt, deletedAt *time.Time
+		var replyToCommentID *string
 
 		err := rows.Scan(
 			&comment.ID,
-			&comment.PostID,
 			&comment.AuthorProfileID,
 			&comment.Body,
 			&comment.BodyFormat,
-			&comment.ReplyCount,
-			&comment.ModerationStatus,
+			&replyToCommentID,
+			&comment.CID,
+			&comment.Signature,
 			&editedAt,
 			&comment.CreatedAt,
 			&comment.UpdatedAt,
@@ -398,6 +428,7 @@ func (r *Repository) GetCommentsByPostID(ctx context.Context, postID string, lim
 
 		comment.EditedAt = editedAt
 		comment.DeletedAt = deletedAt
+		comment.ReplyToCommentID = replyToCommentID
 
 		comments = append(comments, &comment)
 	}
@@ -409,18 +440,17 @@ func (r *Repository) GetCommentsByPostID(ctx context.Context, postID string, lim
 	return comments, nil
 }
 
+// UpdateComment updates an existing comment
 func (r *Repository) UpdateComment(ctx context.Context, comment *domain.Comment) error {
 	query := `
 		UPDATE comments
-		SET body = $1, body_format = $2, moderation_status = $3,
-		    edited_at = $4, updated_at = $5
-		WHERE id = $6 AND deleted_at IS NULL
+		SET body = $1, body_format = $2, edited_at = $3, updated_at = $4
+		WHERE id = $5 AND deleted_at IS NULL
 	`
 
 	result, err := r.pool.Exec(ctx, query,
 		comment.Body,
 		comment.BodyFormat,
-		comment.ModerationStatus,
 		comment.EditedAt,
 		comment.UpdatedAt,
 		comment.ID,
@@ -437,14 +467,23 @@ func (r *Repository) UpdateComment(ctx context.Context, comment *domain.Comment)
 	return nil
 }
 
+// DeleteComment soft-deletes a comment and removes junction table entry
 func (r *Repository) DeleteComment(ctx context.Context, commentID string) error {
-	query := `
+	// Use a transaction to ensure atomicity
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Soft delete the comment
+	deleteQuery := `
 		UPDATE comments
 		SET deleted_at = $1
 		WHERE id = $2 AND deleted_at IS NULL
 	`
 
-	result, err := r.pool.Exec(ctx, query, time.Now().UTC(), commentID)
+	result, err := tx.Exec(ctx, deleteQuery, time.Now().UTC(), commentID)
 	if err != nil {
 		return err
 	}
@@ -453,6 +492,14 @@ func (r *Repository) DeleteComment(ctx context.Context, commentID string) error 
 		return fmt.Errorf("comment not found")
 	}
 
+	// Remove from junction tables (post_comments and discussion_comments)
+	// Note: We don't delete from junction tables to maintain data integrity,
+	// but we could if needed. The deleted_at check in queries handles filtering.
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
-*/

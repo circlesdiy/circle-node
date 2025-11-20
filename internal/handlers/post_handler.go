@@ -321,6 +321,59 @@ func (h *PostHandler) mapPostToCirclePost(ctx context.Context, post *domain.Post
 	}, nil
 }
 
+// mapCommentToCircleComment converts a domain.Comment to models.CircleComment for template rendering
+func (h *PostHandler) mapCommentToCircleComment(ctx context.Context, comment *domain.Comment, postID string, viewerProfileID string) (*models.CircleComment, error) {
+	// Format time
+	formattedTime := formatTimeAgo(comment.CreatedAt)
+
+	// Check if edited
+	isEdited := comment.EditedAt != nil
+	var editedAtStr *string
+	if isEdited {
+		editedStr := formatTimeAgo(*comment.EditedAt)
+		editedAtStr = &editedStr
+	}
+
+	// Get author profile information
+	authorName := "Circle Member"
+	authorAvatar := ""
+	authorHandle := ""
+	authorProfile, err := h.profileService.GetByID(ctx, comment.AuthorProfileID)
+	if err == nil && authorProfile != nil {
+		if authorProfile.DisplayName != "" {
+			authorName = authorProfile.DisplayName
+		} else if authorProfile.Name != "" {
+			authorName = authorProfile.Name
+		} else if authorProfile.Handle != "" {
+			authorName = authorProfile.Handle
+		}
+		authorAvatar = authorProfile.AvatarURL
+		authorHandle = authorProfile.Handle
+	}
+
+	// Check permissions
+	canEdit := comment.AuthorProfileID == viewerProfileID
+	canDelete := comment.AuthorProfileID == viewerProfileID
+
+	return &models.CircleComment{
+		ID:              comment.ID,
+		PostID:          postID,
+		AuthorProfileID: comment.AuthorProfileID,
+		AuthorName:      authorName,
+		AuthorAvatar:    authorAvatar,
+		AuthorHandle:    authorHandle,
+		Body:            comment.Body,
+		BodyFormat:      comment.BodyFormat,
+		CreatedAt:       comment.CreatedAt.Format(time.RFC3339),
+		EditedAt:        editedAtStr,
+		FormattedTime:   formattedTime,
+		IsEdited:        isEdited,
+		CanEdit:         canEdit,
+		CanDelete:       canDelete,
+		ReplyCount:      0, // For future nested comments
+	}, nil
+}
+
 // handleGetPost retrieves a single post
 func (h *PostHandler) handleGetPost(w http.ResponseWriter, r *http.Request, postID string) {
 	post, err := h.contentService.GetPost(r.Context(), postID)
@@ -427,13 +480,13 @@ func (h *PostHandler) handleDeletePost(w http.ResponseWriter, r *http.Request, p
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Comment handlers - TODO: Implement when comment service methods are ready
-/*
-// handleComments handles listing and creating comments
-func (h *PostHandler) handleComments(w http.ResponseWriter, r *http.Request) {
-	// Extract post ID from path
+// Comment handlers
+
+// HandleComments handles listing and creating comments for a post
+func (h *PostHandler) HandleComments(w http.ResponseWriter, r *http.Request) {
+	// Extract post ID from path: /api/posts/{id}/comments
 	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(pathParts) < 3 {
+	if len(pathParts) < 4 {
 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
 		return
 	}
@@ -475,15 +528,29 @@ func (h *PostHandler) handleListComments(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	// Get viewer profile ID for permission checks
+	viewerProfileID := getProfileID(r)
+
+	// Map comments to CircleComment with enriched data
+	circleComments := make([]models.CircleComment, 0, len(comments))
+	for _, comment := range comments {
+		circleComment, err := h.mapCommentToCircleComment(r.Context(), comment, postID, viewerProfileID)
+		if err != nil {
+			// Log error but continue with other comments
+			continue
+		}
+		circleComments = append(circleComments, *circleComment)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(comments)
+	json.NewEncoder(w).Encode(circleComments)
 }
 
 // handleCreateComment creates a new comment
 func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request, postID string) {
 	// Get user from session
-	user := auth.GetUser(r.Context())
-	if user == nil {
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -510,10 +577,10 @@ func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create comment
-	comment, err := h.contentService.CreateComment(
+	comment, err := h.contentService.CreateCommentOnPost(
 		r.Context(),
 		postID,
-		getProfileID(r),
+		*session.ActiveProfileID,
 		req.Body,
 		req.BodyFormat,
 	)
@@ -523,14 +590,21 @@ func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Map to CircleComment with enriched data
+	circleComment, err := h.mapCommentToCircleComment(r.Context(), comment, postID, *session.ActiveProfileID)
+	if err != nil {
+		http.Error(w, "Failed to format comment response", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment)
+	json.NewEncoder(w).Encode(circleComment)
 }
 
-// handleComment handles single comment operations
-func (h *PostHandler) handleComment(w http.ResponseWriter, r *http.Request) {
-	// Extract comment ID from path
+// HandleComment handles single comment operations
+func (h *PostHandler) HandleComment(w http.ResponseWriter, r *http.Request) {
+	// Extract comment ID from path: /api/comments/{id}
 	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(pathParts) < 3 {
 		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
@@ -565,14 +639,14 @@ func (h *PostHandler) handleGetComment(w http.ResponseWriter, r *http.Request, c
 // handleUpdateComment updates a comment
 func (h *PostHandler) handleUpdateComment(w http.ResponseWriter, r *http.Request, commentID string) {
 	// Get user from session
-	user := auth.GetUser(r.Context())
-	if user == nil {
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Check if user can edit this comment
-	canEdit, err := h.contentService.CanEditComment(r.Context(), commentID, getProfileID(r))
+	canEdit, err := h.contentService.CanEditComment(r.Context(), commentID, *session.ActiveProfileID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -625,14 +699,21 @@ func (h *PostHandler) handleUpdateComment(w http.ResponseWriter, r *http.Request
 // handleDeleteComment deletes a comment
 func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request, commentID string) {
 	// Get user from session
-	user := auth.GetUser(r.Context())
-	if user == nil {
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
+	// Get postID from query parameter (required for decrementing reply count)
+	postID := r.URL.Query().Get("post_id")
+	if postID == "" {
+		http.Error(w, "post_id query parameter is required", http.StatusBadRequest)
+		return
+	}
+
 	// Check if user can delete this comment
-	canDelete, err := h.contentService.CanDeleteComment(r.Context(), commentID, getProfileID(r))
+	canDelete, err := h.contentService.CanDeleteComment(r.Context(), commentID, *session.ActiveProfileID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -643,7 +724,7 @@ func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request
 	}
 
 	// Delete comment
-	err = h.contentService.DeleteComment(r.Context(), commentID)
+	err = h.contentService.DeleteCommentOnPost(r.Context(), commentID, postID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -651,7 +732,6 @@ func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusNoContent)
 }
-*/
 
 // handlePostReactions handles reactions on posts
 func (h *PostHandler) handlePostReactions(w http.ResponseWriter, r *http.Request) {
