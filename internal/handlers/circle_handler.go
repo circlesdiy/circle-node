@@ -123,7 +123,7 @@ func (h *CircleHandler) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterRoutes registers all circle routes with the mux
-func (h *CircleHandler) RegisterRoutes(mux *http.ServeMux, authHandler *auth.Handler) {
+func (h *CircleHandler) RegisterRoutes(mux *http.ServeMux, authHandler *auth.Handler, uploadHandler *CircleUploadHandler) {
 	// Page routes
 	mux.HandleFunc("/circles", authHandler.RequireAuth(h.Handle))
 	mux.HandleFunc("/circles/", authHandler.RequireAuth(h.Handle))
@@ -132,6 +132,12 @@ func (h *CircleHandler) RegisterRoutes(mux *http.ServeMux, authHandler *auth.Han
 	mux.HandleFunc("/api/circles", authHandler.RequireAuth(h.handleAPICreateCircle))
 	mux.HandleFunc("/api/circles/form", authHandler.RequireAuth(h.handleAPICircleForm))
 	mux.HandleFunc("/api/circles/", authHandler.RequireAuth(h.handleAPICircleActions))
+
+	// Image upload routes (use specific paths to avoid conflicts with handleAPICircleActions)
+	mux.HandleFunc("POST /api/circles/{id}/avatar", authHandler.RequireAuth(uploadHandler.UploadAvatar))
+	mux.HandleFunc("POST /api/circles/{id}/banner", authHandler.RequireAuth(uploadHandler.UploadBanner))
+	mux.HandleFunc("DELETE /api/circles/{id}/avatar", authHandler.RequireAuth(uploadHandler.DeleteAvatar))
+	mux.HandleFunc("DELETE /api/circles/{id}/banner", authHandler.RequireAuth(uploadHandler.DeleteBanner))
 }
 
 // handleListCircles shows the main circles page with user's circles and public circles

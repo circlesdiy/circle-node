@@ -108,7 +108,9 @@ func (r *Repository) UpdateCircle(ctx context.Context, circle *domain.Circle) er
 			description = $3,
 			visibility = $4,
 			auto_mod_enabled = $5,
-			updated_at = $6
+			avatar_url = $6,
+			banner_url = $7,
+			updated_at = $8
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 
@@ -118,6 +120,8 @@ func (r *Repository) UpdateCircle(ctx context.Context, circle *domain.Circle) er
 		circle.Description,
 		circle.Visibility,
 		circle.AutoModEnabled,
+		circle.AvatarURL,
+		circle.BannerURL,
 		circle.UpdatedAt,
 	)
 	if err != nil {

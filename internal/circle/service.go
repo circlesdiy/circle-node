@@ -3,6 +3,7 @@ package circle
 import (
 	"context"
 	"fmt"
+	"mime/multipart"
 	"strings"
 	"time"
 
@@ -13,15 +14,17 @@ import (
 
 // Service handles circle business logic
 type Service struct {
-	repo   domain.CircleRepository
-	logger *zap.Logger
+	repo    domain.CircleRepository
+	storage domain.FileStorage
+	logger  *zap.Logger
 }
 
 // NewService creates a new circle service
-func NewService(repo domain.CircleRepository, logger *zap.Logger) *Service {
+func NewService(repo domain.CircleRepository, storage domain.FileStorage, logger *zap.Logger) *Service {
 	return &Service{
-		repo:   repo,
-		logger: logger,
+		repo:    repo,
+		storage: storage,
+		logger:  logger,
 	}
 }
 
@@ -901,6 +904,224 @@ func (s *Service) GetMemberRole(ctx context.Context, circleID, profileID string)
 	}
 
 	return "", nil
+}
+
+// UpdateAvatar uploads a new avatar and updates the circle
+func (s *Service) UpdateAvatar(ctx context.Context, circleID string, file multipart.File, header *multipart.FileHeader, requesterProfileID string) error {
+	s.logger.Debug("updating circle avatar",
+		zap.String("circle_id", circleID),
+		zap.String("requester_profile_id", requesterProfileID),
+		zap.String("filename", header.Filename))
+
+	// Get current circle to verify ownership and retrieve old avatar URL
+	circle, err := s.repo.GetCircleByID(ctx, circleID)
+	if err != nil {
+		return fmt.Errorf("failed to get circle: %w", err)
+	}
+	if circle == nil {
+		return fmt.Errorf("circle not found")
+	}
+
+	// Check if requester is the owner
+	if circle.OwnerProfileID != requesterProfileID {
+		return fmt.Errorf("only circle owner can update avatar")
+	}
+
+	oldAvatarURL := circle.AvatarURL
+
+	// Upload new avatar using storage interface (reuses profile storage with circleID)
+	avatarURL, err := s.storage.SaveAvatar(ctx, circleID, file, header)
+	if err != nil {
+		s.logger.Error("failed to save circle avatar",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to save avatar: %w", err)
+	}
+
+	// Update circle with new avatar URL
+	circle.AvatarURL = avatarURL
+	circle.UpdatedAt = time.Now().UTC()
+
+	if err := s.repo.UpdateCircle(ctx, circle); err != nil {
+		// Rollback: delete newly uploaded avatar
+		if deleteErr := s.storage.DeleteAvatar(ctx, circleID); deleteErr != nil {
+			s.logger.Warn("failed to delete avatar after DB update failure",
+				zap.String("circle_id", circleID),
+				zap.Error(deleteErr))
+		}
+		s.logger.Error("failed to update circle with new avatar",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to update circle: %w", err)
+	}
+
+	// Delete old avatar file if it exists and is different
+	if oldAvatarURL != "" && oldAvatarURL != avatarURL {
+		if err := s.storage.DeleteAvatar(ctx, circleID); err != nil {
+			s.logger.Warn("failed to delete old circle avatar",
+				zap.String("circle_id", circleID),
+				zap.String("old_url", oldAvatarURL),
+				zap.Error(err))
+		}
+	}
+
+	s.logger.Info("circle avatar updated successfully",
+		zap.String("circle_id", circleID),
+		zap.String("new_url", avatarURL))
+
+	return nil
+}
+
+// UpdateBanner uploads a new banner and updates the circle
+func (s *Service) UpdateBanner(ctx context.Context, circleID string, file multipart.File, header *multipart.FileHeader, requesterProfileID string) error {
+	s.logger.Debug("updating circle banner",
+		zap.String("circle_id", circleID),
+		zap.String("requester_profile_id", requesterProfileID),
+		zap.String("filename", header.Filename))
+
+	// Get current circle to verify ownership and retrieve old banner URL
+	circle, err := s.repo.GetCircleByID(ctx, circleID)
+	if err != nil {
+		return fmt.Errorf("failed to get circle: %w", err)
+	}
+	if circle == nil {
+		return fmt.Errorf("circle not found")
+	}
+
+	// Check if requester is the owner
+	if circle.OwnerProfileID != requesterProfileID {
+		return fmt.Errorf("only circle owner can update banner")
+	}
+
+	oldBannerURL := circle.BannerURL
+
+	// Upload new banner using storage interface (reuses profile storage with circleID)
+	bannerURL, err := s.storage.SaveBanner(ctx, circleID, file, header)
+	if err != nil {
+		s.logger.Error("failed to save circle banner",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to save banner: %w", err)
+	}
+
+	// Update circle with new banner URL
+	circle.BannerURL = bannerURL
+	circle.UpdatedAt = time.Now().UTC()
+
+	if err := s.repo.UpdateCircle(ctx, circle); err != nil {
+		// Rollback: delete newly uploaded banner
+		if deleteErr := s.storage.DeleteBanner(ctx, circleID); deleteErr != nil {
+			s.logger.Warn("failed to delete banner after DB update failure",
+				zap.String("circle_id", circleID),
+				zap.Error(deleteErr))
+		}
+		s.logger.Error("failed to update circle with new banner",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to update circle: %w", err)
+	}
+
+	// Delete old banner file if it exists and is different
+	if oldBannerURL != "" && oldBannerURL != bannerURL {
+		if err := s.storage.DeleteBanner(ctx, circleID); err != nil {
+			s.logger.Warn("failed to delete old circle banner",
+				zap.String("circle_id", circleID),
+				zap.String("old_url", oldBannerURL),
+				zap.Error(err))
+		}
+	}
+
+	s.logger.Info("circle banner updated successfully",
+		zap.String("circle_id", circleID),
+		zap.String("new_url", bannerURL))
+
+	return nil
+}
+
+// RemoveAvatar removes the avatar from a circle
+func (s *Service) RemoveAvatar(ctx context.Context, circleID string, requesterProfileID string) error {
+	s.logger.Debug("removing circle avatar",
+		zap.String("circle_id", circleID),
+		zap.String("requester_profile_id", requesterProfileID))
+
+	// Get current circle to verify ownership
+	circle, err := s.repo.GetCircleByID(ctx, circleID)
+	if err != nil {
+		return fmt.Errorf("failed to get circle: %w", err)
+	}
+	if circle == nil {
+		return fmt.Errorf("circle not found")
+	}
+
+	// Check if requester is the owner
+	if circle.OwnerProfileID != requesterProfileID {
+		return fmt.Errorf("only circle owner can remove avatar")
+	}
+
+	// Delete avatar file
+	if err := s.storage.DeleteAvatar(ctx, circleID); err != nil {
+		s.logger.Warn("failed to delete circle avatar file",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+	}
+
+	// Update circle to remove avatar URL
+	circle.AvatarURL = ""
+	circle.UpdatedAt = time.Now().UTC()
+
+	if err := s.repo.UpdateCircle(ctx, circle); err != nil {
+		s.logger.Error("failed to update circle to remove avatar",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to update circle: %w", err)
+	}
+
+	s.logger.Info("circle avatar removed successfully",
+		zap.String("circle_id", circleID))
+	return nil
+}
+
+// RemoveBanner removes the banner from a circle
+func (s *Service) RemoveBanner(ctx context.Context, circleID string, requesterProfileID string) error {
+	s.logger.Debug("removing circle banner",
+		zap.String("circle_id", circleID),
+		zap.String("requester_profile_id", requesterProfileID))
+
+	// Get current circle to verify ownership
+	circle, err := s.repo.GetCircleByID(ctx, circleID)
+	if err != nil {
+		return fmt.Errorf("failed to get circle: %w", err)
+	}
+	if circle == nil {
+		return fmt.Errorf("circle not found")
+	}
+
+	// Check if requester is the owner
+	if circle.OwnerProfileID != requesterProfileID {
+		return fmt.Errorf("only circle owner can remove banner")
+	}
+
+	// Delete banner file
+	if err := s.storage.DeleteBanner(ctx, circleID); err != nil {
+		s.logger.Warn("failed to delete circle banner file",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+	}
+
+	// Update circle to remove banner URL
+	circle.BannerURL = ""
+	circle.UpdatedAt = time.Now().UTC()
+
+	if err := s.repo.UpdateCircle(ctx, circle); err != nil {
+		s.logger.Error("failed to update circle to remove banner",
+			zap.String("circle_id", circleID),
+			zap.Error(err))
+		return fmt.Errorf("failed to update circle: %w", err)
+	}
+
+	s.logger.Info("circle banner removed successfully",
+		zap.String("circle_id", circleID))
+	return nil
 }
 
 // Helper functions

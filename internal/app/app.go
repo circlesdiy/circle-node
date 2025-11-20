@@ -56,6 +56,7 @@ type App struct {
 	}
 	ProfileUploadHandler *handlers.ProfileUploadHandler
 	CircleHandler        *handlers.CircleHandler
+	CircleUploadHandler  *handlers.CircleUploadHandler
 	DashboardHandler     *handlers.DashboardHandler
 	GatherHandler        *handlers.GatherHandler
 	GatherAPIHandler     *handlers.GatherAPIHandler
@@ -145,7 +146,7 @@ func New(ctx context.Context) (*App, error) {
 
 	// Circle service
 	circleRepo := circle.NewRepository(postgres.Pool)
-	circleService := circle.NewService(circleRepo, logger)
+	circleService := circle.NewService(circleRepo, fileStorage, logger)
 
 	// Dashboard service
 	dashboardRepo := dashboard.NewPostgresRepository(postgres.Pool)
@@ -177,6 +178,7 @@ func New(ctx context.Context) (*App, error) {
 	profileHandler := handlers.NewProfileHandler(profileService, prefsService, circleService, logger)
 	profileUploadHandler := handlers.NewProfileUploadHandler(profileService, logger)
 	circleHandler := handlers.NewCircleHandler(circleService, contentService, prefsService, profileService, cfg.AssetVersion, logger)
+	circleUploadHandler := handlers.NewCircleUploadHandler(circleService, logger)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService, profileService)
 	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
 	gatherAPIHandler := handlers.NewGatherAPIHandler(gatherService, eventService, logger)
@@ -201,6 +203,7 @@ func New(ctx context.Context) (*App, error) {
 		ProfileHandler:       profileHandler,
 		ProfileUploadHandler: profileUploadHandler,
 		CircleHandler:        circleHandler,
+		CircleUploadHandler:  circleUploadHandler,
 		DashboardHandler:     dashboardHandler,
 		GatherHandler:        gatherHandler,
 		GatherAPIHandler:     gatherAPIHandler,

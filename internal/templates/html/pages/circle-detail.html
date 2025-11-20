@@ -280,18 +280,73 @@
             <div class="circle-tab" id="settings-tab">
                 {{if .IsOwner}}
 
+                <!-- Avatar Upload Section -->
+                <div class="settings-section">
+                    <h3>Circle Avatar</h3>
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div class="circle-detail-avatar" style="flex-shrink: 0;" {{if not .Circle.AvatarURL}}{{if .Circle.IconBgColor}}style="background: {{.Circle.IconBgColor}};"{{end}}{{end}}>
+                            {{if .Circle.AvatarURL}}
+                            <img src="{{.Circle.AvatarURL}}" alt="Circle avatar" id="circle-avatar-preview"
+                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px;">
+                            {{else if .Circle.Icon}}
+                            <span id="circle-avatar-preview">{{.Circle.Icon}}</span>
+                            {{else}}
+                            <span id="circle-avatar-preview">🔵</span>
+                            {{end}}
+                        </div>
+                        <form id="circle-avatar-upload-form" hx-post="/api/circles/{{.Circle.ID}}/avatar" hx-encoding="multipart/form-data" hx-swap="none" style="flex: 1;">
+                            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                            <div style="display: flex; gap: 1rem; flex-direction: column;">
+                                <input type="file" name="avatar" id="circle-avatar-input" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex: 1;">
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="submit" class="btn btn-secondary" id="circle-avatar-upload-btn" disabled>Upload</button>
+                                    {{if .Circle.AvatarURL}}
+                                    <button type="button" class="btn btn-text" hx-delete="/api/circles/{{.Circle.ID}}/avatar" hx-swap="none">Remove</button>
+                                    {{end}}
+                                </div>
+                            </div>
+                            <span class="form-help">JPG, PNG, or WebP. Max 5MB. Recommended: 512×512px</span>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Banner Upload Section -->
+                <div class="settings-section">
+                    <h3>Circle Banner</h3>
+                    <div class="circle-banner-preview" id="circle-banner-preview-container" style="height: 200px; border-radius: var(--container-radius); overflow: hidden; margin-bottom: 1rem; background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
+                        {{if .Circle.BannerURL}}
+                        <img src="{{.Circle.BannerURL}}" alt="Circle banner" id="circle-banner-preview" style="width: 100%; height: 100%; object-fit: cover;">
+                        {{end}}
+                    </div>
+                    <form id="circle-banner-upload-form" hx-post="/api/circles/{{.Circle.ID}}/banner" hx-encoding="multipart/form-data" hx-swap="none">
+                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="file" name="banner" id="circle-banner-input" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex: 1;">
+                            <button type="submit" class="btn btn-secondary" id="circle-banner-upload-btn" disabled>Upload</button>
+                            {{if .Circle.BannerURL}}
+                            <button type="button" class="btn btn-text" hx-delete="/api/circles/{{.Circle.ID}}/banner" hx-swap="none">Remove</button>
+                            {{end}}
+                        </div>
+                        <span class="form-help">JPG, PNG, or WebP. Max 10MB. Recommended: 1500×500px</span>
+                    </form>
+                </div>
+
+                <!-- Circle Information Form -->
                 <div class="settings-section">
                     <h3>Circle Information</h3>
                     {{if .CanEditInfo}}
-                    <div class="form-group">
-                        <label>Circle name</label>
-                        <input type="text" value="{{.Circle.Name}}" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-textarea">{{.Circle.Description}}</textarea>
-                    </div>
-                    <button class="btn btn-primary">Save changes</button>
+                    <form hx-post="/api/circles/{{.Circle.ID}}" hx-swap="none">
+                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                        <div class="form-group">
+                            <label>Circle name</label>
+                            <input type="text" name="name" value="{{.Circle.Name}}" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" class="form-textarea">{{.Circle.Description}}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </form>
                     {{else}}
                     <p class="text-secondary">Only the owner can edit circle information.</p>
                     {{end}}
@@ -1105,6 +1160,107 @@
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
         });
+    });
+
+    // Circle avatar upload handling
+    const circleAvatarInput = document.getElementById('circle-avatar-input');
+    const circleAvatarUploadBtn = document.getElementById('circle-avatar-upload-btn');
+    const circleAvatarPreview = document.getElementById('circle-avatar-preview');
+
+    if (circleAvatarInput) {
+        circleAvatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                circleAvatarUploadBtn.disabled = true;
+                return;
+            }
+
+            // Validate file size (5MB max)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('Avatar file size must be less than 5MB');
+                e.target.value = '';
+                circleAvatarUploadBtn.disabled = true;
+                return;
+            }
+
+            // Enable upload button
+            circleAvatarUploadBtn.disabled = false;
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (circleAvatarPreview.tagName === 'IMG') {
+                    circleAvatarPreview.src = e.target.result;
+                } else {
+                    // Replace emoji/text with img element
+                    const img = document.createElement('img');
+                    img.id = 'circle-avatar-preview';
+                    img.src = e.target.result;
+                    img.alt = 'Avatar preview';
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 24px;';
+                    circleAvatarPreview.parentNode.replaceChild(img, circleAvatarPreview);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Circle banner upload handling
+    const circleBannerInput = document.getElementById('circle-banner-input');
+    const circleBannerUploadBtn = document.getElementById('circle-banner-upload-btn');
+    const circleBannerPreviewContainer = document.getElementById('circle-banner-preview-container');
+
+    if (circleBannerInput) {
+        circleBannerInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                circleBannerUploadBtn.disabled = true;
+                return;
+            }
+
+            // Validate file size (10MB max)
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('Banner file size must be less than 10MB');
+                e.target.value = '';
+                circleBannerUploadBtn.disabled = true;
+                return;
+            }
+
+            // Enable upload button
+            circleBannerUploadBtn.disabled = false;
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let bannerPreview = document.getElementById('circle-banner-preview');
+                if (!bannerPreview) {
+                    bannerPreview = document.createElement('img');
+                    bannerPreview.id = 'circle-banner-preview';
+                    bannerPreview.alt = 'Banner preview';
+                    bannerPreview.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    circleBannerPreviewContainer.appendChild(bannerPreview);
+                }
+                bannerPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // HTMX event handlers for successful uploads
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        const path = evt.detail.pathInfo.requestPath;
+
+        if (path.includes('/avatar') || path.includes('/banner')) {
+            if (evt.detail.successful) {
+                alert('Image uploaded successfully! Reloading page...');
+                window.location.reload();
+            } else {
+                const errorMsg = evt.detail.xhr.responseText || 'Upload failed';
+                alert('Upload failed: ' + errorMsg);
+            }
+        }
     });
 </script>
 

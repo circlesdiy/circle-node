@@ -134,7 +134,7 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	mux.HandleFunc("/profile/", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))
 
 	// Register circle routes
-	app.CircleHandler.RegisterRoutes(mux, app.AuthHandler)
+	app.CircleHandler.RegisterRoutes(mux, app.AuthHandler, app.CircleUploadHandler)
 
 	mux.HandleFunc("/chat", app.AuthHandler.RequireAuth(handlers.ChatHandler))
 	mux.HandleFunc("/chat/", app.AuthHandler.RequireAuth(handlers.ChatHandler))
