@@ -121,7 +121,6 @@ make docker-up
 
 # Access the app
 open http://localhost              # Main app
-open http://docs.localhost         # Documentation (Docmost)
 
 # View logs
 make docker-logs

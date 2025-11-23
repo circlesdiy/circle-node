@@ -7,7 +7,7 @@ This directory contains nginx configurations for different environments.
 ### `nginx-local.conf`
 **Local development configuration** - HTTP only, no SSL
 - Used by default in `docker-compose.yml`
-- Proxies to `circles-diy:8080` and `docmost:3000`
+- Proxies to `circles-diy:8080`
 - HTTP on port 80
 - No SSL/TLS
 - Relaxed security headers
@@ -41,7 +41,6 @@ docker-compose up -d
 
 # Access the app
 open http://localhost
-open http://docs.localhost  # Docmost documentation
 ```
 
 ### Testing Locally
@@ -78,7 +77,6 @@ cp nginx/nginx-init.conf nginx/nginx.conf
 # Set your domain
 export DOMAIN=yourdomain.com
 export CIRCLES_DB_PASSWORD=$(openssl rand -base64 32)
-export DOCMOST_DB_PASSWORD=$(openssl rand -base64 32)
 export CSRF_SECRET=$(openssl rand -base64 32)
 export POSTGRES_PASSWORD=$(openssl rand -base64 32)
 
@@ -111,7 +109,6 @@ Once SSL certificates are obtained:
 # Set environment variables
 export DOMAIN=yourdomain.com
 export CIRCLES_DB_PASSWORD=your_secure_password
-export DOCMOST_DB_PASSWORD=your_secure_password
 export CSRF_SECRET=$(openssl rand -base64 32)
 export POSTGRES_PASSWORD=$(openssl rand -base64 32)
 
@@ -155,7 +152,6 @@ limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
 All configs include WebSocket support for:
 - HTMX SSE (Server-Sent Events)
 - Future WebSocket features
-- Docmost real-time collaboration
 
 ### Security Headers
 

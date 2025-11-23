@@ -31,7 +31,6 @@ fi
 # Check if domain resolves to this server
 SERVER_IP=$(curl -s ifconfig.me || curl -s icanhazip.com || echo "unknown")
 DOMAIN_IP=$(dig +short $DOMAIN | tail -n1)
-DOCS_DOMAIN_IP=$(dig +short docs.$DOMAIN | tail -n1)
 
 if [ "$DOMAIN_IP" != "$SERVER_IP" ] && [ "$SERVER_IP" != "unknown" ]; then
     echo "Warning: Domain $DOMAIN resolves to $DOMAIN_IP but server IP is $SERVER_IP"
@@ -42,32 +41,11 @@ if [ "$DOMAIN_IP" != "$SERVER_IP" ] && [ "$SERVER_IP" != "unknown" ]; then
     fi
 fi
 
-if [ "$DOCS_DOMAIN_IP" != "$SERVER_IP" ] && [ "$SERVER_IP" != "unknown" ] && [ "$DOCS_DOMAIN_IP" != "" ]; then
-    echo "Warning: docs.$DOMAIN resolves to $DOCS_DOMAIN_IP but server IP is $SERVER_IP"
-fi
-
-echo "### Setting up Let's Encrypt certificate for $DOMAIN and docs.$DOMAIN..."
+echo "### Setting up Let's Encrypt certificate for $DOMAIN..."
 
 # Create directories
 mkdir -p ./certbot/conf/live/$DOMAIN
 mkdir -p ./certbot/www
-
-# Generate Docmost configuration
-echo "### Generating Docmost configuration..."
-if [ ! -f .env.docmost ]; then
-    DOCMOST_SECRET=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
-    DOCMOST_PASSWORD=$(openssl rand -base64 16 | tr -d "=+/" | cut -c1-16)
-    
-    cat > .env.docmost << EOF
-# Generated Docmost configuration
-DOCMOST_APP_SECRET=$DOCMOST_SECRET
-DOCMOST_DB_PASSWORD=$DOCMOST_PASSWORD
-DOCMOST_DOMAIN=$DOMAIN
-EOF
-    echo "✅ Generated .env.docmost with secure random values"
-else
-    echo "✅ Using existing .env.docmost"
-fi
 
 # Create working copy of nginx config and prepare SSL version
 cp ./nginx/nginx.conf ./nginx/nginx.conf.bak 2>/dev/null || true
@@ -79,7 +57,7 @@ sed "s/DOMAIN/$DOMAIN/g" ./nginx/nginx.conf.bak > ./nginx/nginx-ssl.conf.tmp
 echo "### Starting services with HTTP-only configuration..."
 
 # Start services with HTTP-only nginx
-docker compose --env-file .env.docmost up -d
+docker compose up -d
 
 # Wait for services to be ready
 echo "### Waiting for services to start..."
@@ -102,8 +80,7 @@ docker run --rm \
     --agree-tos \
     --no-eff-email \
     --force-renewal \
-    -d $DOMAIN \
-    -d docs.$DOMAIN
+    -d $DOMAIN
 
 # Switch to SSL configuration
 echo "### Switching to HTTPS configuration..."
@@ -111,7 +88,7 @@ cp ./nginx/nginx-ssl.conf.tmp ./nginx/nginx.conf
 rm ./nginx/nginx-ssl.conf.tmp
 
 # Restart nginx with SSL config
-docker compose --env-file .env.docmost restart nginx
+docker compose restart nginx
 
 # Wait and test HTTPS
 echo "### Testing HTTPS setup..."
@@ -129,7 +106,6 @@ echo "### Cleanup..."
 rm -f ./nginx/nginx.conf.bak
 
 echo "### Setup complete! 🎉"
-echo "Your sites are available at:"
-echo "  Circles:  https://$DOMAIN"
-echo "  Docmost:  https://docs.$DOMAIN"
+echo "Your site is available at:"
+echo "  circles.diy:  https://$DOMAIN"
 echo "Certificate renewal is scheduled daily at noon."

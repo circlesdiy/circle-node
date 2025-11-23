@@ -38,24 +38,6 @@ services:
     networks:
       - app-network
 
-  # docmost:
-  #   image: docmost/docmost:latest
-  #   depends_on:
-  #     - db
-  #     - redis
-  #   environment:
-  #     APP_URL: "https://docs.${DOCMOST_DOMAIN:-yourdomain.com}"
-  #     APP_SECRET: "${DOCMOST_APP_SECRET}"
-  #     DATABASE_URL: "postgresql://docmost:${DOCMOST_DB_PASSWORD}@db:5432/docmost?schema=public"
-  #     REDIS_URL: "redis://redis:6379"
-  #   expose:
-  #     - "3000"
-  #   restart: unless-stopped
-  #   volumes:
-  #     - docmost_data:/app/data/storage
-  #   networks:
-  #     - app-network
-
   db:
     image: postgres:16-alpine
     environment:
@@ -115,8 +97,6 @@ networks:
     driver: bridge
 
 volumes:
-  docmost_data:
-    driver: local
   db_data:
     driver: local
   redis_data:
