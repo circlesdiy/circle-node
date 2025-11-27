@@ -1,185 +1,82 @@
 ![cover image](static/img/circles-og-image.jpeg)
 
-A social platform for communities, creators and collaborators.
+# Circles.DIY
 
-Read the manifesto: https://circles.diy/
+A self-hosted social platform built around your circles, not your profile.
 
-## Production Deployment (Ubuntu VM)
+**Read the manifesto:** https://circles.diy/
 
-### Prerequisites
-- Ubuntu 24.04 LTS VM with public IP
-- Docker and Docker Compose installed
-- Domain pointing to your VM's IP
-- Ports 80 and 443 open in firewall
+## Deploy an Instance
 
-### Step-by-Step Setup
+### Requirements
 
-1. **Install Docker (if needed):**
-   ```bash
-   sudo apt update
-   sudo apt install docker.io docker-compose-v2 -y
-   sudo usermod -aG docker $USER
-   # Log out and back in
-   ```
+- Ubuntu 24.04 (or similar Linux with Docker)
+- Domain with DNS pointing to your server
+- Ports 80 and 443 open
 
-2. **Configure firewall:**
-   ```bash
-   sudo ufw allow 22/tcp   # SSH
-   sudo ufw allow 80/tcp   # HTTP
-   sudo ufw allow 443/tcp  # HTTPS
-   sudo ufw enable
-   ```
+### Quick Start
 
-3. **Clone and deploy:**
-   ```bash
-   git clone git@github.com:circlesdiy/circle-node.git
-   cd circles-node
-   ./init-letsencrypt.sh yourdomain.com your@email.com
-   ```
-
-### What the Setup Does
-The `init-letsencrypt.sh` script:
-- ✅ Validates your domain and email
-- ✅ Checks domain DNS resolution  
-- ✅ Starts services with HTTP-only nginx
-- ✅ Requests Let's Encrypt SSL certificate
-- ✅ Switches to HTTPS configuration
-- ✅ Tests the final deployment
-- ✅ Sets up automatic certificate renewal with certbot
-
-### Troubleshooting
-
-**Certificate request fails:**
 ```bash
-# Check domain resolution
-dig yourdomain.com A
+# Install Docker
+sudo apt update && sudo apt install docker.io docker-compose-v2 -y
+sudo usermod -aG docker $USER && newgrp docker
 
-# Check HTTP accessibility
-curl -I http://yourdomain.com
-
-# View nginx logs
-docker compose logs nginx
+# Clone and deploy
+git clone https://github.com/circlesdiy/circle-node.git
+cd circle-node
+./init-letsencrypt.sh yourdomain.com you@email.com
 ```
 
-**Service not starting:**
-```bash
-# Check all container status
-docker compose ps
+Done. Your circles.diy instance is live at `https://yourdomain.com`
 
-# View app logs
-docker compose logs circles-diy
-
-# Restart services
-docker compose restart
-```
-
-### Manual Operations
-
-**Manual SSL renewal:**
-```bash
-docker compose --profile renewal run --rm certbot
-docker compose restart nginx
-```
+## Maintenance
 
 **View logs:**
 ```bash
 docker compose logs -f
 ```
 
-**Update and redeploy:**
+**Restart services:**
 ```bash
-git pull
-docker compose build --no-cache
-docker compose up -d
+docker compose restart
 ```
 
-### Security Features
-- ✅ HTTPS with Let's Encrypt
-- ✅ Rate limiting (10 req/min general, 5 req/min feedback)
-- ✅ Security headers (HSTS, CSP, XSS protection)
-- ✅ Input validation and sanitization
-- ✅ Non-root container execution
-- ✅ CSRF protection
-
-### Monitoring
-- **View logs:** `docker compose logs -f`
-- **Check certificates:** `docker compose exec nginx nginx -t`
-
-### Local Development
-
-#### Option 1: Direct Go (No Database)
+**Update:**
 ```bash
-# Run with mock data (no database required)
-go run main.go
-# Access at http://localhost:8080
+git pull && docker compose build --no-cache && docker compose up -d
 ```
 
-#### Option 2: Full Stack with Docker
+**Manual SSL renewal** (auto-renews daily):
 ```bash
-# Start all services (PostgreSQL + Redis + App + Nginx)
+docker compose run --rm certbot renew && docker compose restart nginx
+```
+
+## Local Development
+
+```bash
+# Full stack (recommended)
 make docker-up
-
-# Access the app
-open http://localhost              # Main app
-
-# View logs
-make docker-logs
-
-# Stop services
-make docker-down
+open http://localhost
 ```
 
-#### Option 3: Database Only (Hybrid)
-```bash
-# Start just database and Redis
-docker-compose up -d db redis
+See [config.example.yaml](config.example.yaml) for configuration options.
 
-# Run app locally
-go run main.go
-# Access at http://localhost:8080
-```
+## Troubleshooting
 
-### Available Make Commands
+| Problem | Solution |
+|---------|----------|
+| Certificate fails | Check DNS: `dig yourdomain.com` should show your server IP |
+| 502 Bad Gateway | App not ready: `docker compose logs circles-diy` |
+| Can't reach site | Firewall: `sudo ufw allow 80/tcp && sudo ufw allow 443/tcp` |
 
-```bash
-make build        # Build the application binary
-make run          # Build and run
-make dev          # Development mode with auto-reload
-make test         # Run tests
-make clean        # Clean build artifacts
-make docker-up    # Start all Docker services
-make docker-down  # Stop all Docker services
-make docker-logs  # View logs
-make deps         # Install dependencies
-make fmt          # Format code
-```
+## Architecture
 
-### Configuration
+- **Go 1.24** backend with server-side rendering
+- **PostgreSQL 16** database
+- **Redis 7.2** for sessions
+- **Nginx** reverse proxy with Let's Encrypt SSL
+- **WebAuthn** passwordless authentication
 
-The app uses YAML configuration with environment variable overrides:
+## License
 
-```bash
-# Copy example config
-cp config.example.yaml config.yaml
-
-# Or use environment variables
-export DB_HOST=localhost
-export DB_PORT=5432
-export REDIS_HOST=localhost
-export LOG_LEVEL=debug
-
-# Run
-go run main.go
-```
-
-See [config.example.yaml](config.example.yaml) for all available options.
-
-### Nginx Configuration
-
-Three nginx configurations are available:
-
-- **`nginx/nginx-local.conf`** - Local development (HTTP, no SSL)
-- **`nginx/nginx.conf`** - Production (HTTPS with Let's Encrypt)
-- **`nginx/nginx-init.conf`** - Initial setup for SSL certificate
-
-See [nginx/README.md](nginx/README.md) for detailed nginx documentation.
+[License details]
