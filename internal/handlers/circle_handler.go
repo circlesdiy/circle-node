@@ -256,6 +256,7 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 			Icon:        c.Icon,
 			IconBgColor: c.IconBgColor,
 			AvatarURL:   c.AvatarURL,
+			Banner:      c.BannerURL,
 		})
 	}
 
@@ -279,6 +280,7 @@ func (h *CircleHandler) handleListCircles(w http.ResponseWriter, r *http.Request
 				Icon:        c.Icon,
 				IconBgColor: c.IconBgColor,
 				AvatarURL:   c.AvatarURL,
+				Banner:      c.BannerURL,
 			})
 		}
 	}

@@ -18,9 +18,6 @@ func GetAvatarURL(avatarURL string) string {
 
 // GetBannerURL returns the banner URL or fallback if empty
 func GetBannerURL(bannerURL string) string {
-	if bannerURL == "" {
-		return BannerFallbackURL
-	}
 	return bannerURL
 }
 

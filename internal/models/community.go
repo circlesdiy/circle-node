@@ -30,7 +30,7 @@ func (c *Circle) GetThumbnail() string {
 
 // GetBanner returns the banner URL or fallback if empty
 func (c *Circle) GetBanner() string {
-	return c.Banner
+	return utils.GetBannerURL(c.Banner)
 }
 
 type Discussion struct {
