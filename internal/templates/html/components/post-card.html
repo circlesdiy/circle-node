@@ -91,17 +91,21 @@
 
     <div class="post-footer">
         <div class="post-engagement">
-            <button class="engagement-btn" data-action="comment">
+            <button class="engagement-btn"
+                    hx-get="/api/posts/{{.ID}}/comments"
+                    hx-target="#comments-{{.ID}}"
+                    hx-swap="innerHTML"
+                    hx-trigger="click once">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
                     <path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z"></path>
                 </svg>
-                <span>{{.ReplyCount}} {{if eq .ReplyCount 1}}comment{{else}}comments{{end}}</span>
+                <span id="comment-count-{{.ID}}">{{.ReplyCount}} {{if eq .ReplyCount 1}}comment{{else}}comments{{end}}</span>
             </button>
         </div>
     </div>
 
-    <div class="post-comments" id="comments-{{.ID}}" style="display: none;">
-        <!-- Comments loaded dynamically -->
+    <div class="post-comments" id="comments-{{.ID}}">
+        <!-- Comments loaded via HTMX on first click -->
     </div>
 </article>
 
@@ -295,8 +299,6 @@
 .post-footer {
     display: flex;
     gap: 0.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-light);
 }
 
 .post-reactions,
@@ -331,12 +333,6 @@
     background: var(--hover-bg);
     color: var(--accent-primary);
     border-color: var(--border-secondary);
-}
-
-.post-comments {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-light);
 }
 
 @media (max-width: 640px) {

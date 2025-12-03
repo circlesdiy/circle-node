@@ -1,12 +1,27 @@
 {{define "comment-form"}}
-<form class="comment-form" data-post-id="{{.PostID}}">
+<form class="comment-form"
+      hx-post="/api/posts/{{.PostID}}/comments"
+      hx-target="#comment-list-{{.PostID}}"
+      hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) {
+          this.reset();
+          this.querySelector('.char-current').textContent = '0';
+          this.querySelector('button[type=submit]').disabled = true;
+      }">
+
+    <input type="hidden" name="body_format" value="plaintext" />
+
     <div class="comment-form-input">
-        <textarea
-            name="body"
-            placeholder="Write a comment..."
-            rows="2"
-            maxlength="2000"
-            required></textarea>
+        <textarea name="body"
+                  placeholder="Write a comment..."
+                  rows="2"
+                  maxlength="2000"
+                  required
+                  hx-on:input="
+                      const length = this.value.trim().length;
+                      this.closest('form').querySelector('.char-current').textContent = this.value.length;
+                      this.closest('form').querySelector('button[type=submit]').disabled = length === 0;
+                  "></textarea>
         <div class="comment-form-footer">
             <div class="comment-form-hint">
                 <span class="char-count"><span class="char-current">0</span>/2000</span>
@@ -15,78 +30,4 @@
         </div>
     </div>
 </form>
-
-<script>
-// Character counter and submit button enabler
-(function() {
-    const form = document.querySelector('.comment-form');
-    if (!form) return;
-
-    const textarea = form.querySelector('textarea');
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const charCurrent = form.querySelector('.char-current');
-    const maxLength = parseInt(textarea.getAttribute('maxlength')) || 2000;
-
-    textarea.addEventListener('input', function() {
-        const length = this.value.trim().length;
-        charCurrent.textContent = this.value.length;
-
-        // Enable submit only if there's content
-        submitBtn.disabled = length === 0;
-    });
-
-    // Handle form submission
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const body = textarea.value.trim();
-        if (!body) return;
-
-        const postID = form.dataset.postId;
-
-        // Submit via fetch
-        fetch(`/api/posts/${postID}/comments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                body: body,
-                body_format: 'plaintext'
-            })
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to post comment');
-            return response.json();
-        })
-        .then(data => {
-            // Clear form
-            textarea.value = '';
-            charCurrent.textContent = '0';
-            submitBtn.disabled = true;
-
-            // Trigger reload of comments
-            const commentsSection = document.getElementById(`comments-${postID}`);
-            if (commentsSection) {
-                htmx.trigger(commentsSection, 'commentsChanged');
-            }
-
-            // Update comment count on post card
-            const postCard = form.closest('.post-card');
-            if (postCard) {
-                const commentBtn = postCard.querySelector('.engagement-btn[data-action="comment"] span');
-                if (commentBtn) {
-                    const currentCount = parseInt(commentBtn.textContent) || 0;
-                    const newCount = currentCount + 1;
-                    commentBtn.textContent = `${newCount} ${newCount === 1 ? 'comment' : 'comments'}`;
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error posting comment:', error);
-            alert('Failed to post comment. Please try again.');
-        });
-    });
-})();
-</script>
 {{end}}

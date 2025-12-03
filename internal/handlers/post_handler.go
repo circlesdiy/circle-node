@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -502,7 +503,7 @@ func (h *PostHandler) HandleComments(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleListComments lists comments for a post
+// handleListComments lists comments for a post and returns HTML for HTMX
 func (h *PostHandler) handleListComments(w http.ResponseWriter, r *http.Request, postID string) {
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
@@ -524,7 +525,8 @@ func (h *PostHandler) handleListComments(w http.ResponseWriter, r *http.Request,
 
 	comments, err := h.contentService.GetCommentsByPost(r.Context(), postID, limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message">Failed to load comments</div>`))
 		return
 	}
 
@@ -542,11 +544,22 @@ func (h *PostHandler) handleListComments(w http.ResponseWriter, r *http.Request,
 		circleComments = append(circleComments, *circleComment)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(circleComments)
+	// Render comment-list template
+	data := struct {
+		PostID   string
+		Comments []models.CircleComment
+	}{PostID: postID, Comments: circleComments}
+
+	w.Header().Set("Content-Type", "text/html")
+	err = templates.GetTemplates().CommentList.ExecuteTemplate(w, "comment-list", data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message">Failed to render comments</div>`))
+		return
+	}
 }
 
-// handleCreateComment creates a new comment
+// handleCreateComment creates a new comment and returns HTML for HTMX
 func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request, postID string) {
 	// Get user from session
 	session := auth.GetSession(r.Context())
@@ -555,24 +568,25 @@ func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Parse request body
-	var req struct {
-		Body       string `json:"body"`
-		BodyFormat string `json:"body_format"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	// Parse form data (HTMX sends as form-urlencoded)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
+	body := r.FormValue("body")
+	bodyFormat := r.FormValue("body_format")
+	if bodyFormat == "" {
+		bodyFormat = "plaintext"
+	}
+
 	// Sanitize input
-	req.Body = content.SanitizeInput(req.Body, req.BodyFormat)
+	body = content.SanitizeInput(body, bodyFormat)
 
 	// Validate not empty after sanitization
-	if content.IsEmptyContent(req.Body) {
-		http.Error(w, "Comment body cannot be empty", http.StatusBadRequest)
+	if content.IsEmptyContent(body) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`<div class="error-message">Comment cannot be empty</div>`))
 		return
 	}
 
@@ -581,25 +595,47 @@ func (h *PostHandler) handleCreateComment(w http.ResponseWriter, r *http.Request
 		r.Context(),
 		postID,
 		*session.ActiveProfileID,
-		req.Body,
-		req.BodyFormat,
+		body,
+		bodyFormat,
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message">Failed to post comment</div>`))
 		return
 	}
 
 	// Map to CircleComment with enriched data
 	circleComment, err := h.mapCommentToCircleComment(r.Context(), comment, postID, *session.ActiveProfileID)
 	if err != nil {
-		http.Error(w, "Failed to format comment response", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message">Failed to render comment</div>`))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(circleComment)
+	// Render comment-card template
+	w.Header().Set("Content-Type", "text/html")
+	err = templates.GetTemplates().CommentCard.ExecuteTemplate(w, "comment-card", circleComment)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<div class="error-message">Failed to render comment</div>`))
+		return
+	}
+
+	// Get updated post for count
+	post, _ := h.contentService.GetPost(r.Context(), postID)
+	if post != nil {
+		countText := fmt.Sprintf("%d %s", post.ReplyCount,
+			func() string {
+				if post.ReplyCount == 1 {
+					return "comment"
+				}
+				return "comments"
+			}())
+		countHTML := fmt.Sprintf(`<span id="comment-count-%s" hx-swap-oob="true">%s</span>`,
+			postID, countText)
+		w.Write([]byte(countHTML))
+	}
 }
 
 // HandleComment handles single comment operations
@@ -696,7 +732,7 @@ func (h *PostHandler) handleUpdateComment(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(comment)
 }
 
-// handleDeleteComment deletes a comment
+// handleDeleteComment deletes a comment and returns HTML for HTMX
 func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request, commentID string) {
 	// Get user from session
 	session := auth.GetSession(r.Context())
@@ -730,7 +766,23 @@ func (h *PostHandler) handleDeleteComment(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	// Return empty body (removes card) + OOB count update
+	w.Header().Set("Content-Type", "text/html")
+
+	// Get updated post for count
+	post, _ := h.contentService.GetPost(r.Context(), postID)
+	if post != nil {
+		countText := fmt.Sprintf("%d %s", post.ReplyCount,
+			func() string {
+				if post.ReplyCount == 1 {
+					return "comment"
+				}
+				return "comments"
+			}())
+		countHTML := fmt.Sprintf(`<span id="comment-count-%s" hx-swap-oob="true">%s</span>`,
+			postID, countText)
+		w.Write([]byte(countHTML))
+	}
 }
 
 // handlePostReactions handles reactions on posts

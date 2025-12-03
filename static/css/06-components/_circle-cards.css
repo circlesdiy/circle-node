@@ -296,3 +296,21 @@
     font-size: 1.5rem;
     flex-shrink: 0;
 }
+/* HTMX Comment Auto-visibility and Animations */
+.post-comments:empty {
+    display: none;
+}
+
+.post-comments:not(:empty) {
+    display: block;
+}
+
+.comment-card.htmx-swapping {
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+.comment-card {
+    opacity: 1;
+    transition: opacity 200ms ease-in;
+}

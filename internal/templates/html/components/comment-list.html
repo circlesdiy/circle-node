@@ -1,7 +1,7 @@
 {{define "comment-list"}}
 <div class="comment-list-container">
     {{if .Comments}}
-    <div class="comment-list">
+    <div class="comment-list" id="comment-list-{{.PostID}}">
         {{range .Comments}}
         {{template "comment-card" .}}
         {{end}}
@@ -14,6 +14,7 @@
         <p>No comments yet</p>
         <span>Be the first to share your thoughts</span>
     </div>
+    <div class="comment-list" id="comment-list-{{.PostID}}" style="display: none;"></div>
     {{end}}
 
     {{template "comment-form" .}}
