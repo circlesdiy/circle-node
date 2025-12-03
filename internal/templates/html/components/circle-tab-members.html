@@ -1,0 +1,145 @@
+{{define "circle-tab-members"}}
+<div class="circle-tab-content" id="members-tab-content">
+    <div class="tab-header">
+        <h2>Members ({{.MemberCount}})</h2>
+        {{if .CanInvite}}
+        <button class="btn btn-secondary btn-sm"
+                hx-get="/api/circles/{{.Circle.ID}}/invite/form"
+                hx-target="#modal-body"
+                hx-swap="innerHTML">+ Invite</button>
+        {{end}}
+    </div>
+
+    <div class="members-grid">
+        {{range .Members}}
+        <a href="/profile/{{.Username}}" class="member-card" style="text-decoration: none; color: inherit; cursor: pointer; transition: all 0.15s ease;">
+            <div class="member-avatar">
+                {{if .Avatar}}
+                <img src="{{.Avatar}}" alt="{{.Name}}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                {{else}}
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-secondary);">
+                    {{if .Name}}{{slice .Name 0 1}}{{else}}M{{end}}
+                </div>
+                {{end}}
+            </div>
+            <div class="member-info">
+                <div class="member-name">{{.Name}}</div>
+                <div class="member-role">@{{.Username}}{{if .Role}} • {{.Role}}{{end}}</div>
+            </div>
+            {{if and (or $.IsOwner $.IsAdmin) (ne .ProfileID $.ActiveProfileID) (ne .Role "owner")}}
+            <div class="member-actions" style="margin-left: auto; position: relative;" onclick="event.preventDefault(); event.stopPropagation();">
+                <button class="btn btn-text btn-sm member-actions-toggle" onclick="toggleMemberActions('{{.ProfileID}}')" style="padding: 0.25rem 0.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="opacity: 0.6;">
+                        <circle cx="8" cy="3" r="1.5"/>
+                        <circle cx="8" cy="8" r="1.5"/>
+                        <circle cx="8" cy="13" r="1.5"/>
+                    </svg>
+                </button>
+                <div class="member-actions-menu" id="member-actions-{{.ProfileID}}" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--container-radius); box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 120px; z-index: 10; margin-top: 0.25rem;">
+                    <button class="member-action-item"
+                            hx-post="/circles/{{$.Circle.ID}}/members/{{.ProfileID}}/remove"
+                            hx-confirm="Remove {{.Name}} from this circle?"
+                            hx-swap="outerHTML"
+                            hx-target="closest .member-card"
+                            style="width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--text-primary); display: block;">
+                        Kick
+                    </button>
+                    <button class="member-action-item"
+                            hx-post="/circles/{{$.Circle.ID}}/members/{{.ProfileID}}/ban"
+                            hx-confirm="Ban {{.Name}} from this circle? They will not be able to rejoin."
+                            hx-swap="outerHTML"
+                            hx-target="closest .member-card"
+                            style="width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--error); display: block; border-top: 1px solid var(--border-light);">
+                        Ban
+                    </button>
+                </div>
+            </div>
+            {{end}}
+        </a>
+        {{end}}
+    </div>
+
+    {{if .PendingInvites}}
+    <div class="pending-invites-section" style="margin: 2rem 0;">
+        <h3 style="font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 1rem;">Pending Invitations</h3>
+        <div class="members-grid">
+            {{range .PendingInvites}}
+            <div class="member-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.2);">
+                <div class="member-avatar">
+                    {{if .Avatar}}
+                    <img src="{{.Avatar}}" alt="{{.Name}}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                    {{else}}
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-secondary);">
+                        {{if .Name}}{{slice .Name 0 1}}{{else}}?{{end}}
+                    </div>
+                    {{end}}
+                </div>
+                <div class="member-info">
+                    <div class="member-name">{{.Name}}</div>
+                    <div class="member-role" style="color: var(--text-tertiary);">@{{.Username}} • invited</div>
+                </div>
+                {{if or $.IsOwner $.IsAdmin}}
+                <div class="member-actions" style="display: flex; gap: 0.5rem; margin-left: auto;">
+                    <button class="btn btn-text btn-sm"
+                            hx-post="/api/circles/{{$.Circle.ID}}/invites/{{.ProfileID}}/resend"
+                            hx-swap="none"
+                            title="Resend invitation">
+                        Resend
+                    </button>
+                    <button class="btn btn-text btn-sm" style="color: var(--error);"
+                            hx-delete="/api/circles/{{$.Circle.ID}}/invites/{{.ProfileID}}/revoke"
+                            hx-confirm="Revoke invitation for {{.Name}}?"
+                            hx-swap="outerHTML"
+                            hx-target="closest .member-card"
+                            title="Revoke invitation">
+                        Revoke
+                    </button>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
+    <script>
+    // Toggle member actions dropdown
+    function toggleMemberActions(profileID) {
+        const menu = document.getElementById('member-actions-' + profileID);
+        const allMenus = document.querySelectorAll('.member-actions-menu');
+
+        // Close all other menus
+        allMenus.forEach(m => {
+            if (m.id !== 'member-actions-' + profileID) {
+                m.style.display = 'none';
+            }
+        });
+
+        // Toggle this menu
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.member-actions')) {
+            document.querySelectorAll('.member-actions-menu').forEach(m => {
+                m.style.display = 'none';
+            });
+        }
+    });
+
+    // Add hover styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .member-card:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-primary);
+        }
+        .member-action-item:hover {
+            background: var(--hover-bg);
+        }
+    `;
+    document.head.appendChild(style);
+    </script>
+</div>
+{{end}}

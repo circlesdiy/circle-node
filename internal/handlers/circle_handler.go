@@ -133,6 +133,13 @@ func (h *CircleHandler) RegisterRoutes(mux *http.ServeMux, authHandler *auth.Han
 	mux.HandleFunc("/api/circles/form", authHandler.RequireAuth(h.handleAPICircleForm))
 	mux.HandleFunc("/api/circles/", authHandler.RequireAuth(h.handleAPICircleActions))
 
+	// Tab lazy-loading endpoints
+	mux.HandleFunc("GET /api/circles/{id}/tabs/chat", authHandler.RequireAuth(h.handleAPITabChat))
+	mux.HandleFunc("GET /api/circles/{id}/tabs/members", authHandler.RequireAuth(h.handleAPITabMembers))
+	mux.HandleFunc("GET /api/circles/{id}/tabs/gatherings", authHandler.RequireAuth(h.handleAPITabGatherings))
+	mux.HandleFunc("GET /api/circles/{id}/tabs/files", authHandler.RequireAuth(h.handleAPITabFiles))
+	mux.HandleFunc("GET /api/circles/{id}/tabs/settings", authHandler.RequireAuth(h.handleAPITabSettings))
+
 	// Image upload routes (use specific paths to avoid conflicts with handleAPICircleActions)
 	mux.HandleFunc("POST /api/circles/{id}/avatar", authHandler.RequireAuth(uploadHandler.UploadAvatar))
 	mux.HandleFunc("POST /api/circles/{id}/banner", authHandler.RequireAuth(uploadHandler.UploadBanner))
@@ -393,170 +400,26 @@ func (h *CircleHandler) handleViewCircle(w http.ResponseWriter, r *http.Request,
 }
 
 // buildCircleDetailPageData builds the circle detail page data
+// This now only loads minimal data + chat tab for initial render
+// Other tabs are loaded lazily via HTMX
 func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *domain.Circle, profileID string, user *domain.User, effectiveTheme *domain.EffectiveTheme) *models.CircleDetailPageData {
-	// Determine user role and permissions
+	// Determine user role and permissions (minimal checks)
 	isOwner, _ := h.circleService.IsOwner(ctx, circle.ID, profileID)
 	isAdmin, _ := h.circleService.IsAdmin(ctx, circle.ID, profileID)
 	isMember, _ := h.circleService.IsMember(ctx, circle.ID, profileID)
-	canInvite, _ := h.circleService.CanInvite(ctx, circle.ID, profileID)
-	canEditSettings, _ := h.circleService.CanEditSettings(ctx, circle.ID, profileID)
 
-	// Get user role
-	userRole, _ := h.circleService.GetMemberRole(ctx, circle.ID, profileID)
-
-	// Get member count
+	// Get member count for header badge
 	memberCount, _ := h.circleService.CountMembers(ctx, circle.ID)
 
-	// Get members
-	memberships, _ := h.circleService.GetCircleMembers(ctx, circle.ID, 100, 0)
-
-	// Batch fetch member profiles
-	memberProfileIDSet := make(map[string]bool)
-	for _, m := range memberships {
-		memberProfileIDSet[m.ProfileID] = true
-	}
-
-	memberProfileMap := make(map[string]*domain.Profile)
-	for memberProfileID := range memberProfileIDSet {
-		profile, err := h.profileService.GetByID(ctx, memberProfileID)
-		if err == nil && profile != nil {
-			memberProfileMap[memberProfileID] = profile
-		}
-	}
-
-	// Separate pending invites from active members
-	members := make([]models.CircleMember, 0)
-	pendingInvites := make([]models.CircleMember, 0)
-
-	for _, m := range memberships {
-		// Determine role for this member
-		role := "member"
-		if m.ProfileID == circle.OwnerProfileID {
-			role = "owner"
-		}
-		// TODO: Check if member is admin once roles are implemented
-
-		// Get profile information
-		name := "Member"
-		username := ""
-		avatar := ""
-		if memberProfile, ok := memberProfileMap[m.ProfileID]; ok {
-			if memberProfile.DisplayName != "" {
-				name = memberProfile.DisplayName
-			} else if memberProfile.Name != "" {
-				name = memberProfile.Name
-			} else if memberProfile.Handle != "" {
-				name = memberProfile.Handle
-			}
-			username = memberProfile.Handle
-			avatar = memberProfile.AvatarURL
-		}
-
-		circleMember := models.CircleMember{
-			ProfileID: m.ProfileID,
-			Name:      name,
-			Username:  username,
-			Avatar:    avatar,
-			Role:      role,
-			State:     m.State,
-			JoinedAt:  m.JoinedAt.Format("Jan 2, 2006"),
-		}
-
-		// Separate invited vs active members
-		if m.State == "invited" {
-			pendingInvites = append(pendingInvites, circleMember)
-		} else if m.State == "active" {
-			members = append(members, circleMember)
-		}
-	}
-
-	// Fetch recent posts
+	// Load ONLY chat tab data for initial render
 	posts, _ := h.contentService.GetPostsByCircle(ctx, circle.ID, 20, 0)
+	recentPosts := h.buildPostModels(ctx, posts, profileID)
 
-	// Collect unique profile IDs for batch fetching
-	profileIDSet := make(map[string]bool)
-	for _, post := range posts {
-		profileIDSet[post.AuthorProfileID] = true
-	}
-
-	// Batch fetch profiles
-	profileMap := make(map[string]*domain.Profile)
-	for authorProfileID := range profileIDSet {
-		profile, err := h.profileService.GetByID(ctx, authorProfileID)
-		if err == nil && profile != nil {
-			profileMap[authorProfileID] = profile
-		}
-	}
-
-	recentPosts := make([]models.CirclePost, 0, len(posts))
-	for _, post := range posts {
-		// Get reaction counts
-		reactionCounts, _ := h.contentService.GetReactionCounts(ctx, "post", post.ID)
-		likeCount := reactionCounts["like"]
-
-		// Check if user has liked
-		userHasLiked := false
-		if profileID != "" {
-			userReaction, _ := h.contentService.GetUserReaction(ctx, "post", post.ID, profileID)
-			userHasLiked = userReaction != nil && userReaction.Key == "like"
-		}
-
-		// Check if user can edit
-		canEdit := post.AuthorProfileID == profileID
-
-		// Format time
-		formattedTime := formatTimeAgo(post.CreatedAt)
-
-		// Check if edited
-		isEdited := post.EditedAt != nil
-		var editedAtStr *string
-		if isEdited {
-			editedStr := formatTimeAgo(*post.EditedAt)
-			editedAtStr = &editedStr
-		}
-
-		// Get author profile information
-		authorName := "Circle Member"
-		authorAvatar := ""
-		if authorProfile, ok := profileMap[post.AuthorProfileID]; ok {
-			if authorProfile.DisplayName != "" {
-				authorName = authorProfile.DisplayName
-			} else if authorProfile.Name != "" {
-				authorName = authorProfile.Name
-			} else if authorProfile.Handle != "" {
-				authorName = authorProfile.Handle
-			}
-			authorAvatar = authorProfile.AvatarURL
-		}
-
-		recentPosts = append(recentPosts, models.CirclePost{
-			ID:              post.ID,
-			AuthorProfileID: post.AuthorProfileID,
-			AuthorName:      authorName,
-			AuthorAvatar:    authorAvatar,
-			Body:            post.Body,
-			BodyFormat:      post.BodyFormat,
-			ContentWarning:  post.ContentWarning,
-			Visibility:      post.Visibility,
-			CreatedAt:       post.CreatedAt.Format(time.RFC3339),
-			EditedAt:        editedAtStr,
-			FormattedTime:   formattedTime,
-			IsEdited:        isEdited,
-			ReplyCount:      post.ReplyCount,
-			LikeCount:       likeCount,
-			UserHasLiked:    userHasLiked,
-			CanEdit:         canEdit,
-			ShowComments:    false,
-		})
-	}
-
-	// Build stats
+	// Build lightweight stats for sidebar
 	stats := models.CircleDetailStats{
-		TotalPosts:      len(posts), // Count of fetched posts
-		TotalFiles:      0,          // TODO: Implement file counting
-		TotalGatherings: 0,          // TODO: Implement gathering counting
-		CreatedAt:       circle.CreatedAt.Format("Jan 2, 2006"),
-		LastActivity:    "Recently", // TODO: Implement last activity tracking
+		TotalPosts:   len(posts),
+		CreatedAt:    circle.CreatedAt.Format("Jan 2, 2006"),
+		LastActivity: "Recently",
 	}
 
 	return &models.CircleDetailPageData{
@@ -570,24 +433,26 @@ func (h *CircleHandler) buildCircleDetailPageData(ctx context.Context, circle *d
 			User:         user,
 			AssetVersion: h.assetVersion,
 		},
-		Circle:             *circle,
-		Members:            members,
-		PendingInvites:     pendingInvites,
-		MemberCount:        memberCount,
-		RecentPosts:        recentPosts,
-		UpcomingGatherings: []models.GatheringItem{}, // TODO: Implement gathering fetching
-		SharedFiles:        []models.CircleFile{},    // TODO: Implement file fetching
-		IsOwner:            isOwner,
-		IsAdmin:            isAdmin,
-		IsMember:           isMember,
-		CanInvite:          canInvite,
-		CanEditInfo:        canEditSettings,
-		CanEditVisibility:  canEditSettings,
-		CanEditPermissions: canEditSettings,
-		ActiveProfileID:    profileID,
-		UserRole:           userRole,
-		CircleStats:        stats,
-		ActiveTab:          "chat", // Default to chat tab
+		Circle:          *circle,
+		MemberCount:     memberCount,
+		RecentPosts:     recentPosts, // Only chat data
+		IsOwner:         isOwner,
+		IsAdmin:         isAdmin,
+		IsMember:        isMember,
+		ActiveProfileID: profileID,
+		CircleStats:     stats,
+		ActiveTab:       "chat",
+
+		// These are now loaded on-demand via HTMX:
+		Members:            nil,
+		PendingInvites:     nil,
+		UpcomingGatherings: nil,
+		SharedFiles:        nil,
+		CanInvite:          false, // Loaded in members tab
+		CanEditInfo:        false, // Loaded in settings tab
+		CanEditVisibility:  false, // Loaded in settings tab
+		CanEditPermissions: false, // Loaded in settings tab
+		UserRole:           "",    // Loaded if needed
 	}
 }
 
@@ -635,6 +500,451 @@ func formatTimeAgo(t time.Time) string {
 		}
 		return fmt.Sprintf("%d years ago", years)
 	}
+}
+
+// Helper methods for building tab data models
+
+// buildPostModels converts domain posts to template models
+func (h *CircleHandler) buildPostModels(ctx context.Context, posts []*domain.Post, viewerProfileID string) []models.CirclePost {
+	if len(posts) == 0 {
+		return []models.CirclePost{}
+	}
+
+	// Collect unique profile IDs for batch fetching
+	profileIDSet := make(map[string]bool)
+	for _, post := range posts {
+		profileIDSet[post.AuthorProfileID] = true
+	}
+
+	// Batch fetch profiles
+	profileMap := make(map[string]*domain.Profile)
+	for authorProfileID := range profileIDSet {
+		profile, err := h.profileService.GetByID(ctx, authorProfileID)
+		if err == nil && profile != nil {
+			profileMap[authorProfileID] = profile
+		}
+	}
+
+	recentPosts := make([]models.CirclePost, 0, len(posts))
+	for _, post := range posts {
+		// Get reaction counts
+		reactionCounts, _ := h.contentService.GetReactionCounts(ctx, "post", post.ID)
+		likeCount := reactionCounts["like"]
+
+		// Check if user has liked
+		userHasLiked := false
+		if viewerProfileID != "" {
+			userReaction, _ := h.contentService.GetUserReaction(ctx, "post", post.ID, viewerProfileID)
+			userHasLiked = userReaction != nil && userReaction.Key == "like"
+		}
+
+		// Check if user can edit
+		canEdit := post.AuthorProfileID == viewerProfileID
+
+		// Format time
+		formattedTime := formatTimeAgo(post.CreatedAt)
+
+		// Check if edited
+		isEdited := post.EditedAt != nil
+		var editedAtStr *string
+		if isEdited {
+			editedStr := formatTimeAgo(*post.EditedAt)
+			editedAtStr = &editedStr
+		}
+
+		// Get author profile information
+		authorName := "Circle Member"
+		authorAvatar := ""
+		if authorProfile, ok := profileMap[post.AuthorProfileID]; ok {
+			if authorProfile.DisplayName != "" {
+				authorName = authorProfile.DisplayName
+			} else if authorProfile.Name != "" {
+				authorName = authorProfile.Name
+			} else if authorProfile.Handle != "" {
+				authorName = authorProfile.Handle
+			}
+			authorAvatar = authorProfile.AvatarURL
+		}
+
+		recentPosts = append(recentPosts, models.CirclePost{
+			ID:              post.ID,
+			AuthorProfileID: post.AuthorProfileID,
+			AuthorName:      authorName,
+			AuthorAvatar:    authorAvatar,
+			Body:            post.Body,
+			BodyFormat:      post.BodyFormat,
+			ContentWarning:  post.ContentWarning,
+			Visibility:      post.Visibility,
+			CreatedAt:       post.CreatedAt.Format(time.RFC3339),
+			EditedAt:        editedAtStr,
+			FormattedTime:   formattedTime,
+			IsEdited:        isEdited,
+			ReplyCount:      post.ReplyCount,
+			LikeCount:       likeCount,
+			UserHasLiked:    userHasLiked,
+			CanEdit:         canEdit,
+			ShowComments:    false,
+		})
+	}
+
+	return recentPosts
+}
+
+// buildMemberModels fetches and builds member models for the members tab
+func (h *CircleHandler) buildMemberModels(ctx context.Context, circleID string, ownerProfileID string) ([]models.CircleMember, []models.CircleMember) {
+	// Get members
+	memberships, _ := h.circleService.GetCircleMembers(ctx, circleID, 100, 0)
+
+	// Batch fetch member profiles
+	memberProfileIDSet := make(map[string]bool)
+	for _, m := range memberships {
+		memberProfileIDSet[m.ProfileID] = true
+	}
+
+	memberProfileMap := make(map[string]*domain.Profile)
+	for memberProfileID := range memberProfileIDSet {
+		profile, err := h.profileService.GetByID(ctx, memberProfileID)
+		if err == nil && profile != nil {
+			memberProfileMap[memberProfileID] = profile
+		}
+	}
+
+	// Separate pending invites from active members
+	members := make([]models.CircleMember, 0)
+	pendingInvites := make([]models.CircleMember, 0)
+
+	for _, m := range memberships {
+		// Determine role for this member
+		role := "member"
+		if m.ProfileID == ownerProfileID {
+			role = "owner"
+		}
+		// TODO: Check if member is admin once roles are implemented
+
+		// Get profile information
+		name := "Member"
+		username := ""
+		avatar := ""
+		if memberProfile, ok := memberProfileMap[m.ProfileID]; ok {
+			if memberProfile.DisplayName != "" {
+				name = memberProfile.DisplayName
+			} else if memberProfile.Name != "" {
+				name = memberProfile.Name
+			} else if memberProfile.Handle != "" {
+				name = memberProfile.Handle
+			}
+			username = memberProfile.Handle
+			avatar = memberProfile.AvatarURL
+		}
+
+		circleMember := models.CircleMember{
+			ProfileID: m.ProfileID,
+			Name:      name,
+			Username:  username,
+			Avatar:    avatar,
+			Role:      role,
+			State:     m.State,
+			JoinedAt:  m.JoinedAt.Format("Jan 2, 2006"),
+		}
+
+		// Separate invited vs active members
+		if m.State == "invited" {
+			pendingInvites = append(pendingInvites, circleMember)
+		} else if m.State == "active" {
+			members = append(members, circleMember)
+		}
+	}
+
+	return members, pendingInvites
+}
+
+// Tab endpoint handlers for lazy loading
+
+// API wrappers for tab endpoints
+
+// handleAPITabChat is the API wrapper for chat tab
+func (h *CircleHandler) handleAPITabChat(w http.ResponseWriter, r *http.Request) {
+	circleID := r.PathValue("id")
+	h.handleTabChat(w, r, circleID)
+}
+
+// handleAPITabMembers is the API wrapper for members tab
+func (h *CircleHandler) handleAPITabMembers(w http.ResponseWriter, r *http.Request) {
+	circleID := r.PathValue("id")
+	h.handleTabMembers(w, r, circleID)
+}
+
+// handleAPITabGatherings is the API wrapper for gatherings tab
+func (h *CircleHandler) handleAPITabGatherings(w http.ResponseWriter, r *http.Request) {
+	circleID := r.PathValue("id")
+	h.handleTabGatherings(w, r, circleID)
+}
+
+// handleAPITabFiles is the API wrapper for files tab
+func (h *CircleHandler) handleAPITabFiles(w http.ResponseWriter, r *http.Request) {
+	circleID := r.PathValue("id")
+	h.handleTabFiles(w, r, circleID)
+}
+
+// handleAPITabSettings is the API wrapper for settings tab
+func (h *CircleHandler) handleAPITabSettings(w http.ResponseWriter, r *http.Request) {
+	circleID := r.PathValue("id")
+	h.handleTabSettings(w, r, circleID)
+}
+
+// handleTabChat returns the chat tab content
+func (h *CircleHandler) handleTabChat(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	// Permission check
+	canView, err := h.circleService.CanView(r.Context(), circleID, profileID)
+	if err != nil {
+		h.logger.Error("failed to check view permission",
+			zap.String("circle_id", circleID),
+			zap.String("profile_id", profileID),
+			zap.Error(err),
+		)
+		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !canView {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Load only chat-related data
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		h.logger.Error("failed to get circle",
+			zap.String("circle_id", circleID),
+			zap.Error(err),
+		)
+		http.Error(w, "Failed to load circle", http.StatusInternalServerError)
+		return
+	}
+
+	isMember, _ := h.circleService.IsMember(r.Context(), circleID, profileID)
+	posts, _ := h.contentService.GetPostsByCircle(r.Context(), circleID, 20, 0)
+
+	// Build post models
+	recentPosts := h.buildPostModels(r.Context(), posts, profileID)
+
+	data := map[string]interface{}{
+		"Circle":      circle,
+		"IsMember":    isMember,
+		"RecentPosts": recentPosts,
+	}
+
+	RenderFragment(w, h.logger, "circle-tab-chat", data)
+}
+
+// handleTabMembers returns the members tab content
+func (h *CircleHandler) handleTabMembers(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	canView, err := h.circleService.CanView(r.Context(), circleID, profileID)
+	if err != nil {
+		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !canView {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Failed to load circle", http.StatusInternalServerError)
+		return
+	}
+
+	isOwner := circle.OwnerProfileID == profileID
+	isAdmin, _ := h.circleService.IsAdmin(r.Context(), circleID, profileID)
+	canInvite, _ := h.circleService.CanInvite(r.Context(), circleID, profileID)
+	memberCount, _ := h.circleService.CountMembers(r.Context(), circleID)
+
+	// Load members with profiles
+	members, pendingInvites := h.buildMemberModels(r.Context(), circleID, circle.OwnerProfileID)
+
+	data := map[string]interface{}{
+		"Circle":          circle,
+		"Members":         members,
+		"PendingInvites":  pendingInvites,
+		"MemberCount":     memberCount,
+		"IsOwner":         isOwner,
+		"IsAdmin":         isAdmin,
+		"CanInvite":       canInvite,
+		"ActiveProfileID": profileID,
+	}
+
+	RenderFragment(w, h.logger, "circle-tab-members", data)
+}
+
+// handleTabGatherings returns the gatherings tab content
+func (h *CircleHandler) handleTabGatherings(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	canView, err := h.circleService.CanView(r.Context(), circleID, profileID)
+	if err != nil {
+		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !canView {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Failed to load circle", http.StatusInternalServerError)
+		return
+	}
+
+	isMember, _ := h.circleService.IsMember(r.Context(), circleID, profileID)
+
+	// TODO: Load gatherings from service when implemented
+	upcomingGatherings := []models.GatheringItem{}
+
+	data := map[string]interface{}{
+		"Circle":             circle,
+		"IsMember":           isMember,
+		"UpcomingGatherings": upcomingGatherings,
+	}
+
+	RenderFragment(w, h.logger, "circle-tab-gatherings", data)
+}
+
+// handleTabFiles returns the files tab content
+func (h *CircleHandler) handleTabFiles(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	canView, err := h.circleService.CanView(r.Context(), circleID, profileID)
+	if err != nil {
+		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !canView {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Failed to load circle", http.StatusInternalServerError)
+		return
+	}
+
+	isMember, _ := h.circleService.IsMember(r.Context(), circleID, profileID)
+
+	// TODO: Load files from service when implemented
+	sharedFiles := []models.CircleFile{}
+
+	data := map[string]interface{}{
+		"Circle":      circle,
+		"IsMember":    isMember,
+		"SharedFiles": sharedFiles,
+	}
+
+	RenderFragment(w, h.logger, "circle-tab-files", data)
+}
+
+// handleTabSettings returns the settings tab content
+func (h *CircleHandler) handleTabSettings(w http.ResponseWriter, r *http.Request, circleID string) {
+	user := auth.GetUser(r.Context())
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	session := auth.GetSession(r.Context())
+	if session == nil || session.ActiveProfileID == nil {
+		http.Error(w, "No active profile", http.StatusBadRequest)
+		return
+	}
+
+	profileID := *session.ActiveProfileID
+
+	canView, err := h.circleService.CanView(r.Context(), circleID, profileID)
+	if err != nil {
+		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !canView {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	circle, err := h.circleService.GetCircleByID(r.Context(), circleID)
+	if err != nil {
+		http.Error(w, "Failed to load circle", http.StatusInternalServerError)
+		return
+	}
+
+	isOwner := circle.OwnerProfileID == profileID
+	canEditSettings, _ := h.circleService.CanEditSettings(r.Context(), circleID, profileID)
+
+	data := map[string]interface{}{
+		"Circle":            circle,
+		"IsOwner":           isOwner,
+		"CanEditInfo":       canEditSettings,
+		"CanEditVisibility": canEditSettings,
+		"CSRFToken":         middleware.GetCSRFToken(r),
+	}
+
+	RenderFragment(w, h.logger, "circle-tab-settings", data)
 }
 
 // handleNewCircle shows the create circle form or handles creation

@@ -1,0 +1,26 @@
+{{define "circle-tab-gatherings"}}
+<div class="circle-tab-content" id="gatherings-tab-content">
+    <div class="tab-header">
+        <h2>Upcoming Gatherings</h2>
+        {{if .IsMember}}
+        <button class="btn btn-primary btn-sm"
+            onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize
+            Gathering</button>
+        {{end}}
+    </div>
+
+    {{if .UpcomingGatherings}}
+    {{range .UpcomingGatherings}}
+    <div class="event-card">
+        <div class="event-card-title">{{.Title}}</div>
+        <div class="event-card-datetime">📅 {{.TimeRange}}</div>
+        <div class="event-card-description">{{.Description}}</div>
+    </div>
+    {{end}}
+    {{else}}
+    <div class="empty-state">
+        <p>No upcoming gatherings. Organize one to bring the circle together!</p>
+    </div>
+    {{end}}
+</div>
+{{end}}

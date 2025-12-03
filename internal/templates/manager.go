@@ -23,17 +23,22 @@ type Templates struct {
 	Marketplace     *template.Template
 
 	// Components
-	Modal            *template.Template
-	Toast            *template.Template
-	CircleCard       *template.Template
-	CircleForm       *template.Template
-	InviteMemberForm *template.Template
-	EmptyState       *template.Template
-	PostComposer     *template.Template
-	PostCard         *template.Template
-	CommentCard      *template.Template
-	CommentList      *template.Template
-	CommentForm      *template.Template
+	Modal               *template.Template
+	Toast               *template.Template
+	CircleCard          *template.Template
+	CircleForm          *template.Template
+	CircleTabChat       *template.Template
+	CircleTabFiles      *template.Template
+	CircleTabGatherings *template.Template
+	CircleTabMembers    *template.Template
+	CircleTabSettings   *template.Template
+	InviteMemberForm    *template.Template
+	EmptyState          *template.Template
+	PostComposer        *template.Template
+	PostCard            *template.Template
+	CommentCard         *template.Template
+	CommentList         *template.Template
+	CommentForm         *template.Template
 }
 
 var templates *Templates
@@ -127,6 +132,31 @@ func InitTemplates() error {
 	}
 
 	templates.CircleForm, err = parseTemplateFromEmbedded("circle-form", "html/components/circle-form.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleTabChat, err = parseTemplateFromEmbedded("circle-tab-chat", "html/components/circle-tab-chat.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleTabFiles, err = parseTemplateFromEmbedded("circle-tab-files", "html/components/circle-tab-files.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleTabGatherings, err = parseTemplateFromEmbedded("circle-tab-gatherings", "html/components/circle-tab-gatherings.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleTabMembers, err = parseTemplateFromEmbedded("circle-tab-members", "html/components/circle-tab-members.html")
+	if err != nil {
+		return err
+	}
+
+	templates.CircleTabSettings, err = parseTemplateFromEmbedded("circle-tab-settings", "html/components/circle-tab-settings.html")
 	if err != nil {
 		return err
 	}

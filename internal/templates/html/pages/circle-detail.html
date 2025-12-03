@@ -43,18 +43,69 @@
         </div>
 
         <div class="circle-detail-nav">
-            <button class="nav-pill active" data-tab="chat">Chat</button>
-            <button class="nav-pill" data-tab="gatherings">Gatherings</button>
-            <button class="nav-pill" data-tab="files">Files</button>
-            <button class="nav-pill" data-tab="members">Members</button>
-            <button class="nav-pill" data-tab="settings">Settings</button>
+            <button class="nav-pill active"
+                    data-tab="chat"
+                    hx-get="/api/circles/{{.Circle.ID}}/tabs/chat"
+                    hx-target="#tab-container"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-indicator="#tab-loading">
+                Chat
+            </button>
+            <button class="nav-pill"
+                    data-tab="gatherings"
+                    hx-get="/api/circles/{{.Circle.ID}}/tabs/gatherings"
+                    hx-target="#tab-container"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-indicator="#tab-loading">
+                Gatherings
+            </button>
+            <button class="nav-pill"
+                    data-tab="files"
+                    hx-get="/api/circles/{{.Circle.ID}}/tabs/files"
+                    hx-target="#tab-container"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-indicator="#tab-loading">
+                Files
+            </button>
+            <button class="nav-pill"
+                    data-tab="members"
+                    hx-get="/api/circles/{{.Circle.ID}}/tabs/members"
+                    hx-target="#tab-container"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-indicator="#tab-loading">
+                Members
+            </button>
+            <button class="nav-pill"
+                    data-tab="settings"
+                    hx-get="/api/circles/{{.Circle.ID}}/tabs/settings"
+                    hx-target="#tab-container"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-indicator="#tab-loading">
+                Settings
+            </button>
         </div>
     </div>
 
     <div class="circle-content">
         <div class="circle-main">
-            <!-- Chat Tab -->
-            <div class="circle-tab active" id="chat-tab">
+            <!-- Loading indicator -->
+            <div id="tab-loading" class="htmx-indicator tab-loading">
+                <div class="skeleton-loader">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                </div>
+            </div>
+
+            <!-- Tab content container -->
+            <div id="tab-container">
+                <!-- Initial chat tab loaded server-side for faster FCP -->
+                <div class="circle-tab-content" id="chat-tab-content">
                 {{if .IsMember}}
                 {{template "post-composer" (dict "CircleID" .Circle.ID)}}
                 {{end}}
@@ -77,333 +128,10 @@
                     </div>
                     {{end}}
                 </div>
-            </div>
-
-            <!-- Gatherings Tab -->
-            <div class="circle-tab" id="gatherings-tab">
-                <div class="tab-header">
-                    <h2>Upcoming Gatherings</h2>
-                    {{if .IsMember}}
-                    <button class="btn btn-primary btn-sm"
-                        onclick="window.location.href='/gather/create?circle={{.Circle.ID}}'">+ Organize
-                        Gathering</button>
-                    {{end}}
                 </div>
-
-                {{if .UpcomingGatherings}}
-                {{range .UpcomingGatherings}}
-                <div class="event-card">
-                    <div class="event-card-title">{{.Title}}</div>
-                    <div class="event-card-datetime">📅 {{.TimeRange}}</div>
-                    <div class="event-card-description">{{.Description}}</div>
-                </div>
-                {{end}}
-                {{else}}
-                <div class="empty-state">
-                    <p>No upcoming gatherings. Organize one to bring the circle together!</p>
-                </div>
-                {{end}}
-            </div>
-
-            <!-- Files Tab -->
-            <div class="circle-tab" id="files-tab">
-                <div class="tab-header">
-                    <h2>Shared Files</h2>
-                    {{if .IsMember}}
-                    <button class="btn btn-secondary btn-sm">↑ Upload</button>
-                    {{end}}
-                </div>
-
-                {{if .SharedFiles}}
-                <div class="files-grid">
-                    {{range .SharedFiles}}
-                    <div class="file-card">
-                        <div class="file-icon">{{.Icon}}</div>
-                        <div class="file-info">
-                            <div class="file-name">{{.Name}}</div>
-                            <div class="file-meta">{{.Uploader}} • {{.TimeAgo}} • {{.SizeDisplay}}</div>
-                        </div>
-                        <button class="file-action">↓</button>
-                    </div>
-                    {{end}}
-                </div>
-                {{else}}
-                <div class="empty-state">
-                    <p>No files shared yet.</p>
-                </div>
-                {{end}}
-            </div>
-
-            <!-- Members Tab -->
-            <div class="circle-tab" id="members-tab">
-                <div class="tab-header">
-                    <h2>Members ({{.MemberCount}})</h2>
-                    {{if .CanInvite}}
-                    <button class="btn btn-secondary btn-sm">+ Invite</button>
-                    {{end}}
-                </div>
-
-                <div class="members-grid">
-                    {{range .Members}}
-                    <a href="/profile/{{.Username}}" class="member-card" style="text-decoration: none; color: inherit; cursor: pointer; transition: all 0.15s ease;">
-                        <div class="member-avatar">
-                            {{if .Avatar}}
-                            <img src="{{.Avatar}}" alt="{{.Name}}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                            {{else}}
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-secondary);">
-                                {{if .Name}}{{slice .Name 0 1}}{{else}}M{{end}}
-                            </div>
-                            {{end}}
-                        </div>
-                        <div class="member-info">
-                            <div class="member-name">{{.Name}}</div>
-                            <div class="member-role">@{{.Username}}{{if .Role}} • {{.Role}}{{end}}</div>
-                        </div>
-                        {{if and (or $.IsOwner $.IsAdmin) (ne .ProfileID $.ActiveProfileID) (ne .Role "owner")}}
-                        <div class="member-actions" style="margin-left: auto; position: relative;" onclick="event.preventDefault(); event.stopPropagation();">
-                            <button class="btn btn-text btn-sm member-actions-toggle" onclick="toggleMemberActions('{{.ProfileID}}')" style="padding: 0.25rem 0.5rem;">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="opacity: 0.6;">
-                                    <circle cx="8" cy="3" r="1.5"/>
-                                    <circle cx="8" cy="8" r="1.5"/>
-                                    <circle cx="8" cy="13" r="1.5"/>
-                                </svg>
-                            </button>
-                            <div class="member-actions-menu" id="member-actions-{{.ProfileID}}" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--container-radius); box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 120px; z-index: 10; margin-top: 0.25rem;">
-                                <button class="member-action-item"
-                                        hx-post="/circles/{{$.Circle.ID}}/members/{{.ProfileID}}/remove"
-                                        hx-confirm="Remove {{.Name}} from this circle?"
-                                        hx-swap="outerHTML"
-                                        hx-target="closest .member-card"
-                                        style="width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--text-primary); display: block;">
-                                    Kick
-                                </button>
-                                <button class="member-action-item"
-                                        hx-post="/circles/{{$.Circle.ID}}/members/{{.ProfileID}}/ban"
-                                        hx-confirm="Ban {{.Name}} from this circle? They will not be able to rejoin."
-                                        hx-swap="outerHTML"
-                                        hx-target="closest .member-card"
-                                        style="width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; color: var(--error); display: block; border-top: 1px solid var(--border-light);">
-                                    Ban
-                                </button>
-                            </div>
-                        </div>
-                        {{end}}
-                    </a>
-                    {{end}}
-                </div>
-
-                {{if .PendingInvites}}
-                <div class="pending-invites-section" style="margin: 2rem 0;">
-                    <h3 style="font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 1rem;">Pending Invitations</h3>
-                    <div class="members-grid">
-                        {{range .PendingInvites}}
-                        <div class="member-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); border: 1px solid rgba(99, 102, 241, 0.2);">
-                            <div class="member-avatar">
-                                {{if .Avatar}}
-                                <img src="{{.Avatar}}" alt="{{.Name}}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                                {{else}}
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-secondary);">
-                                    {{if .Name}}{{slice .Name 0 1}}{{else}}?{{end}}
-                                </div>
-                                {{end}}
-                            </div>
-                            <div class="member-info">
-                                <div class="member-name">{{.Name}}</div>
-                                <div class="member-role" style="color: var(--text-tertiary);">@{{.Username}} • invited</div>
-                            </div>
-                            {{if or $.IsOwner $.IsAdmin}}
-                            <div class="member-actions" style="display: flex; gap: 0.5rem; margin-left: auto;">
-                                <button class="btn btn-text btn-sm"
-                                        hx-post="/api/circles/{{$.Circle.ID}}/invites/{{.ProfileID}}/resend"
-                                        hx-swap="none"
-                                        title="Resend invitation">
-                                    Resend
-                                </button>
-                                <button class="btn btn-text btn-sm" style="color: var(--error);"
-                                        hx-delete="/api/circles/{{$.Circle.ID}}/invites/{{.ProfileID}}/revoke"
-                                        hx-confirm="Revoke invitation for {{.Name}}?"
-                                        hx-swap="outerHTML"
-                                        hx-target="closest .member-card"
-                                        title="Revoke invitation">
-                                    Revoke
-                                </button>
-                            </div>
-                            {{end}}
-                        </div>
-                        {{end}}
-                    </div>
-                </div>
-                {{end}}
-            </div>
-
-            <script>
-            // Toggle member actions dropdown
-            function toggleMemberActions(profileID) {
-                const menu = document.getElementById('member-actions-' + profileID);
-                const allMenus = document.querySelectorAll('.member-actions-menu');
-
-                // Close all other menus
-                allMenus.forEach(m => {
-                    if (m.id !== 'member-actions-' + profileID) {
-                        m.style.display = 'none';
-                    }
-                });
-
-                // Toggle this menu
-                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-            }
-
-            // Close menus when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('.member-actions')) {
-                    document.querySelectorAll('.member-actions-menu').forEach(m => {
-                        m.style.display = 'none';
-                    });
-                }
-            });
-
-            // Add hover styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .member-card:hover {
-                    background: var(--bg-secondary);
-                    border-color: var(--border-primary);
-                }
-                .member-action-item:hover {
-                    background: var(--hover-bg);
-                }
-            `;
-            document.head.appendChild(style);
-            </script>
-
-            <!-- Settings Tab -->
-            <div class="circle-tab" id="settings-tab">
-                {{if .IsOwner}}
-
-                <!-- Avatar Upload Section -->
-                <div class="settings-section">
-                    <h3>Circle Avatar</h3>
-                    <div style="display: flex; align-items: center; gap: 1.5rem;">
-                        <div class="circle-detail-avatar" style="flex-shrink: 0;" {{if not .Circle.AvatarURL}}{{if .Circle.IconBgColor}}style="background: {{.Circle.IconBgColor}};"{{end}}{{end}}>
-                            {{if .Circle.AvatarURL}}
-                            <img src="{{.Circle.AvatarURL}}" alt="Circle avatar" id="circle-avatar-preview"
-                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px;">
-                            {{else if .Circle.Icon}}
-                            <span id="circle-avatar-preview">{{.Circle.Icon}}</span>
-                            {{else}}
-                            <span id="circle-avatar-preview">🔵</span>
-                            {{end}}
-                        </div>
-                        <form id="circle-avatar-upload-form" hx-post="/api/circles/{{.Circle.ID}}/avatar" hx-encoding="multipart/form-data" hx-swap="none" style="flex: 1;">
-                            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                            <div style="display: flex; gap: 1rem; flex-direction: column;">
-                                <input type="file" name="avatar" id="circle-avatar-input" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex: 1;">
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button type="submit" class="btn btn-secondary" id="circle-avatar-upload-btn" disabled>Upload</button>
-                                    {{if .Circle.AvatarURL}}
-                                    <button type="button" class="btn btn-text" hx-delete="/api/circles/{{.Circle.ID}}/avatar" hx-swap="none">Remove</button>
-                                    {{end}}
-                                </div>
-                            </div>
-                            <span class="form-help">JPG, PNG, or WebP. Max 5MB. Recommended: 512×512px</span>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Banner Upload Section -->
-                <div class="settings-section">
-                    <h3>Circle Banner</h3>
-                    <div class="circle-banner-preview" id="circle-banner-preview-container" style="height: 200px; border-radius: var(--container-radius); overflow: hidden; margin-bottom: 1rem; background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));">
-                        {{if .Circle.BannerURL}}
-                        <img src="{{.Circle.BannerURL}}" alt="Circle banner" id="circle-banner-preview" style="width: 100%; height: 100%; object-fit: cover;">
-                        {{end}}
-                    </div>
-                    <form id="circle-banner-upload-form" hx-post="/api/circles/{{.Circle.ID}}/banner" hx-encoding="multipart/form-data" hx-swap="none">
-                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                        <div style="display: flex; gap: 1rem; align-items: center;">
-                            <input type="file" name="banner" id="circle-banner-input" accept="image/jpeg,image/png,image/webp" class="form-input" style="flex: 1;">
-                            <button type="submit" class="btn btn-secondary" id="circle-banner-upload-btn" disabled>Upload</button>
-                            {{if .Circle.BannerURL}}
-                            <button type="button" class="btn btn-text" hx-delete="/api/circles/{{.Circle.ID}}/banner" hx-swap="none">Remove</button>
-                            {{end}}
-                        </div>
-                        <span class="form-help">JPG, PNG, or WebP. Max 10MB. Recommended: 1500×500px</span>
-                    </form>
-                </div>
-
-                <!-- Circle Information Form -->
-                <div class="settings-section">
-                    <h3>Circle Information</h3>
-                    {{if .CanEditInfo}}
-                    <form hx-post="/api/circles/{{.Circle.ID}}" hx-swap="none">
-                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                        <div class="form-group">
-                            <label>Circle name</label>
-                            <input type="text" name="name" value="{{.Circle.Name}}" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea name="description" class="form-textarea">{{.Circle.Description}}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </form>
-                    {{else}}
-                    <p class="text-secondary">Only the owner can edit circle information.</p>
-                    {{end}}
-                </div>
-                {{end}}
-
-                {{if .IsOwner}}
-                <div class="settings-section">
-                    <h3>Visibility</h3>
-                    {{if .CanEditVisibility}}
-                    <div class="setting-item">
-                        <div>
-                            <div class="setting-label">Circle visibility</div>
-                            <div class="setting-description">Current: {{.Circle.Visibility}}</div>
-                        </div>
-                    </div>
-                    {{else}}
-                    <p class="text-secondary">Only the owner can change visibility settings.</p>
-                    {{end}}
-                </div>
-                {{end}}
-
-                <div class="settings-section">
-                    <h3>Notifications</h3>
-                    <div class="setting-item">
-                        <div>
-                            <div class="setting-label">Activity notifications</div>
-                            <div class="setting-description">Get notified of new posts and activity</div>
-                        </div>
-                        <div class="toggle-switch active"></div>
-                    </div>
-                    <div class="setting-item">
-                        <div>
-                            <div class="setting-label">Gathering alerts</div>
-                            <div class="setting-description">Notify about new gatherings</div>
-                        </div>
-                        <div class="toggle-switch active"></div>
-                    </div>
-                </div>
-
-                {{if .IsOwner}}
-                <div class="settings-section danger-zone">
-                    <h3>Danger Zone</h3>
-                    <div class="danger-content">
-                        <div class="danger-title">Delete circle</div>
-                        <div class="danger-description">This action cannot be undone.</div>
-                        <button class="btn btn-danger">Delete circle</button>
-                    </div>
-                </div>
-                {{else}}
-                <div class="settings-section">
-                    <h3>Leave Circle</h3>
-                    <button class="btn btn-secondary">Leave Circle</button>
-                </div>
-                {{end}}
             </div>
         </div>
+
 
         <!-- Sidebar -->
         <aside class="circle-sidebar">
@@ -1127,24 +855,64 @@
             padding: 0 1.5rem;
         }
     }
+
+    /* Loading indicator styles */
+    .tab-loading {
+        display: none;
+        padding: 2rem;
+    }
+
+    .tab-loading.htmx-request {
+        display: block;
+    }
+
+    .skeleton-loader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .skeleton-line {
+        height: 80px;
+        background: linear-gradient(
+            90deg,
+            var(--bg-secondary) 0%,
+            var(--bg-tertiary) 50%,
+            var(--bg-secondary) 100%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+        border-radius: var(--container-radius);
+    }
+
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 </style>
 
 <script>
-    // Tab switching
+    // Enhanced tab switching with HTMX
     document.querySelectorAll('.nav-pill').forEach(pill => {
         pill.addEventListener('click', function () {
-            const tabName = this.dataset.tab;
-
-            // Update pills
+            // Update active state
             document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
             this.classList.add('active');
-
-            // Update content
-            document.querySelectorAll('.circle-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.getElementById(tabName + '-tab').classList.add('active');
         });
+    });
+
+    // Hide loading indicator after swap
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'tab-container') {
+            document.getElementById('tab-loading').classList.remove('htmx-request');
+        }
+    });
+
+    // Show loading indicator before request
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.detail.target.id === 'tab-container') {
+            document.getElementById('tab-loading').classList.add('htmx-request');
+        }
     });
 
     // Toggle switches

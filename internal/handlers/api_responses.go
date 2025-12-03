@@ -28,6 +28,16 @@ func RenderFragment(w http.ResponseWriter, logger *zap.Logger, templateName stri
 		err = tmpl.CircleCard.ExecuteTemplate(w, "circle-card", data)
 	case "circle-form":
 		err = tmpl.CircleForm.ExecuteTemplate(w, "circle-form", data)
+	case "circle-tab-chat":
+		err = tmpl.CircleTabChat.ExecuteTemplate(w, "circle-tab-chat", data)
+	case "circle-tab-files":
+		err = tmpl.CircleTabChat.ExecuteTemplate(w, "circle-tab-files", data)
+	case "circle-tab-gatherings":
+		err = tmpl.CircleTabChat.ExecuteTemplate(w, "circle-tab-gatherings", data)
+	case "circle-tab-members":
+		err = tmpl.CircleTabChat.ExecuteTemplate(w, "circle-tab-members", data)
+	case "circle-tab-settings":
+		err = tmpl.CircleTabChat.ExecuteTemplate(w, "circle-tab-settings", data)
 	case "invite-member-form":
 		err = tmpl.CircleForm.ExecuteTemplate(w, "invite-member-form", data)
 	case "empty-state":

@@ -1,0 +1,26 @@
+{{define "circle-tab-chat"}}
+<div class="circle-tab-content" id="chat-tab-content">
+    {{if .IsMember}}
+    {{template "post-composer" (dict "CircleID" .Circle.ID)}}
+    {{end}}
+
+    <div class="posts-feed">
+        {{if .RecentPosts}}
+        {{range .RecentPosts}}
+        {{template "post-card" .}}
+        {{end}}
+        {{else}}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                viewBox="0 0 256 256">
+                <path
+                    d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Z">
+                </path>
+            </svg>
+            <h3>No posts yet</h3>
+            <p>Be the first to share something with the circle!</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

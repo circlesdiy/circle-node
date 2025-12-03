@@ -1,0 +1,29 @@
+{{define "circle-tab-files"}}
+<div class="circle-tab-content" id="files-tab-content">
+    <div class="tab-header">
+        <h2>Shared Files</h2>
+        {{if .IsMember}}
+        <button class="btn btn-secondary btn-sm">↑ Upload</button>
+        {{end}}
+    </div>
+
+    {{if .SharedFiles}}
+    <div class="files-grid">
+        {{range .SharedFiles}}
+        <div class="file-card">
+            <div class="file-icon">{{.Icon}}</div>
+            <div class="file-info">
+                <div class="file-name">{{.Name}}</div>
+                <div class="file-meta">{{.Uploader}} • {{.TimeAgo}} • {{.SizeDisplay}}</div>
+            </div>
+            <button class="file-action">↓</button>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state">
+        <p>No files shared yet.</p>
+    </div>
+    {{end}}
+</div>
+{{end}}
