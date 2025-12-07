@@ -123,10 +123,10 @@ func setupRoutes(app *app.App) *http.ServeMux {
 	app.AuthHandler.RegisterRoutes(mux)
 
 	// Manifesto & user research routes (public)
-	mux.HandleFunc("/", handlers.HomeHandler)
-	mux.HandleFunc("/feedback", handlers.FeedbackHandler)
+	// mux.HandleFunc("/feedback", handlers.FeedbackHandler)
 
 	// App routes (protected - require authentication)
+	mux.HandleFunc("/", app.AuthHandler.RequireAuth(app.DashboardHandler.Handle))
 	mux.HandleFunc("/dashboard", app.AuthHandler.RequireAuth(app.DashboardHandler.Handle))
 	mux.HandleFunc("/dashboard/", app.AuthHandler.RequireAuth(app.DashboardHandler.Handle))
 	mux.HandleFunc("/profile", app.AuthHandler.RequireAuth(app.ProfileHandler.Handle))

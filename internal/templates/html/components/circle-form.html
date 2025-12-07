@@ -1,5 +1,5 @@
 {{define "circle-form"}}
-<form class="circle-form" {{if .CircleID}}hx-post="/api/circles/{{.CircleID}}"{{else}}hx-post="/api/circles"{{end}} hx-swap="none">
+<form class="circle-form" {{if .CircleID}}hx-post="/api/circles/{{.CircleID}}"{{else}}hx-post="/api/circles"{{end}} hx-swap="none" hx-encoding="multipart/form-data">
   <h2 class="modal-title">{{if .CircleID}}Edit Circle{{else}}Create a New Circle{{end}}</h2>
   <p class="modal-description">{{if .CircleID}}Update your circle details{{else}}Start building your community{{end}}</p>
 
@@ -33,6 +33,108 @@
       placeholder="What's this circle about?"
     >{{.Description}}</textarea>
     <span class="form-help character-count" data-max="500">0 / 500 characters</span>
+  </div>
+
+  <!-- Avatar Selector -->
+  <div class="form-group">
+    <label class="form-label">Circle Avatar</label>
+
+    <!-- Mode Toggle -->
+    <div class="avatar-mode-toggle">
+      <button type="button" class="mode-btn active" data-mode="icon">
+        Icon + Color
+      </button>
+      <button type="button" class="mode-btn" data-mode="image">
+        Upload Image
+      </button>
+    </div>
+
+    <!-- Icon Mode -->
+    <div class="avatar-mode-content" id="avatar-mode-icon">
+      <div class="icon-selector-layout">
+        <div class="icon-preview-circle" id="icon-preview">
+          <span id="icon-preview-char">🔵</span>
+        </div>
+        <div class="icon-inputs">
+          <div class="icon-input-group">
+            <label class="form-label-sm">Icon</label>
+            <input
+              type="text"
+              name="icon"
+              id="icon-input"
+              class="form-input form-input-sm"
+              placeholder="🎨"
+              maxlength="2"
+              value="{{.Icon}}"
+            />
+            <span class="form-help-sm">Paste any emoji</span>
+          </div>
+
+          <div class="icon-color-group">
+            <label class="form-label-sm">Background Color</label>
+            <div class="color-swatches">
+              <label class="color-swatch">
+                <input type="radio" name="icon_bg_color" value="warm-accent" {{if or (not .IconBgColor) (eq .IconBgColor "warm-accent")}}checked{{end}} />
+                <span class="swatch swatch-warm"></span>
+                <span class="swatch-label">Warm</span>
+              </label>
+              <label class="color-swatch">
+                <input type="radio" name="icon_bg_color" value="cool-accent" {{if eq .IconBgColor "cool-accent"}}checked{{end}} />
+                <span class="swatch swatch-cool"></span>
+                <span class="swatch-label">Cool</span>
+              </label>
+              <label class="color-swatch">
+                <input type="radio" name="icon_bg_color" value="earth-accent" {{if eq .IconBgColor "earth-accent"}}checked{{end}} />
+                <span class="swatch swatch-earth"></span>
+                <span class="swatch-label">Earth</span>
+              </label>
+              <label class="color-swatch">
+                <input type="radio" name="icon_bg_color" value="sage-accent" {{if eq .IconBgColor "sage-accent"}}checked{{end}} />
+                <span class="swatch swatch-sage"></span>
+                <span class="swatch-label">Sage</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Mode -->
+    <div class="avatar-mode-content hidden" id="avatar-mode-image">
+      <div class="file-upload-zone">
+        <div class="file-preview-circle" id="avatar-file-preview">
+          <span class="preview-placeholder">No image selected</span>
+        </div>
+        <div class="file-input-group">
+          <input
+            type="file"
+            id="avatar-file-input"
+            name="avatar-file-input"
+            accept="image/jpeg,image/png,image/webp"
+            class="form-input"
+          />
+          <span class="form-help">Max 5MB • Uploads with circle creation</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner Selector -->
+  <div class="form-group">
+    <label class="form-label">Circle Banner <span class="form-label-optional">(optional)</span></label>
+    <div class="banner-upload-zone">
+      <div class="banner-preview" id="banner-preview">
+        <span class="preview-placeholder">No banner selected</span>
+      </div>
+      <input
+        type="file"
+        id="banner-file-input"
+        name="banner-file-input"
+        accept="image/jpeg,image/png,image/webp"
+        class="form-input"
+      />
+      <span class="form-help">Max 10MB • Recommended 1500×500px • Uploads with circle creation</span>
+    </div>
   </div>
 
   <div class="form-group">
@@ -95,5 +197,129 @@
     updateCount(); // Initial count
   }
 })();
+
+// Avatar mode toggle
+(function() {
+  const modeButtons = document.querySelectorAll('.mode-btn');
+  const iconMode = document.getElementById('avatar-mode-icon');
+  const imageMode = document.getElementById('avatar-mode-image');
+
+  if (modeButtons.length > 0 && iconMode && imageMode) {
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+
+        // Update button states
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Toggle content
+        if (mode === 'icon') {
+          iconMode.classList.remove('hidden');
+          imageMode.classList.add('hidden');
+        } else {
+          iconMode.classList.add('hidden');
+          imageMode.classList.remove('hidden');
+        }
+      });
+    });
+  }
+})();
+
+// Icon preview updater
+(function() {
+  const iconInput = document.getElementById('icon-input');
+  const colorRadios = document.querySelectorAll('input[name="icon_bg_color"]');
+  const preview = document.getElementById('icon-preview');
+  const previewChar = document.getElementById('icon-preview-char');
+
+  function updatePreview() {
+    const icon = iconInput.value.trim() || '🔵';
+    const selectedColor = document.querySelector('input[name="icon_bg_color"]:checked');
+    const bgColor = selectedColor ? selectedColor.value : 'cool-accent';
+
+    previewChar.textContent = icon;
+    preview.className = 'icon-preview-circle bg-' + bgColor;
+  }
+
+  if (iconInput && preview) {
+    iconInput.addEventListener('input', updatePreview);
+    colorRadios.forEach(radio => {
+      radio.addEventListener('change', updatePreview);
+    });
+    updatePreview(); // Initial state
+  }
+})();
+
+// Avatar file preview
+(function() {
+  const fileInput = document.getElementById('avatar-file-input');
+  const preview = document.getElementById('avatar-file-preview');
+
+  if (fileInput && preview) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        preview.innerHTML = '<span class="preview-placeholder">No image selected</span>';
+        return;
+      }
+
+      // Validate size
+      if (file.size > 5 * 1024 * 1024) {
+        if (window.ToastManager) {
+          window.ToastManager.show('error', 'Avatar must be less than 5MB');
+        } else {
+          alert('Avatar must be less than 5MB');
+        }
+        fileInput.value = '';
+        preview.innerHTML = '<span class="preview-placeholder">No image selected</span>';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+})();
+
+// Banner file preview
+(function() {
+  const fileInput = document.getElementById('banner-file-input');
+  const preview = document.getElementById('banner-preview');
+
+  if (fileInput && preview) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        preview.innerHTML = '<span class="preview-placeholder">No banner selected</span>';
+        return;
+      }
+
+      // Validate size
+      if (file.size > 10 * 1024 * 1024) {
+        if (window.ToastManager) {
+          window.ToastManager.show('error', 'Banner must be less than 10MB');
+        } else {
+          alert('Banner must be less than 10MB');
+        }
+        fileInput.value = '';
+        preview.innerHTML = '<span class="preview-placeholder">No banner selected</span>';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.innerHTML = `<img src="${e.target.result}" alt="Banner preview" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+})();
+
 </script>
 {{end}}

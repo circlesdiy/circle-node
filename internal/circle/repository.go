@@ -26,8 +26,9 @@ func (r *Repository) CreateCircle(ctx context.Context, circle *domain.Circle) er
 	query := `
 		INSERT INTO circles (
 			id, owner_profile_id, name, description,
-			visibility, auto_mod_enabled, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			visibility, auto_mod_enabled, icon, icon_bg_color,
+			avatar_url, banner_url, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err := r.db.Exec(ctx, query,
@@ -37,6 +38,10 @@ func (r *Repository) CreateCircle(ctx context.Context, circle *domain.Circle) er
 		circle.Description,
 		circle.Visibility,
 		circle.AutoModEnabled,
+		circle.Icon,
+		circle.IconBgColor,
+		circle.AvatarURL,
+		circle.BannerURL,
 		circle.CreatedAt,
 		circle.UpdatedAt,
 	)
@@ -108,9 +113,11 @@ func (r *Repository) UpdateCircle(ctx context.Context, circle *domain.Circle) er
 			description = $3,
 			visibility = $4,
 			auto_mod_enabled = $5,
-			avatar_url = $6,
-			banner_url = $7,
-			updated_at = $8
+			icon = $6,
+			icon_bg_color = $7,
+			avatar_url = $8,
+			banner_url = $9,
+			updated_at = $10
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 
@@ -120,6 +127,8 @@ func (r *Repository) UpdateCircle(ctx context.Context, circle *domain.Circle) er
 		circle.Description,
 		circle.Visibility,
 		circle.AutoModEnabled,
+		circle.Icon,
+		circle.IconBgColor,
 		circle.AvatarURL,
 		circle.BannerURL,
 		circle.UpdatedAt,
@@ -843,8 +852,9 @@ func (r *Repository) CreateCircleWithOwnership(ctx context.Context, circle *doma
 	circleQuery := `
 		INSERT INTO circles (
 			id, owner_profile_id, name, description,
-			visibility, auto_mod_enabled, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			visibility, auto_mod_enabled, icon, icon_bg_color,
+			avatar_url, banner_url, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err = tx.Exec(ctx, circleQuery,
@@ -854,6 +864,10 @@ func (r *Repository) CreateCircleWithOwnership(ctx context.Context, circle *doma
 		circle.Description,
 		circle.Visibility,
 		circle.AutoModEnabled,
+		circle.Icon,
+		circle.IconBgColor,
+		circle.AvatarURL,
+		circle.BannerURL,
 		circle.CreatedAt,
 		circle.UpdatedAt,
 	)

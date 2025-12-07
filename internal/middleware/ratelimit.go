@@ -49,7 +49,7 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 		}
 
 		if !rateLimiter.Allow(strings.TrimSpace(ip)) {
-			http.Error(w, "Maybe just take a second to breath, okay?", http.StatusTooManyRequests)
+			http.Error(w, "Maybe just take a second to breath, okay?\n\nThen you can refresh the page :)", http.StatusTooManyRequests)
 			return
 		}
 

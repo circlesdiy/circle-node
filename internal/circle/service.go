@@ -3,6 +3,7 @@ package circle
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"mime/multipart"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ func NewService(repo domain.CircleRepository, storage domain.FileStorage, logger
 }
 
 // CreateCircle creates a new circle with automatic owner membership
-func (s *Service) CreateCircle(ctx context.Context, name, description, visibility string, autoModEnabled bool, ownerProfileID string) (*domain.Circle, error) {
+func (s *Service) CreateCircle(ctx context.Context, name, description, visibility string, autoModEnabled bool, icon, iconBgColor, ownerProfileID string) (*domain.Circle, error) {
 	// Validate inputs
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -59,6 +60,8 @@ func (s *Service) CreateCircle(ctx context.Context, name, description, visibilit
 		Description:    description,
 		Visibility:     visibility,
 		AutoModEnabled: autoModEnabled,
+		Icon:           icon,
+		IconBgColor:    template.CSS(iconBgColor),
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

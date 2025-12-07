@@ -1011,13 +1011,15 @@ func (h *CircleHandler) handleNewCircle(w http.ResponseWriter, r *http.Request) 
 		visibility := r.FormValue("visibility")
 		autoModEnabled := r.FormValue("auto_mod_enabled") == "on"
 
-		// Create circle
+		// Create circle (legacy form - no icon/color support)
 		circle, err := h.circleService.CreateCircle(
 			r.Context(),
 			name,
 			description,
 			visibility,
 			autoModEnabled,
+			"", // icon
+			"", // iconBgColor
 			profileID,
 		)
 		if err != nil {
@@ -1459,6 +1461,8 @@ func (h *CircleHandler) handleAPICircleForm(w http.ResponseWriter, r *http.Reque
 			"Description":    circle.Description,
 			"Visibility":     circle.Visibility,
 			"AutoModEnabled": circle.AutoModEnabled,
+			"Icon":           circle.Icon,
+			"IconBgColor":    circle.IconBgColor,
 		}
 	} else {
 		// New circle form
@@ -1468,6 +1472,8 @@ func (h *CircleHandler) handleAPICircleForm(w http.ResponseWriter, r *http.Reque
 			"Description":    "",
 			"Visibility":     "private",
 			"AutoModEnabled": false,
+			"Icon":           "",
+			"IconBgColor":    "",
 		}
 	}
 
@@ -1540,21 +1546,55 @@ func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Req
 
 	profileID := *session.ActiveProfileID
 
-	// Parse form
-	if err := r.ParseForm(); err != nil {
+	// Parse multipart form (max 15MB for avatar 5MB + banner 10MB)
+	if err := r.ParseMultipartForm(15 << 20); err != nil {
 		RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
 		return
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
-	description := r.FormValue("description")
+	description := strings.TrimSpace(r.FormValue("description"))
 	visibility := r.FormValue("visibility")
 	autoModEnabled := r.FormValue("auto_mod_enabled") == "on"
+	icon := strings.TrimSpace(r.FormValue("icon"))
+	iconBgColor := r.FormValue("icon_bg_color")
+
+	h.logger.Debug("creating circle with form data",
+		zap.String("name", name),
+		zap.String("description", description),
+		zap.String("visibility", visibility),
+		zap.Bool("auto_mod_enabled", autoModEnabled),
+		zap.String("icon", icon),
+		zap.String("icon_bg_color", iconBgColor),
+	)
 
 	// Validate
 	if name == "" {
 		RenderValidationError(w, h.logger, "name", "Circle name is required")
 		return
+	}
+
+	// Validate icon length (optional field)
+	if icon != "" && len([]rune(icon)) > 2 {
+		RenderValidationError(w, h.logger, "icon", "Icon must be 2 characters or less")
+		return
+	}
+
+	// Validate iconBgColor (optional field)
+	if iconBgColor != "" {
+		validColors := []string{"warm-accent", "cool-accent", "earth-accent", "sage-accent"}
+		valid := false
+		for _, color := range validColors {
+			if iconBgColor == color {
+				valid = true
+				iconBgColor = fmt.Sprintf("var(--%s)", iconBgColor)
+				break
+			}
+		}
+		if !valid {
+			RenderValidationError(w, h.logger, "icon_bg_color", "Invalid icon background color")
+			return
+		}
 	}
 
 	// Create circle
@@ -1564,6 +1604,8 @@ func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Req
 		description,
 		visibility,
 		autoModEnabled,
+		icon,
+		iconBgColor,
 		profileID,
 	)
 	if err != nil {
@@ -1580,9 +1622,40 @@ func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Req
 		zap.String("profile_id", profileID),
 	)
 
-	// Set redirect header before rendering response
-	SendHTMXRedirect(w, "/circles")
-	RenderSuccess(w, h.logger, "Circle created successfully!")
+	// Handle optional file uploads
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		// Upload avatar if provided
+		if avatarFiles, ok := r.MultipartForm.File["avatar-file-input"]; ok && len(avatarFiles) > 0 {
+			avatarFile, err := avatarFiles[0].Open()
+			if err == nil {
+				defer avatarFile.Close()
+				if err := h.circleService.UpdateAvatar(r.Context(), circle.ID, avatarFile, avatarFiles[0], profileID); err != nil {
+					h.logger.Warn("failed to upload avatar during circle creation",
+						zap.String("circle_id", circle.ID),
+						zap.Error(err),
+					)
+				}
+			}
+		}
+
+		// Upload banner if provided
+		if bannerFiles, ok := r.MultipartForm.File["banner-file-input"]; ok && len(bannerFiles) > 0 {
+			bannerFile, err := bannerFiles[0].Open()
+			if err == nil {
+				defer bannerFile.Close()
+				if err := h.circleService.UpdateBanner(r.Context(), circle.ID, bannerFile, bannerFiles[0], profileID); err != nil {
+					h.logger.Warn("failed to upload banner during circle creation",
+						zap.String("circle_id", circle.ID),
+						zap.Error(err),
+					)
+				}
+			}
+		}
+	}
+
+	// Redirect to circle page via HX-Redirect header
+	w.Header().Set("HX-Redirect", fmt.Sprintf("/circles/%s", circle.ID))
+	w.WriteHeader(http.StatusOK)
 }
 
 // handleAPICircleActions handles various circle API actions

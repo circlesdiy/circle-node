@@ -47,7 +47,7 @@
                     data-tab="chat"
                     hx-get="/api/circles/{{.Circle.ID}}/tabs/chat"
                     hx-target="#tab-container"
-                    hx-swap="innerHTML"
+                    hx-swap="innerHTML swap:0ms settle:0ms"
                     hx-trigger="click"
                     hx-indicator="#tab-loading">
                 Chat
@@ -56,7 +56,7 @@
                     data-tab="gatherings"
                     hx-get="/api/circles/{{.Circle.ID}}/tabs/gatherings"
                     hx-target="#tab-container"
-                    hx-swap="innerHTML"
+                    hx-swap="innerHTML swap:0ms settle:0ms"
                     hx-trigger="click"
                     hx-indicator="#tab-loading">
                 Gatherings
@@ -65,7 +65,7 @@
                     data-tab="files"
                     hx-get="/api/circles/{{.Circle.ID}}/tabs/files"
                     hx-target="#tab-container"
-                    hx-swap="innerHTML"
+                    hx-swap="innerHTML swap:0ms settle:0ms"
                     hx-trigger="click"
                     hx-indicator="#tab-loading">
                 Files
@@ -74,7 +74,7 @@
                     data-tab="members"
                     hx-get="/api/circles/{{.Circle.ID}}/tabs/members"
                     hx-target="#tab-container"
-                    hx-swap="innerHTML"
+                    hx-swap="innerHTML swap:0ms settle:0ms"
                     hx-trigger="click"
                     hx-indicator="#tab-loading">
                 Members
@@ -83,7 +83,7 @@
                     data-tab="settings"
                     hx-get="/api/circles/{{.Circle.ID}}/tabs/settings"
                     hx-target="#tab-container"
-                    hx-swap="innerHTML"
+                    hx-swap="innerHTML swap:0ms settle:0ms"
                     hx-trigger="click"
                     hx-indicator="#tab-loading">
                 Settings
