@@ -168,7 +168,7 @@ func (h *ProfileHandler) handleInternalProfile(
 		AvatarURL:   profile.AvatarURL,
 		BannerURL:   profile.BannerURL,
 		IsActive:    profile.IsActive,
-		IsPublic:    true, // Default
+		IsPublic:    true,                  // Default
 		Stats:       models.ProfileStats{}, // TODO: Fetch real stats from content service when implemented
 		IsOwner:     true,
 		IsConnected: false,
@@ -194,20 +194,20 @@ func (h *ProfileHandler) handleInternalProfile(
 	// Build template data from real sources only
 	data := &models.ProfileData{
 		BaseData: models.BaseData{
-			Title:     profile.DisplayName + " - Profile",
+			Title:     profile.DisplayName,
 			ActiveNav: "profile",
 			Theme:     themeSettings,
 			User:      user,
 			CSRFToken: middleware.GetCSRFToken(r),
 		},
 		Profile:      templateProfile,
-		Posts:        []models.Post{},        // TODO: Fetch from content service
+		Posts:        []models.Post{}, // TODO: Fetch from content service
 		PostOffset:   0,
 		HasMorePosts: false,
 		IsOwner:      true,
-		Extensions:   []models.Extension{},   // TODO: Fetch profile extensions
-		Analytics:    models.Analytics{},     // TODO: Fetch profile analytics
-		Drafts:       []models.DraftPost{},   // TODO: Fetch drafts
+		Extensions:   []models.Extension{}, // TODO: Fetch profile extensions
+		Analytics:    models.Analytics{},   // TODO: Fetch profile analytics
+		Drafts:       []models.DraftPost{}, // TODO: Fetch drafts
 		DraftCount:   0,
 	}
 
@@ -285,7 +285,7 @@ func (h *ProfileHandler) handleExternalProfile(
 		Bio:         profile.Bio,
 		AvatarURL:   profile.AvatarURL,
 		BannerURL:   profile.BannerURL,
-		IsPublic:    true, // Default
+		IsPublic:    true,                  // Default
 		Stats:       models.ProfileStats{}, // TODO: Fetch real stats from content service when implemented
 		IsOwner:     isOwner,
 		IsConnected: false, // TODO: Check connection status between profiles
@@ -312,13 +312,13 @@ func (h *ProfileHandler) handleExternalProfile(
 			CSRFToken: middleware.GetCSRFToken(r),
 		},
 		Profile:      templateProfile,
-		Posts:        []models.Post{},        // TODO: Fetch from content service
+		Posts:        []models.Post{}, // TODO: Fetch from content service
 		PostOffset:   0,
 		HasMorePosts: false,
 		IsOwner:      isOwner,
-		Extensions:   []models.Extension{},   // Extensions not shown on external view
-		Analytics:    models.Analytics{},     // Analytics not shown on external view
-		Drafts:       []models.DraftPost{},   // Drafts not shown on external view
+		Extensions:   []models.Extension{}, // Extensions not shown on external view
+		Analytics:    models.Analytics{},   // Analytics not shown on external view
+		Drafts:       []models.DraftPost{}, // Drafts not shown on external view
 		DraftCount:   0,
 	}
 

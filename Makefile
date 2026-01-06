@@ -31,7 +31,7 @@ run: build
 dev:
 	@echo "Starting development server..."
 	@echo "Watching for changes..."
-	go run main.go
+	go run cmd/server/main.go
 
 # Run tests
 test:

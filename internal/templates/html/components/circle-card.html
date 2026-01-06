@@ -11,9 +11,9 @@
             </div>
             {{end}}
         </div>
-        <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
+        <!-- <div class="circle-status {{if .Active}}active{{else}}inactive{{end}}">
             {{if .Active}}{{.OnlineCount}} online{{end}}
-        </div>
+        </div> -->
         <div class="circle-role-badge role-{{.UserRole}}">
             {{if eq .UserRole "owner"}}Owner{{else if eq .UserRole "admin"}}Admin{{else}}Member{{end}}
         </div>

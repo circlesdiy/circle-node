@@ -74,7 +74,7 @@
     padding: 0.25rem 0.75rem;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
-    border-radius: 12px;
+    border-radius: var(--container-radius);
     font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid var(--border-light);
@@ -95,7 +95,7 @@
     padding: 0.25rem 0.75rem;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
-    border-radius: 12px;
+    border-radius: var(--container-radius);
     font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid var(--border-light);

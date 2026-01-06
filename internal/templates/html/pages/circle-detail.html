@@ -9,8 +9,7 @@
         <div class="circle-detail-banner" {{if .Circle.BannerURL}}
             style="background-image: url('{{.Circle.BannerURL}}'); background-size: cover; background-position: center;"
             {{end}}>
-            <div class="circle-detail-avatar" {{if not .Circle.AvatarURL}}{{if .Circle.IconBgColor}}
-                style="background: {{.Circle.IconBgColor}};" {{end}}{{end}}>
+            <div class="circle-detail-avatar" style="background: {{if and (not .Circle.AvatarURL) (.Circle.IconBgColor)}}{{.Circle.IconBgColor}}{{else}} none{{end}};"}>
                 {{if .Circle.AvatarURL}}
                 <img src="{{.Circle.AvatarURL}}" alt="{{.Circle.Name}}"
                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 24px;">
@@ -232,7 +231,7 @@
     }
 
     .circle-detail-banner {
-        height: 200px;
+        height: 260px;
         background: linear-gradient(135deg, var(--warm-accent), var(--cool-accent));
         position: relative;
         display: flex;
@@ -425,7 +424,7 @@
     .post-avatar {
         width: 48px;
         height: 48px;
-        border-radius: 12px;
+        border-radius: var(--container-radius);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -636,7 +635,7 @@
         width: 44px;
         height: 24px;
         background: var(--border-secondary, #ccc);
-        border-radius: 12px;
+        border-radius: var(--container-radius);
         position: relative;
         cursor: pointer;
     }
@@ -930,106 +929,6 @@
         });
     });
 
-    // Circle avatar upload handling
-    const circleAvatarInput = document.getElementById('circle-avatar-input');
-    const circleAvatarUploadBtn = document.getElementById('circle-avatar-upload-btn');
-    const circleAvatarPreview = document.getElementById('circle-avatar-preview');
-
-    if (circleAvatarInput) {
-        circleAvatarInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) {
-                circleAvatarUploadBtn.disabled = true;
-                return;
-            }
-
-            // Validate file size (5MB max)
-            const maxSize = 5 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert('Avatar file size must be less than 5MB');
-                e.target.value = '';
-                circleAvatarUploadBtn.disabled = true;
-                return;
-            }
-
-            // Enable upload button
-            circleAvatarUploadBtn.disabled = false;
-
-            // Preview image
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (circleAvatarPreview.tagName === 'IMG') {
-                    circleAvatarPreview.src = e.target.result;
-                } else {
-                    // Replace emoji/text with img element
-                    const img = document.createElement('img');
-                    img.id = 'circle-avatar-preview';
-                    img.src = e.target.result;
-                    img.alt = 'Avatar preview';
-                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 24px;';
-                    circleAvatarPreview.parentNode.replaceChild(img, circleAvatarPreview);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Circle banner upload handling
-    const circleBannerInput = document.getElementById('circle-banner-input');
-    const circleBannerUploadBtn = document.getElementById('circle-banner-upload-btn');
-    const circleBannerPreviewContainer = document.getElementById('circle-banner-preview-container');
-
-    if (circleBannerInput) {
-        circleBannerInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) {
-                circleBannerUploadBtn.disabled = true;
-                return;
-            }
-
-            // Validate file size (10MB max)
-            const maxSize = 10 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert('Banner file size must be less than 10MB');
-                e.target.value = '';
-                circleBannerUploadBtn.disabled = true;
-                return;
-            }
-
-            // Enable upload button
-            circleBannerUploadBtn.disabled = false;
-
-            // Preview image
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                let bannerPreview = document.getElementById('circle-banner-preview');
-                if (!bannerPreview) {
-                    bannerPreview = document.createElement('img');
-                    bannerPreview.id = 'circle-banner-preview';
-                    bannerPreview.alt = 'Banner preview';
-                    bannerPreview.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-                    circleBannerPreviewContainer.appendChild(bannerPreview);
-                }
-                bannerPreview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // HTMX event handlers for successful uploads
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-        const path = evt.detail.pathInfo.requestPath;
-
-        if (path.includes('/avatar') || path.includes('/banner')) {
-            if (evt.detail.successful) {
-                alert('Image uploaded successfully! Reloading page...');
-                window.location.reload();
-            } else {
-                const errorMsg = evt.detail.xhr.responseText || 'Upload failed';
-                alert('Upload failed: ' + errorMsg);
-            }
-        }
-    });
 </script>
 
 <script src="/static/js/post-cards.js"></script>

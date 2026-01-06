@@ -38,7 +38,7 @@
     <meta name="apple-mobile-web-app-title" content="circles.diy">
     <link rel="apple-touch-icon" href="/static/img/icon-192.png">
 
-    <title>{{.Title}} - circles.diy</title>
+    <title>{{.Title}} | circles.diy</title>
     <link rel="stylesheet" href="/static/css/style.css">
     {{block "head" .}}{{end}}
 </head>
@@ -56,7 +56,6 @@ class ThemeManager {
     constructor() {
         this.themeButton = document.querySelector('.theme-menu');
         this.dropdown = document.querySelector('.theme-dropdown');
-        this.radiusOptions = document.querySelectorAll('.radius-option');
         this.themeOptions = document.querySelectorAll('.theme-option');
         this.root = document.documentElement;
 
@@ -71,13 +70,6 @@ class ThemeManager {
         this.themeButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleDropdown();
-        });
-
-        this.radiusOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const radius = option.dataset.radius;
-                this.setRadius(radius);
-            });
         });
 
         this.themeOptions.forEach(option => {
@@ -117,23 +109,6 @@ class ThemeManager {
     closeDropdown() {
         this.dropdown.hidden = true;
         this.themeButton.setAttribute('aria-expanded', 'false');
-    }
-
-    setRadius(radius) {
-        this.root.style.setProperty('--container-radius', radius + 'px');
-
-        this.radiusOptions.forEach(option => {
-            option.classList.toggle('active', option.dataset.radius === radius);
-        });
-
-        localStorage.setItem('theme-radius', radius);
-
-        // Save to server
-        fetch('/api/theme/radius', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ radius: parseInt(radius) })
-        });
     }
 
     setTheme(theme) {
@@ -213,9 +188,6 @@ class ThemeManager {
     }
 
     loadPreferences() {
-        const savedRadius = localStorage.getItem('theme-radius') || '{{.Theme.Radius}}';
-        this.setRadius(savedRadius);
-
         const savedTheme = localStorage.getItem('theme-mode') || '{{.Theme.Mode}}';
         this.setTheme(savedTheme);
     }

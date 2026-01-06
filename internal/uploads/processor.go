@@ -22,8 +22,8 @@ const (
 	BannerHeight = 500
 
 	// Max dimensions to prevent decompression bombs
-	MaxImageWidth  = 10000
-	MaxImageHeight = 10000
+	MaxImageWidth  = 7680
+	MaxImageHeight = 4320
 
 	// JPEG quality for encoding
 	JPEGQuality = 85

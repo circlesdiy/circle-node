@@ -165,7 +165,7 @@
     width: 44px;
     height: 24px;
     background: var(--border-secondary);
-    border-radius: 12px;
+    border-radius: var(--container-radius);
     position: relative;
     cursor: pointer;
     transition: all 0.2s ease;
