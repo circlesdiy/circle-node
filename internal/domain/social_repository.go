@@ -49,6 +49,7 @@ type ChatRepository interface {
 	CreateChat(ctx context.Context, chat *Chat) error
 	GetChatByID(ctx context.Context, id string) (*Chat, error)
 	GetChatsByProfileID(ctx context.Context, profileID string) ([]Chat, error)
+	GetChatsByCircleID(ctx context.Context, circleID string) ([]Chat, error)
 	GetDirectChatByProfiles(ctx context.Context, profileID1, profileID2 string) (*Chat, error)
 	UpdateChat(ctx context.Context, chat *Chat) error
 	DeleteChat(ctx context.Context, id string) error

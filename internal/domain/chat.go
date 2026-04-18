@@ -7,6 +7,7 @@ type Chat struct {
 	ID            string     `json:"id"`
 	Type          string     `json:"type"` // direct, group
 	Name          string     `json:"name"` // For group chats
+	CircleID      *string    `json:"circle_id,omitempty"` // When set, chat is scoped to this circle
 	LastMessageAt *time.Time `json:"last_message_at,omitempty"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
@@ -16,6 +17,11 @@ type Chat struct {
 // IsDeleted checks if the chat has been soft deleted
 func (c *Chat) IsDeleted() bool {
 	return c.DeletedAt != nil
+}
+
+// IsCircleScoped reports whether the chat is bound to a circle.
+func (c *Chat) IsCircleScoped() bool {
+	return c != nil && c.CircleID != nil && *c.CircleID != ""
 }
 
 // IsGroup checks if this is a group chat
