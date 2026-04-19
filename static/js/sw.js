@@ -59,6 +59,9 @@ self.addEventListener('fetch', event => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
+  // Skip all API requests (SSE streams and HTMX endpoints must not be cached)
+  if (new URL(event.request.url).pathname.startsWith('/api/')) return;
+
   // Network-first strategy for HTML pages (always fetch fresh content)
   if (isHTMLRequest(event.request)) {
     event.respondWith(
