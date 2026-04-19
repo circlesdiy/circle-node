@@ -39,6 +39,15 @@ type Templates struct {
 	CommentCard         *template.Template
 	CommentList         *template.Template
 	CommentForm         *template.Template
+
+	// Chat fragments (returned for HTMX/SSE updates)
+	ChatConversationList *template.Template
+	ChatConversationRow  *template.Template
+	ChatMessageList      *template.Template
+	ChatMessageRow       *template.Template
+	ChatNewModal         *template.Template
+	ChatNewCircles       *template.Template
+	ChatNewMembers       *template.Template
 }
 
 var templates *Templates
@@ -187,6 +196,41 @@ func InitTemplates() error {
 	}
 
 	templates.CommentForm, err = parseTemplateFromEmbedded("comment-form", "html/components/comment-form.html")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatConversationList, err = parseTemplateFromEmbedded("chat-conversation-list", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatConversationRow, err = parseTemplateFromEmbedded("chat-conversation-row", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatMessageList, err = parseTemplateFromEmbedded("chat-message-list", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatMessageRow, err = parseTemplateFromEmbedded("chat-message-row", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatNewModal, err = parseTemplateFromEmbedded("chat-new-modal", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatNewCircles, err = parseTemplateFromEmbedded("chat-new-circles", "")
+	if err != nil {
+		return err
+	}
+
+	templates.ChatNewMembers, err = parseTemplateFromEmbedded("chat-new-members", "")
 	if err != nil {
 		return err
 	}

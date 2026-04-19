@@ -51,10 +51,10 @@ func ServeStaticFile(w http.ResponseWriter, r *http.Request, filePath, contentTy
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Last-Modified", lastModified)
 
-	// Smart caching: Short cache in development, long cache with immutable in production
+	// Smart caching: No cache in development, long cache with immutable in production
 	if isDevelopment {
 		// Development: 10 second cache for quick iteration
-		w.Header().Set("Cache-Control", "public, max-age=10")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate, private")
 	} else {
 		// Production: 1 year cache with immutable (safe with versioned URLs)
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")

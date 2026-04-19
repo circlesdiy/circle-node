@@ -48,12 +48,12 @@ clean:
 # Docker operations
 docker-up:
 	@echo "Starting services..."
-	docker-compose up -d
+	docker compose up -d
 	@echo "Services started. Use 'make docker-logs' to view logs"
 
 docker-down:
 	@echo "Stopping services..."
-	docker-compose down
+	docker compose down
 	@echo "Services stopped"
 
 docker-logs:
@@ -61,7 +61,7 @@ docker-logs:
 
 docker-build:
 	@echo "Building Docker image..."
-	docker-compose build
+	docker compose build
 	@echo "Build complete"
 
 # Database operations

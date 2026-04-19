@@ -55,13 +55,11 @@ func (r *PostgresRepository) GetUnreadMessagesSummary(ctx context.Context, profi
 		WITH unread_messages AS (
 			SELECT DISTINCT m.sender_profile_id, m.chat_id, p.handle
 			FROM messages m
-			JOIN chat_participants cp ON cp.chat_id = m.chat_id
-			LEFT JOIN message_reads mr ON mr.message_id = m.id AND mr.profile_id = $1
+			JOIN chat_participants cp ON cp.chat_id = m.chat_id AND cp.profile_id = $1
 			JOIN profiles p ON p.id = m.sender_profile_id
-			WHERE cp.profile_id = $1
-			AND m.sender_profile_id != $1
-			AND mr.id IS NULL
+			WHERE m.sender_profile_id != $1
 			AND m.deleted_at IS NULL
+			AND m.created_at > COALESCE(cp.last_read_at, '1970-01-01'::timestamp)
 		),
 		sender_circles AS (
 			SELECT um.sender_profile_id, um.handle,
@@ -93,13 +91,11 @@ func (r *PostgresRepository) GetUnreadMessagesSummary(ctx context.Context, profi
 			WITH unread_messages AS (
 				SELECT DISTINCT m.sender_profile_id, p.handle
 				FROM messages m
-				JOIN chat_participants cp ON cp.chat_id = m.chat_id
-				LEFT JOIN message_reads mr ON mr.message_id = m.id AND mr.profile_id = $1
+				JOIN chat_participants cp ON cp.chat_id = m.chat_id AND cp.profile_id = $1
 				JOIN profiles p ON p.id = m.sender_profile_id
-				WHERE cp.profile_id = $1
-				AND m.sender_profile_id != $1
-				AND mr.id IS NULL
+				WHERE m.sender_profile_id != $1
 				AND m.deleted_at IS NULL
+				AND m.created_at > COALESCE(cp.last_read_at, '1970-01-01'::timestamp)
 			)
 			SELECT um.handle, STRING_AGG(DISTINCT c.name, ', ') as shared_circles
 			FROM unread_messages um

@@ -1,0 +1,33 @@
+{{define "chat-new-circles"}}
+{{if .}}
+<div class="chat-new-circles">
+    <p class="chat-new-hint">You can only message people you share a circle with.</p>
+    <ul class="chat-new-list" role="list">
+        {{range .}}
+        <li>
+            <button type="button"
+                    class="chat-new-circle-row"
+                    data-circle-id="{{.ID}}"
+                    data-circle-name="{{.Name}}"
+                    hx-get="/api/chats/new?step=members&circle={{.ID}}"
+                    hx-target="#chat-new-step"
+                    hx-swap="innerHTML">
+                <span class="chat-new-circle-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24a104,104,0,1,0,104,104A104.12,104.12,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"></path></svg>
+                </span>
+                <span class="chat-new-circle-name">{{.Name}}</span>
+                <span class="chat-new-circle-chevron" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg>
+                </span>
+            </button>
+        </li>
+        {{end}}
+    </ul>
+</div>
+{{else}}
+<div class="chat-new-empty">
+    <p>You aren't in any circles yet.</p>
+    <p class="chat-new-hint">Join or create a circle before starting a conversation.</p>
+</div>
+{{end}}
+{{end}}

@@ -70,7 +70,13 @@
         </div>
     </dialog>
 
+    <meta name="htmx-config" content='{
+        "historyCacheSize": 0,
+        "refreshOnHistoryMiss": true,
+        "defaultSwapStyle": "innerHTML"
+      }'>
     <script src="/static/js/htmx.min.js?v={{.AssetVersion}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx-ext-sse@2.2.4" integrity="sha384-A986SAtodyH8eg8x8irJnYUk7i9inVQqYigD6qZ9evobksGNIXfeFvDwLSHcp31N" crossorigin="anonymous"></script>
     <!-- <script src="/static/js/htmx-helpers.js?v={{.AssetVersion}}"></script> -->
     <script>
         // Modal management
@@ -476,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <nav class="main-nav">
     <a href="/dashboard" class="nav-item" {{if eq .ActiveNav "dashboard"}}aria-current="page"{{end}}>Dashboard</a>
     <a href="/circles" class="nav-item" {{if eq .ActiveNav "circles"}}aria-current="page"{{end}}>Circles</a>
-    <!-- <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a> -->
+    <a href="/chat" class="nav-item" {{if eq .ActiveNav "chat"}}aria-current="page"{{end}}>Chat</a>
     <a href="/gather" class="nav-item" {{if eq .ActiveNav "gather"}}aria-current="page"{{end}}>Gather</a>
     <a href="/profile" class="nav-item" {{if eq .ActiveNav "profile"}}aria-current="page"{{end}}>Profile</a>
 </nav>
@@ -557,9 +563,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <a href="/circles" class="nav-item{{if eq .ActiveNav "circles"}} active{{end}}">
         Circles
     </a>
-    <!-- <a href="/chat" class="nav-item{{if eq .ActiveNav "chat"}} active{{end}}">
+    <a href="/chat" class="nav-item{{if eq .ActiveNav "chat"}} active{{end}}">
         Chat
-    </a> -->
+    </a>
     <a href="/gather" class="nav-item{{if eq .ActiveNav "gather"}} active{{end}}">
         Gather
     </a>

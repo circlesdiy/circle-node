@@ -128,13 +128,16 @@ func (r *Repository) GetProfileByID(ctx context.Context, id string) (*domain.Pro
 	return &profile, nil
 }
 
-func (r *Repository) GetProfilesByIDs(ctx context.Context, userIDs []string) ([]domain.Profile, error) {
+func (r *Repository) GetProfilesByIDs(ctx context.Context, ids []string) ([]domain.Profile, error) {
+	if len(ids) == 0 {
+		return []domain.Profile{}, nil
+	}
 	query := `
 		SELECT id, user_id, handle, name, display_name, bio, avatar_url, banner_url, is_active, created_at, updated_at, deleted_at
-		FROM profiles WHERE user_id in $1 AND deleted_at IS NULL
+		FROM profiles WHERE id = ANY($1) AND deleted_at IS NULL
 		ORDER BY created_at ASC`
 
-	rows, err := r.db.Query(ctx, query, userIDs)
+	rows, err := r.db.Query(ctx, query, ids)
 	if err != nil {
 		return nil, err
 	}

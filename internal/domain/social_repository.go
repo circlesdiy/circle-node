@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // SocialRepository defines the interface for social interaction operations
 type SocialRepository interface {
@@ -71,6 +74,9 @@ type ChatRepository interface {
 	MarkMessageAsRead(ctx context.Context, messageRead *MessageRead) error
 	GetReadReceiptsByMessageID(ctx context.Context, messageID string) ([]MessageRead, error)
 	GetUnreadMessageCount(ctx context.Context, chatID, profileID string) (int, error)
+
+	// Watermark-based read tracking
+	MarkChatRead(ctx context.Context, chatID, profileID string, readAt time.Time) error
 }
 
 // NotificationRepository defines the interface for notification operations

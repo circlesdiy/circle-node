@@ -1,0 +1,13 @@
+{{define "chat-new-modal"}}
+<div class="chat-new">
+    <h2 id="modal-title" class="modal-title">Start a new conversation</h2>
+    <p class="modal-description">Pick a circle, then choose one or more members to message.</p>
+    <div id="chat-new-step" class="chat-new-step">
+        {{template "chat-new-circles" .}}
+    </div>
+    <div id="chat-new-error" class="chat-new-error-slot" aria-live="polite"></div>
+    <div class="form-actions chat-new-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+{{end}}

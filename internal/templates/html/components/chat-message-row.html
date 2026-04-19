@@ -1,0 +1,38 @@
+{{define "chat-message-row"}}
+{{if .BucketLabel}}
+<div class="messages-bucket-divider" role="separator" aria-label="{{.BucketLabel}}">
+    <span>{{.BucketLabel}}</span>
+</div>
+{{end}}
+<div class="message {{if .IsOwn}}own{{else}}other{{end}}{{if .IsRunStart}} run-start{{end}}{{if .IsRunEnd}} run-end{{end}}{{if and (not .IsRunStart) (not .IsRunEnd)}} run-middle{{end}}"
+     data-message-id="{{.ID}}"
+     data-ts="{{.CreatedAt.Format "2006-01-02T15:04:05.999999999Z07:00"}}"
+     data-sender-id="{{.Sender.ID}}">
+    {{if not .IsOwn}}
+    <div class="message-avatar" aria-hidden="{{if not .IsRunStart}}true{{else}}false{{end}}">
+        {{if .IsRunStart}}
+        {{if .Sender.Avatar}}
+        <img src="{{.Sender.Avatar}}" alt="{{.Sender.Name}}" />
+        {{else}}
+        <div class="message-avatar-placeholder" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8Z"></path></svg>
+        </div>
+        {{end}}
+        {{else}}
+        <div class="message-avatar-spacer" aria-hidden="true"></div>
+        {{end}}
+    </div>
+    {{end}}
+    <div class="message-content">
+        {{if and (not .IsOwn) .IsRunStart}}
+        <div class="message-sender">{{.Sender.Name}}</div>
+        {{end}}
+        <div class="message-bubble">
+            <p>{{.Content}}</p>
+        </div>
+        <div class="message-meta">
+            <span class="message-time">{{.Timestamp}}</span>
+        </div>
+    </div>
+</div>
+{{end}}

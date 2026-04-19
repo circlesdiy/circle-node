@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"circles.diy/internal/auth"
+	"circles.diy/internal/chat"
 	"circles.diy/internal/circle"
 	"circles.diy/internal/config"
 	"circles.diy/internal/content"
@@ -43,6 +44,8 @@ type App struct {
 	GatherService      *gather.Service
 	EventService       *events.Service
 	ContentService     *content.Service
+	ChatService        *chat.Service
+	ChatHub            *chat.Hub
 
 	// Authentication components
 	AuthService *auth.Service
@@ -61,6 +64,7 @@ type App struct {
 	GatherHandler        *handlers.GatherHandler
 	GatherAPIHandler     *handlers.GatherAPIHandler
 	PostHandler          *handlers.PostHandler
+	ChatHandler          *handlers.ChatHandler
 }
 
 // New creates a new application instance with all dependencies
@@ -165,6 +169,11 @@ func New(ctx context.Context) (*App, error) {
 	reactionRepo := content.NewReactionRepository(postgres.Pool)
 	contentService := content.NewService(contentRepo, reactionRepo)
 
+	// Chat service + in-process SSE hub
+	chatRepo := chat.NewPostgresRepository(postgres.Pool)
+	chatHub := chat.NewHub(logger)
+	chatService := chat.NewService(chatRepo, circleService, logger)
+
 	// Initialize authentication system
 	logger.Debug("initializing authentication system...")
 	authRepo := auth.NewRepository(postgres.Pool)
@@ -183,6 +192,7 @@ func New(ctx context.Context) (*App, error) {
 	gatherHandler := handlers.NewGatherHandler(gatherService, eventService, profileService)
 	gatherAPIHandler := handlers.NewGatherAPIHandler(gatherService, eventService, logger)
 	postHandler := handlers.NewPostHandler(contentService, profileService)
+	chatHandler := handlers.NewChatHandler(chatService, chatHub, profileService, circleService, prefsService, cfg.AssetVersion, logger)
 
 	app := &App{
 		Config:               cfg,
@@ -198,6 +208,8 @@ func New(ctx context.Context) (*App, error) {
 		GatherService:        gatherService,
 		EventService:         eventService,
 		ContentService:       contentService,
+		ChatService:          chatService,
+		ChatHub:              chatHub,
 		AuthService:          authService,
 		AuthHandler:          authHandler,
 		ProfileHandler:       profileHandler,
@@ -208,6 +220,7 @@ func New(ctx context.Context) (*App, error) {
 		GatherHandler:        gatherHandler,
 		GatherAPIHandler:     gatherAPIHandler,
 		PostHandler:          postHandler,
+		ChatHandler:          chatHandler,
 	}
 
 	return app, nil

@@ -1,43 +1,33 @@
 /* Message Compose */
 .message-compose {
-    padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-light);
     background: var(--bg-primary);
+    padding: 0.75rem 1rem;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 0.75rem;
 }
 
-.compose-actions {
+.message-compose-inner {
     display: flex;
-    gap: 0.5rem;
-}
-
-.compose-btn {
-    background: none;
-    border: none;
-    padding: 0.5rem;
-    border-radius: var(--container-radius);
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.compose-btn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
+    align-items: flex-end;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
 }
 
 .message-input-container {
     flex: 1;
+    min-width: 0;
+}
+
+.message-compose-send {
+    flex-shrink: 0;
 }
 
 .message-input {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     border: 1px solid var(--border-secondary);
     border-radius: var(--container-radius);
     background: var(--bg-secondary);
@@ -46,44 +36,63 @@
     line-height: 1.4;
     outline: none;
     resize: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease, outline 0.15s ease;
     font-family: inherit;
-    min-height: 44px;
-    max-height: 120px;
+    min-height: 40px;
+    max-height: 160px;
+    box-sizing: border-box;
 }
 
 .message-input:focus {
+    outline: 2px solid var(--border-primary);
+    outline-offset: 2px;
     border-color: var(--border-primary);
-    box-shadow: 0 0 0 2px var(--border-secondary);
+}
+
+.message-input:hover:not(:focus) {
+    border-color: var(--text-secondary);
 }
 
 .message-input::placeholder {
     color: var(--text-secondary);
 }
 
-.send-actions {
-    display: flex;
-    gap: 0.5rem;
+.message-input:focus-visible {
+    outline: 2px solid var(--border-primary);
+    outline-offset: 2px;
 }
 
 .send-btn {
+    width: 40px;
+    height: 40px;
     background: var(--active-bg);
     color: var(--active-text);
     border: none;
-    padding: 0.75rem;
+    padding: 0;
     border-radius: var(--container-radius);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: opacity 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
-.send-btn:hover {
-    opacity: 0.8;
+.send-btn:hover:not(:disabled) {
+    opacity: 0.88;
 }
 
 .send-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
+}
+
+.send-btn:focus-visible {
+    outline: 2px solid var(--border-primary);
+    outline-offset: 2px;
+}
+
+.send-btn svg {
+    width: 22px;
+    height: 22px;
 }

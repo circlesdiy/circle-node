@@ -7,11 +7,12 @@
 }
 
 .chat-header {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-light);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
     background: var(--bg-primary);
 }
 
@@ -31,8 +32,14 @@
 .chat-avatar img {
     width: 40px;
     height: 40px;
-    border-radius: var(--container-radius);
+    border-radius: 50%;
     object-fit: cover;
+}
+
+.chat-avatar .conversation-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-width: 0;
 }
 
 .chat-details {
@@ -40,23 +47,29 @@
 }
 
 .chat-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.125rem 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.chat-participants,
-.chat-status {
-    font-size: 0.85rem;
+.chat-participants {
+    font-size: 0.8rem;
     color: var(--text-secondary);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.chat-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .chat-actions {
@@ -72,7 +85,7 @@
     border-radius: var(--container-radius);
     cursor: pointer;
     color: var(--text-primary);
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -81,18 +94,6 @@
 .chat-action-btn:hover {
     background: var(--hover-bg);
     border-color: var(--border-primary);
-}
-
-.voice-call-btn:hover {
-    color: var(--success);
-    border-color: var(--success);
-    background: var(--success-bg);
-}
-
-.video-call-btn:hover {
-    color: var(--info);
-    border-color: var(--info);
-    background: var(--info-light);
 }
 
 /* No Chat Selected State */
@@ -127,19 +128,4 @@
     color: var(--text-secondary);
     margin: 0 0 2rem 0;
     line-height: 1.5;
-}
-
-.start-chat-btn {
-    background: var(--active-bg);
-    color: var(--active-text);
-    border: 1px solid var(--active-bg);
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--container-radius);
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.start-chat-btn:hover {
-    opacity: 0.8;
 }

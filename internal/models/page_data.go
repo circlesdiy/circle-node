@@ -2,6 +2,7 @@ package models
 
 import (
 	"html/template"
+	"time"
 
 	"circles.diy/internal/domain"
 )
@@ -162,29 +163,36 @@ type ChatPageData struct {
 	ActiveChat    *Conversation  `json:"active_chat,omitempty"`
 	Messages      []Message      `json:"messages"`
 	Contacts      []Contact      `json:"contacts"`
+	ViewerProfileID string       `json:"viewer_profile_id"`
 }
 
 type Conversation struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Avatar       string  `json:"avatar"`
-	LastMessage  string  `json:"last_message"`
-	LastTime     string  `json:"last_time"`
-	UnreadCount  int     `json:"unread_count"`
-	IsOnline     bool    `json:"is_online"`
-	IsGroup      bool    `json:"is_group"`
-	Participants []User  `json:"participants,omitempty"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Avatar         string `json:"avatar"`
+	LastMessage    string `json:"last_message"`
+	LastTime       string `json:"last_time"`
+	UnreadCount    int    `json:"unread_count"`
+	IsOnline       bool   `json:"is_online"`
+	IsGroup        bool   `json:"is_group"`
+	IsCircleScoped bool   `json:"is_circle_scoped"`
+	CircleID       string `json:"circle_id,omitempty"`
+	Participants   []User `json:"participants,omitempty"`
 }
 
 type Message struct {
-	ID        string     `json:"id"`
-	Content   string     `json:"content"`
-	Timestamp string     `json:"timestamp"`
-	Sender    User       `json:"sender"`
-	IsOwn     bool       `json:"is_own"`
-	IsRead    bool       `json:"is_read"`
-	Type      string     `json:"type"` // text, image, voice, video, call
-	Media     *MediaItem `json:"media,omitempty"`
+	ID          string     `json:"id"`
+	Content     string     `json:"content"`
+	Timestamp   string     `json:"timestamp"`
+	CreatedAt   time.Time  `json:"created_at"`
+	Sender      User       `json:"sender"`
+	IsOwn       bool       `json:"is_own"`
+	IsRead      bool       `json:"is_read"`
+	Type        string     `json:"type"` // text, image, voice, video, call
+	Media       *MediaItem `json:"media,omitempty"`
+	BucketLabel string     `json:"bucket_label,omitempty"`
+	IsRunStart  bool       `json:"is_run_start,omitempty"`
+	IsRunEnd    bool       `json:"is_run_end,omitempty"`
 }
 
 type Contact struct {

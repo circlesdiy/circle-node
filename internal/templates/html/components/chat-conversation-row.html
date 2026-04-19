@@ -1,0 +1,52 @@
+{{define "chat-conversation-row"}}
+<a class="conversation-item{{if .IsActive}} active{{end}}"
+   href="/chat/{{.Conversation.ID}}"
+   hx-get="/chat/{{.Conversation.ID}}"
+   hx-target="#chat-main"
+   hx-select="#chat-main"
+   hx-swap="outerHTML"
+   hx-push-url="true"
+   data-conversation-id="{{.Conversation.ID}}"
+   data-name="{{.Conversation.Name}}"
+   data-preview="{{.Conversation.LastMessage}}"
+   id="conversation-row-{{.Conversation.ID}}">
+    <div class="conversation-avatar">
+        {{if .Conversation.Avatar}}
+        <img src="{{.Conversation.Avatar}}" alt="{{.Conversation.Name}}" />
+        {{else}}
+        <div class="conversation-avatar-placeholder" aria-hidden="true">
+            {{if .Conversation.IsCircleScoped}}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24a104,104,0,1,0,104,104A104.12,104.12,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"></path></svg>
+            {{else if .Conversation.IsGroup}}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Z"></path></svg>
+            {{else}}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8Z"></path></svg>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    <div class="conversation-info">
+        <div class="conversation-header">
+            <h3 class="conversation-name">{{.Conversation.Name}}</h3>
+            <span class="conversation-time">{{.Conversation.LastTime}}</span>
+        </div>
+        <div class="conversation-preview">
+            <p class="last-message">{{if .Conversation.LastMessage}}{{.Conversation.LastMessage}}{{else}}No messages yet{{end}}</p>
+            {{if .Conversation.UnreadCount}}
+            <span class="unread-count">{{.Conversation.UnreadCount}}</span>
+            {{end}}
+        </div>
+        {{if .Conversation.IsCircleScoped}}
+        <div class="group-indicator" title="Circle chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24a104,104,0,1,0,104,104A104.12,104.12,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"></path></svg>
+            <span>Circle</span>
+        </div>
+        {{else if .Conversation.IsGroup}}
+        <div class="group-indicator" title="Group chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92Z"></path></svg>
+            <span>Group</span>
+        </div>
+        {{end}}
+    </div>
+</a>
+{{end}}
