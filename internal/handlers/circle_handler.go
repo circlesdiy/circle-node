@@ -1546,10 +1546,20 @@ func (h *CircleHandler) handleAPICreateCircle(w http.ResponseWriter, r *http.Req
 
 	profileID := *session.ActiveProfileID
 
-	// Parse multipart form (max 15MB for avatar 5MB + banner 10MB)
-	if err := r.ParseMultipartForm(15 << 20); err != nil {
-		RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
-		return
+	// Parse form data - handle both multipart/form-data and application/x-www-form-urlencoded
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		if err := r.ParseMultipartForm(15 << 20); err != nil {
+			h.logger.Error("failed to parse multipart form", zap.Error(err))
+			RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
+			return
+		}
+	} else {
+		if err := r.ParseForm(); err != nil {
+			h.logger.Error("failed to parse form", zap.Error(err))
+			RenderError(w, h.logger, http.StatusBadRequest, "Invalid form data")
+			return
+		}
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
