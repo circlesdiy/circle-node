@@ -1,7 +1,7 @@
 /* Responsive Design for Circles Page */
-@media (max-width: var(--breakpoint-md)) {
+@media (max-width: 768px) {
     .circles-page {
-        padding: 1rem;
+        padding: 2rem 1.5rem;
     }
     
     .circles-header {
@@ -62,7 +62,11 @@
     }
 }
 
-@media (max-width: var(--breakpoint-sm)) {
+@media (max-width: 576px) {
+    /* .circles-page {
+        padding: 1rem 0.75rem;
+    } */
+
     .circles-subtitle {
         font-size: 1rem;
     }

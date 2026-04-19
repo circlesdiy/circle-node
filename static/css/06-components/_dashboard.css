@@ -530,7 +530,7 @@ aside h3 {
 }
 
 /* Dashboard responsive styles */
-@media (max-width: var(--breakpoint-lg)) {
+@media (max-width: 992px) {
     .dashboard-container {
         padding: 1.5rem;
     }
@@ -591,7 +591,7 @@ aside h3 {
     }
 }
 
-@media (max-width: var(--breakpoint-md)) {
+@media (max-width: 768px) {
     html {
         font-size: 14px;
     }
@@ -637,7 +637,7 @@ aside h3 {
     }
 }
 
-@media (max-width: var(--breakpoint-sm)) {
+@media (max-width: 576px) {
     .dashboard-container {
         padding: 1rem 0.75rem;
     }

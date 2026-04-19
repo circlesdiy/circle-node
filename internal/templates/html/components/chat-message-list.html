@@ -1,8 +1,4 @@
 {{define "chat-message-list"}}
-{{/*
-  POST and SSE append a single .message with hx-swap/beforeend on #messages-list so rows stay inside the thread.
-  The #load-older sentinel at the top self-replaces via outerHTML when scrolled into view, fetching older pages.
-*/}}
 <div class="messages-container"
      id="messages-container"
      data-chat-id="{{.ActiveChat.ID}}">
@@ -29,11 +25,11 @@
         {{end}}
         {{else}}
         <div class="messages-empty">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 256 256" class="messages-empty-icon" aria-hidden="true">
-                <path d="M216,48H40A16,16,0,0,0,24,64V224a15.84,15.84,0,0,0,9.25,14.5A16.13,16.13,0,0,0,40,240a15.89,15.89,0,0,0,10.25-3.78L69.56,224H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48ZM216,208H64L40,224V64H216Z"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="currentColor" viewBox="0 0 256 256" class="messages-empty-icon" aria-hidden="true">
+                <path d="M168,112a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,112Zm-8,24H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm72-8A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-16,0A88,88,0,1,0,51.81,172.37a8,8,0,0,1,.66,6.54L40,216,77.09,203.54a8,8,0,0,1,6.54.66A88,88,0,0,0,216,128Z"></path>
             </svg>
             <p>No messages yet</p>
-            <p class="messages-empty-hint">Say hello to start the thread.</p>
+            <p class="messages-empty-hint">Send a message to get the conversation started.</p>
         </div>
         {{end}}
     </div>

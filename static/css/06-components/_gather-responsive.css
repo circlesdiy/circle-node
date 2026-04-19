@@ -22,6 +22,10 @@
         font-size: 1.75rem;
     }
 
+    .gather-page .section-title {
+        font-size: 1.75rem;
+    }
+
     .status-bar {
         flex-direction: column;
         align-items: flex-start;
@@ -50,7 +54,7 @@
         font-size: 1.25rem;
     }
 
-    .section-title {
+    .gather-page .section-title {
         font-size: 1.25rem;
     }
 
